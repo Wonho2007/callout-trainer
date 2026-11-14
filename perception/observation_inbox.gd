@@ -56,3 +56,6 @@ func available() -> Array:
 
 func current_tick() -> int:
 	return _clock
+
+func owner_id() -> String:
+	return _bot_id

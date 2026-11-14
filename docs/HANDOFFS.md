@@ -5,7 +5,7 @@ Current Person 2 state: delayed inbox and command runtime implemented, with isol
 | Lane | Current state | Next deliverable | Blocker / dependency |
 |---|---|---|---|
 | Person 1 | Not started | Pin Godot version; JSON-driven synthetic room/builder, actor stubs and blank desktop export | Confirm target hardware and shared contracts |
-| Person 2 (Wonho2007) | Delayed inbox, leak fixture, swing/flash command runtime and fake actor demo implemented | Connect real actor/perception and belief adapters; then add baseline scripts | Person 3 interpreter/beliefs; Person 1 navigation/mechanics/markers |
+| Person 2 (Wonho2007) | Delayed inbox/command runtime plus knowledge-based coverage planner; headless and real-belief adapter checks pass | Connect autonomous goals to actor/navigation; add real sensors and convert Person 3's verified annotations into baseline/branches | Person 1 region/marker/navigation/mechanics; Person 3 runtime messages/beliefs and verified video notes |
 | Person 3 | Not started | Freeze schemas; fake run and evidence/time checks | Shared contracts; use synthetic fixture |
 
 Update only the facts for your lane. Append a short handoff using:
@@ -40,3 +40,22 @@ Validation: official Godot 4.4.1 headless suite passed 174 checks; the synthetic
 ## Product clarification: clear communication across skills
 
 The user selected clear communication as the overall objective, with readiness, enemy reports, utility coordination before entry and useful death reports as examples. Added docs/COMMUNICATION_COACHING.md and aligned the README/brief/decision record. Person 2 supplies delivered-observation/result evidence; Person 3 grades opportunities/omissions and distinguishes parser failures; Person 1 supplies permitted player/death events and post-death input. No runtime/schema fields changed, no cross-lane code edited, and the broader grader is not claimed implemented. Next integration work must preserve player-knowledge limits and accept natural paraphrases.
+
+## Person 2: knowledge-based planner (automated milestone)
+
+- Branch: person-2/bot-perception; existing draft PR #4. Person 2-owned changes: bots/knowledge_planner.gd, bots/README.md, scenarios/synthetic_coverage.json, tests/person2/planner_tests.gd, tests/person2/planner_belief_integration.gd, plus small additions to bots/command_executor.gd, perception/observation_inbox.gd and validation/run_person2_tests.py. This handoff's Person 2 row and this appended note are the only shared-document edits in this increment.
+- Behavior: select hold/cover/reposition from fresh bot-local beliefs and role/objective/reachability, stop when no feasible goal exists, and yield to an accepted player command. Decisions include reason, target/watch IDs and available evidence. Event-time freshness, stable ties, hysteresis and heartbeat prevent stale chasing and unnecessary oscillation. No world/scene handles enter this policy.
+- Interfaces: consumes Person 3's existing snapshot shape; adds copied active_command_snapshot() on the executor and owner_id() on the inbox. No comms.v1 schema, Person 3 module, shared fixture or Person 1 project/actor/world file was changed. Authored planner configuration and the new planner own-state/output shapes are documented in bots/README.md; these do not silently replace the physical executor API.
+- Read-only inspection: Person 1 origin/person-1/world-scaffold at a158bb3; Person 3 checkout/branch at 7a5375c, clean before/after the optional integration run. Person 3 retains video annotation ownership per main's de65f09 documentation. No teammate branch was merged, reset or edited.
+
+**Automated checks actually run:** official Godot 4.4.1 stable via Python 3.14:
+
+Python executable: C:/Users/Isoto/AppData/Local/Python/pythoncore-3.14-64/python.exe. Godot executable: C:/Users/Isoto/Downloads/callout-godot-4.4.1/Godot_v4.4.1-stable_win64_console.exe.
+
+1. validation/run_person2_tests.py --godot <Godot4.4.1_console> --person3-root ../callout-trainer-person3: existing command suite 174 checks, planner suite 72 checks, real Person 3 belief integration 10 checks; all pass, exit 0. Total 256 checks. The optional runner copies Person 3 files read-only to a temporary project.
+2. validation/run_person2_tests.py --godot <Godot4.4.1_console> --demo: original synthetic actor trace passes (one swing, one mid-action report, one flash).
+3. python tools/check_repo.py and git diff --check: pass. Existing CI now automatically runs the added planner suite through the Person 2-owned runner; optional cross-checkout integration is local and not claimed as part of CI.
+
+**Manual playtests:** none. No visual scene, real navigation/utility, smoke/flash perception, speech performance, training efficacy or full-game fairness validation is claimed.
+
+**Remaining dependencies / next step:** Person 1 supplies aligned region/marker IDs, navigation reachability and physical feedback. Person 3 supplies accepted reports/current beliefs in the running game and verified annotation notes. Person 2 must implement the autonomous goal-to-actor controller and real sensors, wire these interfaces in a synthetic room, manually verify a report-driven coverage change and command override, then convert the verified video notes to baseline/branches and add scenario/stuck/fallback checks. The synthetic planner fixture is not a pro reconstruction.

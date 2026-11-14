@@ -29,6 +29,13 @@ func enqueue(observation: Dictionary) -> Dictionary:
 func active_command_id() -> String:
 	return str(_active.get("message", {}).get("message_id", ""))
 
+func active_command_snapshot() -> Dictionary:
+	if _active.is_empty():
+		return {}
+	return {"message_id": _active.message.message_id, "action": _active.message.payload.action,
+		"target_id": _active.message.payload.target_id, "phase": _active.phase,
+		"expires_tick": _active.message.expires_tick, "evidence_ids": _active.evidence_ids.duplicate()}
+
 func step(tick: int, own_state: Dictionary, feedback: Array = []) -> Dictionary:
 	_output = {"results": [], "intents": [], "reports": [], "errors": []}
 	if tick <= _clock or tick < 0:
