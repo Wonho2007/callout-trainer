@@ -4,7 +4,7 @@
 
 Read the complete callout_trainer_brief.md, then docs/TEAM.md, docs/CONTRACTS.md, docs/DECISIONS.md and docs/HANDOFFS.md. Inspect git status and the assigned issue. User instructions take precedence. The brief is authoritative for product requirements; record conflicts rather than silently dropping requirements.
 
-This repository begins as documentation and examples only. Never claim a runnable Godot project, implemented bots, passing fairness tests or collected evaluation data until those actually exist.
+The repository began as documentation and examples. Person 2's isolated delayed inbox/command executor now has headless tests and a fake actor demo; read docs/PERSON2_EXECUTOR.md for exact scope. Do not claim a playable sandbox, speech interpreter, full-game fairness, real physics integration or evaluation data from those tests.
 
 ## Scope and ownership
 
@@ -45,7 +45,7 @@ Use synthetic fixtures for unresolved map/clip details and label them. No client
 
 ## Validation and handoff
 
-Run python tools/check_repo.py for documentation/contracts/examples changes. Run meaningful Godot checks once implemented, using the pinned editor and documented commands; report unavailable checks honestly. Avoid unrelated tests or dependencies.
+Run python tools/check_repo.py for documentation/contracts/examples changes. For Person 2 runtime changes also run validation/run_person2_tests.py with --godot pointing to Godot 4.4.1 stable; see docs/PERSON2_EXECUTOR.md. Run meaningful Godot checks once implemented, using the pinned editor and documented commands; report unavailable checks honestly. Avoid unrelated tests or dependencies.
 
 Each handoff includes changed paths, interface/schema effects, real commands/results, remaining dependency and next integration step. Update the owning lane's row in docs/HANDOFFS.md. A handoff update is not permission to mark unfinished work complete.
 

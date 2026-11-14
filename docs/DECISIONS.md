@@ -6,7 +6,7 @@
 | Development team | Confirmed by user | Wonho2007 = Person 2; sn-kurup/liedwin49 choose Persons 1/3 |
 | Natural language | User-directed | Flexible paraphrases; report_enemy, throw_flash, swing_together; cue/cancel support. Interpreter/provider not selected; deterministic fallback remains required |
 | Product | Confirmed direction | Playable small scenario, player communicates with bots |
-| Editor version | Open; Person 1 | Pin exact stable Godot 4 editor and matching export templates |
+| Editor version | Person 1 proposal; Person 2 tested | Person 1 branch commit d742751 proposes Godot 4.4.1 stable standard GDScript. Person 2 headless checks use that exact build. Export templates and whole-team confirmation remain pending |
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
 | Scenario | Open; all | Select public clip, map/site, takeover moment and communication opportunity |

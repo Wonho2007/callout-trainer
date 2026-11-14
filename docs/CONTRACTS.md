@@ -45,4 +45,4 @@ Person 1 should expose actor movement/action execution and a map query adapter. 
 4. Smoke/flash and reaction delay suppress or delay observations for every actor.
 5. Fallback stays inside the same information boundary.
 
-None of these gameplay tests is implemented by the starter repository.
+Person 2 now tests delayed evidence, private-input boundaries and hidden-state perturbation in isolated modules; see [the runtime guide](PERSON2_EXECUTOR.md). Scene-based smoke/flash perception and full-game checks remain pending.

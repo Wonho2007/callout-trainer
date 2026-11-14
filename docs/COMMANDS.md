@@ -1,6 +1,6 @@
 # Natural-language communication contract v1
 
-Status: selected by the user for implementation on Person 2's branch. This defines the boundary for Persons 1/2/3; it does not claim a parser, speech service or bot executor is implemented. Other engine-wide contracts remain proposed. Coordinate changes through a PR; do not silently change these names.
+Status: selected by the user for implementation on Person 2's branch. This defines the boundary for Persons 1/2/3; the [bot-side runtime](PERSON2_EXECUTOR.md) now implements delayed delivery and execution against fake actor feedback. Speech interpretation and actual 3D mechanics remain pending. Other engine-wide contracts remain proposed. Coordinate changes through a PR; do not silently change these names.
 
 ## Responsibility and scope
 
@@ -82,4 +82,4 @@ Log transcript, normalized message, parser outcome and timestamps separately fro
 - Ambiguous smoke/entry produces clarification, not guessed coordinates.
 - Unseen enemy movement cannot change these decisions when all permitted inputs match.
 
-The schema and examples are interface artifacts. These behavioral checks still need implementation with the observation/leak fixture; no speech accuracy, model performance or gameplay pass is claimed.
+The schema and examples are interface artifacts. The [Person 2 suite](PERSON2_EXECUTOR.md) now covers the bot-side observation, lifecycle and fake-action checks. Paraphrase interpretation, actual scene behavior and speech/countdown performance still need integration tests.

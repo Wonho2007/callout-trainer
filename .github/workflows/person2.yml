@@ -1,0 +1,26 @@
+name: Person 2 Godot checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  person2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the pinned official Godot build
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/godot.zip" https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.4.1-stable_linux.x86_64"
+      - name: Fairness and command lifecycle tests
+        run: python validation/run_person2_tests.py --godot "$RUNNER_TEMP/godot/Godot_v4.4.1-stable_linux.x86_64"
+      - name: Synthetic integration trace
+        run: python validation/run_person2_tests.py --godot "$RUNNER_TEMP/godot/Godot_v4.4.1-stable_linux.x86_64" --demo

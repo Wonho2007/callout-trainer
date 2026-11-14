@@ -2,7 +2,7 @@
 
 A Godot first-person practice scenario where the player communicates with information-limited bot teammates, then reviews what those callouts changed.
 
-**Status: planning and collaboration starter. No playable Godot project exists yet.** Godot and a three-person development team are confirmed. Exact editor version, map/clip, team names and hardware are still open.
+**Status: Person 2's delayed inbox and command runtime are implemented with headless tests and a synthetic actor demo. No playable Godot sandbox exists yet.** Godot and a three-person development team are confirmed. Exact editor version, map/clip, team names and hardware are still open.
 
 ## Start here
 
@@ -37,7 +37,7 @@ Read [the agent-led sandbox workflow](docs/AGENT_WORKFLOW.md). Person 1 builds a
 
 Agents write files and run available checks; humans mainly launch, inspect and playtest. One teammate can initially operate Godot. Learn run/stop, scene tree/Inspector, errors and debug views; advanced editor authoring is unnecessary for the first prototype. Headless success does not prove movement, visuals or bot responses are correct.
 
-Use short tasks: agent changes one feature -> checks -> human playtest -> specific feedback. The workflow document includes a first-task prompt, proposed paths and acceptance gates. These are planned implementation files; no game code is included yet.
+Use short tasks: agent changes one feature -> checks -> human playtest -> specific feedback. The workflow document includes a first-task prompt, proposed paths and acceptance gates. Map and scene construction remain planned; the Person 2 command runtime below is now implemented.
 
 ## Three lanes
 
@@ -51,13 +51,24 @@ Full assignments and hour-by-hour gates are in brief section 9. The 24-hour sche
 
 ## Natural-language commands
 
-The selected [communication contract](docs/COMMANDS.md) separates flexible speech from bot actions. Start with enemy reports, flashes and coordinated swings; paraphrases share intents, while countdown timing remains explicit. See the [schema](schemas/comms_v1.schema.json) and [synthetic examples](examples/comms_v1.json). These are specifications, not an implemented speech or bot system.
+The selected [communication contract](docs/COMMANDS.md) separates flexible speech from bot actions. Start with enemy reports, flashes and coordinated swings; paraphrases share intents, while countdown timing remains explicit. See the [schema](schemas/comms_v1.schema.json) and [synthetic examples](examples/comms_v1.json). The bot-side inbox/executor is implemented against this boundary; speech interpretation and 3D mechanics remain pending.
 
 ## First integrated milestone
 
 One player, one teammate and one enemy in a synthetic test room. The player sees an enemy that the teammate cannot see. A quick-call message updates the teammate's belief and watched angle. The trace links the delayed message to the decision, and the hidden-state perturbation check passes.
 
 Then extend to the planned compact retake: one site, player plus two allies versus two enemies, one rifle, smoke, flash, defuse and a reactive branch. See the brief's never-cut list before reducing scope.
+
+## Person 2 runtime
+
+See [executor setup and integration](docs/PERSON2_EXECUTOR.md) for the delayed inbox, swing/flash execution, reports, actor adapter API, tests and synthetic trace demo. Use Godot 4.4.1 stable, matching Person 1's proposed version; no root project is required for these isolated checks.
+
+~~~sh
+python validation/run_person2_tests.py --godot "/path/to/godot"
+python validation/run_person2_tests.py --godot "/path/to/godot" --demo
+~~~
+
+These checks exercise policy with fake actor feedback. Real navigation, utility effects, language interpretation and full-game integration remain separate work.
 
 ## Checks and running
 
