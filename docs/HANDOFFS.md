@@ -5,7 +5,7 @@ Current Person 2 state: delayed inbox and command runtime implemented, with isol
 | Lane | Current state | Next deliverable | Blocker / dependency |
 |---|---|---|---|
 | Person 1 | Not started | Pin Godot version; JSON-driven synthetic room/builder, actor stubs and blank desktop export | Confirm target hardware and shared contracts |
-| Person 2 (Wonho2007) | Command runtime, knowledge planner and physics/nav perception kernel tested; real-sighting-to-Person-3-belief-to-goal integration passes | Wire actual scene registry/utility/sound adapters and autonomous actor control; convert verified annotations to baseline/branches | Person 1 actor/nav/utility/event interfaces; Person 3 live messages/beliefs, hearing likelihoods and verified notes |
+| Person 2 (Wonho2007) | Command runtime, knowledge planner and physics/nav perception kernel tested; real-sighting-to-Person-3-belief-to-goal integration passes; [new-window handoff](../bots/PERSON2_HANDOFF.md) | Wire actual scene registry/utility/sound adapters and autonomous actor control; convert verified annotations to baseline/branches | Person 1 actor/nav/utility/event interfaces; Person 3 live messages/beliefs, hearing likelihoods and verified notes |
 | Person 3 | Not started | Freeze schemas; fake run and evidence/time checks | Shared contracts; use synthetic fixture |
 
 Update only the facts for your lane. Append a short handoff using:
@@ -76,3 +76,9 @@ Python executable: C:/Users/Isoto/AppData/Local/Python/pythoncore-3.14-64/python
 3. Manual playtests: NONE. These are automated physics/navigation checks, not a rendered gameplay, live voice, complete shared-scene or training-efficacy evaluation.
 
 **Remaining dependencies:** Person 2 must build scene adapters for the actual opponent registry, perception/utility states and audio bus, plus autonomous goal-to-actor control. Person 1 supplies final marker/collision/navigation/utility interfaces; Person 3 supplies live accepted communication and hearing likelihoods, and owns verified video notes. Then run a shared-room manual playtest and convert those notes into baseline/reactive scenarios. PR #4's previously recorded shared-document conflicts with main remain a separate integration dependency; no merge was started.
+
+## Person 2: new-window continuation guide
+
+Added [bots/PERSON2_HANDOFF.md](../bots/PERSON2_HANDOFF.md), linked from the Person 2 README and lane row. It records implementation baseline 04291d8, branch/draft PR, ownership, component/API map, historical automated results, exact local reproduction commands, environment caveats, remaining dependencies and the next controller/scene integration increment. Includes a prompt to paste into a new Codex window.
+
+Documentation-only change on person-2/bot-perception for PR #4; no runtime/schema or teammate-source changes. Actual checks for this handoff: tools/check_repo.py and git diff --check passed. Godot suites were not rerun for this documentation change; the guide labels the prior 357-check result as historical. No manual playtest performed. Next: resume from the guide and verify current teammate interfaces before implementing the owned actor controller/adapters. Existing shared-document merge conflicts remain unresolved.

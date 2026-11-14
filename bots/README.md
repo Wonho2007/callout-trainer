@@ -1,5 +1,7 @@
 # Person 2 knowledge planner
 
+New Codex window: read [Person 2 continuation handoff](PERSON2_HANDOFF.md) for branch state, ownership, tested components, commands and the next integration task.
+
 A deterministic, rule-based goal selector above the existing command executor. This is Person 2-owned code; no Person 1 actor/world files or Person 3 belief/annotation files were edited or merged.
 
 ## Implemented scope
