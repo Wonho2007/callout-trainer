@@ -1,0 +1,31 @@
+{
+  "schema_version": "person3.synthetic.v0",
+  "synthetic": true,
+  "description": "Sanitized synthetic room fixture; no gameplay or pro data. Proposed observation content pending consumer review.",
+  "bot_id": "ally_1",
+  "regions": ["entry", "site", "upper"],
+  "enemy_ids": ["enemy_1"],
+  "observations": [
+    {
+      "id": "obs_call_1", "bot_id": "ally_1", "event_tick": 120, "available_tick": 138,
+      "source": "told", "speaker_id": "player",
+      "content": {
+        "type": "comms",
+        "message": {
+          "schema_version": "comms.v1", "message_id": "call_1", "speaker_id": "player",
+          "recipient_id": "ally_1", "issued_tick": 120, "expires_tick": 220, "kind": "report",
+          "payload": {"action": "report_enemy", "region_id": "upper", "count": null, "hedge": "sure"}
+        }
+      }
+    },
+    {
+      "id": "seen_1", "bot_id": "ally_1", "event_tick": 140, "available_tick": 155,
+      "source": "seen", "speaker_id": "ally_1",
+      "content": {"type": "enemy_seen", "enemy_id": "enemy_1", "region_id": "upper"}
+    }
+  ],
+  "decisions": [
+    {"tick": 138, "bot_id": "ally_1", "action": "hold_angle", "aim_region_id": "upper", "evidence_ids": ["obs_call_1"]}
+  ],
+  "private_truth": [{"tick": 120, "enemy_regions": {"enemy_1": "upper"}}]
+}

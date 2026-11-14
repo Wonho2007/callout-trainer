@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/callout-trainer/person3_records.schema.json",
+  "title": "Proposed Person 3 copied-value records v0 (not a frozen engine API)",
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "tick": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "bot_id", "event_tick", "available_tick", "source", "speaker_id", "content"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "bot_id": {"$ref": "#/$defs/id"},
+        "event_tick": {"$ref": "#/$defs/tick"}, "available_tick": {"$ref": "#/$defs/tick"},
+        "source": {"enum": ["seen", "heard", "told"]}, "speaker_id": {"$ref": "#/$defs/id"},
+        "content": {"type": "object"}
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tick", "bot_id", "action", "aim_region_id", "evidence_ids"],
+      "properties": {
+        "tick": {"$ref": "#/$defs/tick"}, "bot_id": {"$ref": "#/$defs/id"},
+        "action": {"$ref": "#/$defs/id"}, "aim_region_id": {"$ref": "#/$defs/id"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bot_id", "tick", "enemies", "trust", "evidence_ids"],
+      "properties": {
+        "bot_id": {"$ref": "#/$defs/id"}, "tick": {"type": "integer", "minimum": -1},
+        "enemies": {
+          "type": "object", "additionalProperties": {
+            "type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "trust": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "synthetic_run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "synthetic", "description", "bot_id", "regions", "enemy_ids", "observations", "decisions", "private_truth"],
+      "properties": {
+        "schema_version": {"const": "person3.synthetic.v0"}, "synthetic": {"const": true},
+        "description": {"type": "string"}, "bot_id": {"$ref": "#/$defs/id"},
+        "regions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "enemy_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}},
+        "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+        "private_truth": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  },
+  "$ref": "#/$defs/synthetic_run"
+}
