@@ -15,7 +15,9 @@ The brief is the product requirements source. Supporting documents organize that
 
 ## Clone and contribute
 
-Private repository: accept your GitHub invitation before cloning.
+Public repository: anyone can clone. Collaborators must accept their GitHub invitation to push branches.
+
+Team: Wonho2007, sn-kurup and liedwin49. Lane assignments are still open; claim an issue together.
 
 ~~~sh
 git clone https://github.com/Wonho2007/callout-trainer.git
