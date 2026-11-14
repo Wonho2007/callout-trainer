@@ -14,14 +14,14 @@ Know which lane the user assigned. If no lane is assigned, inspect open issues a
 
 - Person 1 owns world/, actors/, weapons/, utility/, scenes/maps/, scenes/player/, main scene, project.godot and export settings.
 - Person 2 owns perception/, bots/, scenarios/, validation/, scenes/bots/ and bot/perception tests.
-- Person 3 owns comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schemas and belief/log tests.
+- Person 3 owns annotations/ for verified video notes, comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schemas and belief/log tests.
 - Shared contracts and fixture changes require explaining the change to both consumers in the PR and updating docs/examples together. Do not treat proposed examples as already frozen APIs.
 
 Use short-lived lane branches and small reviewable PRs. Keep shared root settings/main scene edits under Person 1's coordination. GitHub issues track work; docs/HANDOFFS.md records current integration facts.
 
 ## Agent-led construction and human review
 
-Read docs/AGENT_WORKFLOW.md. The team has no engine experience and prefers code-generated scenes/data with minimal manual authoring. Person 1 owns world/sandbox_builder.gd and world/maps/ for static geometry; Person 2 owns scenario actors/branches separately. Start with a JSON-generated synthetic room and reusable actors; create matching collision and navigation, then integrate one communication moment before pro-site detail.
+Read docs/AGENT_WORKFLOW.md. The team has no engine experience and prefers code-generated scenes/data with minimal manual authoring. Person 1 owns world/sandbox_builder.gd and world/maps/ for static geometry; Person 3 owns video annotation notes in annotations/; Person 2 converts them to executable scenario actors/branches in scenarios/. Follow docs/VIDEO_ANNOTATION.md. Start with a JSON-generated synthetic room and reusable actors; create matching collision and navigation, then integrate one communication moment before pro-site detail.
 
 Implement short increments with explicit acceptance criteria and real launch/check commands. Agents may create scenes, scripts, data/settings and run Godot when available. Humans verify movement, rendering, input, sightlines, bot reactions and the exported build. Keep automated results separate from manual playtest records; never infer manual success from headless logs. If executable or visual access is unavailable, state it and provide reproducible teammate steps.
 

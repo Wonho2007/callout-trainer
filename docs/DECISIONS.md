@@ -9,6 +9,7 @@
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
 | Scenario | Open; all | Select public clip, map/site, takeover moment and communication opportunity |
+| Video annotation | User-assigned | Person 3 owns verified source notes in annotations/; Person 2 converts them into executable scenarios/ and validates. See docs/VIDEO_ANNOTATION.md |
 | Initial scope | Planning default | 30-45 seconds; player + two allies vs two enemies; rifle, smoke, flash, defuse |
 | Deadline | Unverified inheritance | Brief assumes 24 hours; verify with event |
 | Target/demo | Open; Person 1 | OS, hardware, export and presentation format |
