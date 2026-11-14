@@ -78,7 +78,8 @@ func command(message_id: String, recipient_id: String, issued_tick: int,
 
 # Build a cue or cancel referencing an already-issued command. The reference must
 # name a command_id; validation of speaker/recipient/active state is Person 2's job.
-func reference(message_id: String, recipient_id: String, issued_tick: int,
+# Named make_reference (not reference) to avoid the RefCounted.reference() builtin.
+func make_reference(message_id: String, recipient_id: String, issued_tick: int,
 		expires_tick: int, kind: String, command_id: String) -> Dictionary:
 	if kind not in ["cue", "cancel"] or not Values.text(command_id):
 		return {}

@@ -92,45 +92,44 @@ two new scripts into `tests/person3/run_checks.py`. No existing Person 1/2/3 fil
 fixture or main scene was edited. The quick-call emits only validated `comms.v1` messages
 over the existing `report_adapter.gd`; it never invents regions, markers or coordinates.
 
-Automated checks run this session, on a machine **without a Godot executable**:
+Automated checks run this session, **on Godot 4.4.1.stable.official.49a5bc7b6** (installed locally at `C:\Users\Siddh\tools\godot\`):
 
+- `python tests/person3/run_checks.py --godot <4.4.1 console> --person2-root <person-2 worktree>`:
+  **47 isolated + 34 quick-call + 8 executor-integration + 20 goal-integration assertions passed**, exit 0.
+  The Person 2 worktree was `origin/person-2/bot-perception` at `b3b4ddb`; its files were copied read-only.
+  No certificate-store diagnostic appeared on this build; the wrapper still required zero `ERROR:`/`SCRIPT ERROR` lines.
 - `python tools/check_repo.py`: passed (documentation links and synthetic fixture).
 - `python -m json.tool` on all four JSON files: passed (syntax).
-- **Draft 2020-12 meta-schema validation, now actually run** via a local `jsonschema` 4.26.0
-  (installed in an ignored `.venv/`, not committed): `schemas/person3_records.schema.json`
-  and `schemas/comms_v1.schema.json` are valid Draft 2020-12 schemas; `examples/person3_fake_run.json`
-  conforms to the records schema; and all six quick-call message shapes (report with/without
-  count, swing, flash, cue, cancel) conform to the frozen `comms.v1` oneOf. This closes the
+- Draft 2020-12 meta-schema validation via a local `jsonschema` 4.26.0 (in an ignored `.venv/`, not committed):
+  `schemas/person3_records.schema.json` and `schemas/comms_v1.schema.json` are valid Draft 2020-12 schemas;
+  `examples/person3_fake_run.json` conforms to the records schema; and all six quick-call message shapes
+  (report with/without count, swing, flash, cue, cancel) conform to the frozen `comms.v1` oneOf. This closes the
   earlier "meta-schema validation unavailable" gap for these artifacts.
-- Independent re-derivation of the belief/trust formulas (Python) reproduces every numeric
-  assertion in the GDScript suite (report-to-0.8, trust 0.73/0.42/0.63, hedge < 0.8) and the
-  new integration claim (logs to 0.8, above the 0.55 threat threshold, fresh and reachable,
-  so the planner switches to `logs_cover`).
-- Static checks: every `preload` path resolves (Person 2's executor/planner resolve via the
-  wrapper's read-only copy at test time), tab indentation and headers match the lane style,
-  and `run_checks.py` parses.
+- Independent Python re-derivation of the belief/trust formulas reproduces every numeric assertion
+  (report-to-0.8, trust 0.73/0.42/0.63, hedge < 0.8) and the new integration claim (logs to 0.8, above the
+  0.55 threat threshold, fresh and reachable, so the planner switches to `logs_cover`).
 
-**Not run this session (honest):** the Godot assertion suite could not execute because no
-Godot 4 stable executable is installed on this machine. The existing 47+8 assertions and the
-new `quick_call_tests.gd` and `belief_goal_integration.gd` still need a Godot run by a
-teammate with the pinned editor (commands above). No manual UI playtest was run: rendering,
-mouse/keyboard input and on-screen layout of the quick-call panel are unverified and remain a
-required human playtest. `git diff --check` was not run in this session's shell (git is only
-reachable through a bundled path here); run it before the PR.
+The engine run caught one bug a static review could not: the quick-call method was first named `reference()`,
+which collides with `RefCounted.reference()` and failed to parse. It was renamed to `make_reference()`; the suite
+passes after the rename.
+
+**Not run this session (honest):** no manual UI playtest. Rendering, mouse/keyboard input and on-screen layout
+of the quick-call panel are unverified and remain a required human playtest; headless script runs do not establish
+any of that. `git diff --check` passed before the pre-fix commit; re-run it before the PR.
 
 ## Next small increments, in order
 
-1. **Mostly done, pending verification.** The mandatory quick-call Control and
-   lifecycle acknowledgments are implemented (`ui/quick_call/`), and one delayed
+1. **Done except the human UI playtest and merge.** The mandatory quick-call Control
+   and lifecycle acknowledgments are implemented (`ui/quick_call/`), and one delayed
    quick-call is integrated into a bot goal through Person 2's real executor and
-   planner (`tests/person3/belief_goal_integration.gd`). Remaining before this is
-   closed: run the Godot suite with the pinned editor, do the human UI playtest,
-   confirm the envelope/content/query shapes with Persons 1/2, and run the full
-   shared fairness fixture (not just the membership/time audit). Pin the editor
-   version with Person 1. Note: Person 2's `knowledge_planner.gd` already consumes
-   the belief snapshot and ships its own read-only cross-lane test, so the goal path
-   is now proven from both sides against copies; it still needs a real merge and a
-   combined Godot run.
+   planner (`tests/person3/belief_goal_integration.gd`). The Godot suite now passes
+   on 4.4.1 (47 + 34 + 8 + 20 assertions, exit 0). Remaining before this is closed:
+   the human UI playtest (rendering/input/layout), confirm the envelope/content/query
+   shapes with Persons 1/2, and run the full shared fairness fixture (not just the
+   membership/time audit). Pin the editor version with Person 1. Note: Person 2's
+   `knowledge_planner.gd` already consumes the belief snapshot and ships its own
+   read-only cross-lane test, so the goal path is proven from both sides; it still
+   needs a real merge and a combined Godot run.
 2. Add player-sighting intervals and time-indexed truth contracts, then precision/recall/median latency and correct-versus-wrong callout metrics. Undefined denominators must return unavailable. Save real runtime observations/decisions and truth separately.
 3. Build the scrubbable truth-versus-belief debrief and visible belief-only counterfactual using fixed observations. Get map outlines from Person 1. This replay helper does not yet choose the best omitted call or render a comparison.
 4. Add silent/chatty/budgeted outputs, repeated-report suppression and channel busy/rate limits from bot-local evidence; keep combat identical. Build the noisy-callout pilot, VOD-only sheet and unseen pre/post protocol. No human or pilot results have been collected.

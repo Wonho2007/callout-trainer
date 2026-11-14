@@ -53,11 +53,11 @@ func _initialize() -> void:
 	check(qc.command("qc_x", "ally_1", 120, 220, "defuse", "entry_a", "now").is_empty(), "unsupported action rejected")
 
 	# Cue/cancel reference an existing command by ID.
-	var cue: Dictionary = qc.reference("qc_3", "ally_1", 130, 220, "cue", "qc_1")
+	var cue: Dictionary = qc.make_reference("qc_3", "ally_1", 130, 220, "cue", "qc_1")
 	check(not cue.is_empty() and cue.kind == "cue" and cue.payload.command_id == "qc_1", "cue references a command id")
-	var cancel: Dictionary = qc.reference("qc_4", "ally_1", 130, 220, "cancel", "qc_1")
+	var cancel: Dictionary = qc.make_reference("qc_4", "ally_1", 130, 220, "cancel", "qc_1")
 	check(not cancel.is_empty() and cancel.kind == "cancel", "cancel references a command id")
-	check(qc.reference("qc_x", "ally_1", 130, 220, "report", "qc_1").is_empty(), "non reference kind rejected")
+	check(qc.make_reference("qc_x", "ally_1", 130, 220, "report", "qc_1").is_empty(), "non reference kind rejected")
 
 	# Repeated calls throughout the round are supported with distinct ids.
 	var a: Dictionary = qc.report("call_a", "ally_1", 120, 220, "upper")
