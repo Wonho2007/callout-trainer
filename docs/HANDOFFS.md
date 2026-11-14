@@ -67,3 +67,13 @@ The user selected clear communication as the overall objective, with readiness, 
 - Manual playtest and results: tester confirmed player movement, collision, walk/crouch/jump, mouse toggle and restart still work unchanged after refactoring the player onto the shared base.
 - Remaining work/dependency: no weapons/damage sources yet (Health has no driver); no smoke/flash/spike/defuse; no desktop export yet. Region IDs/coordinate convention pending team freeze. Agent/collision-layer and capsule sizing are placeholders to confirm with Person 2.
 - Next integration step: blank offline desktop export to prove the build pipeline on target hardware (brief §9.1).
+
+### 2026-11-14 — Person 1: Windows desktop export verified
+
+- Branch/PR and owning lane: `person-1/world-scaffold`; Person 1 (delivery/export).
+- Changed files: `export_presets.cfg`, `docs/BUILD.md` (committed earlier); `export_presets.cfg` updated to disable resource modification.
+- Interface/schema changes and consumers: none (build tooling only). Export preset "Windows Desktop" (x86_64 release) writes to `build/windows/` which is gitignored; exported binaries are not committed. `docs/BUILD.md` documents run/template-install/GUI+headless export commands.
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally (Python 3.12.10 now installed). Export completed with only a harmless rcedit warning (icon/metadata embedding); disabled `application/modify_resources` so future exports are clean.
+- Manual playtest and results: tester launched the standalone `build/windows/callout-trainer.exe` on the target machine (Windows, RTX 4070 laptop) — the room renders and movement/collision/crouch/jump/HUD/disclaimer all work offline, matching the editor. Export templates 4.4.1.stable confirmed installed.
+- Remaining work/dependency: export save dialog defaulted to project root the first time; binaries were moved to `build/windows/`. Team members export to `build/windows/` per docs/BUILD.md. No gameplay beyond movement yet (no weapons/damage/smoke/flash/spike/defuse). Region IDs/coordinate convention still pending team freeze.
+- Next integration step: first gameplay increment — damage/death wired to the Health component, keeping the player able to communicate after death per docs/COMMUNICATION_COACHING.md, and emitting player-permitted perception/death/entry/utility events for Person 3's grader.
