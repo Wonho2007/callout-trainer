@@ -27,8 +27,16 @@ const LAYER_REGIONS: int = 1 << 3  # layer 4 "regions"
 ## Parsed map data, kept for other systems (spawns, region lookup) to query.
 var map_data: Dictionary = {}
 
+## Emitted after the navigation mesh has finished baking and the nav map has
+## synchronized, so consumers can safely query paths. Person 2 should await or
+## connect to this before using NavigationServer3D path queries.
+signal navigation_ready
+
+## True once navigation_ready has fired for the current build.
+var navigation_is_ready: bool = false
+
 ## Container names so a rebuild can find and clear what it made.
-const GEOMETRY_ROOT := "Geometry"
+const GEOMETRY_ROOT := "NavRegion"  # NavigationRegion3D parenting the geometry
 const REGIONS_ROOT := "Regions"
 const SPAWNS_ROOT := "Spawns"
 
@@ -146,16 +154,32 @@ func validate_map(m: Dictionary) -> Array[String]:
 
 func _build(m: Dictionary) -> void:
 	_clear_generated()
+	navigation_is_ready = false
 
-	var geometry := Node3D.new()
-	geometry.name = GEOMETRY_ROOT
-	add_child(geometry)
+	# Geometry lives under a NavigationRegion3D so the navmesh bakes from the
+	# same meshes that provide collision (collision and navigation are separate
+	# systems; this keeps them generated from one source).
+	var nav_region := NavigationRegion3D.new()
+	nav_region.name = GEOMETRY_ROOT
+	var nav_mesh := NavigationMesh.new()
+	# Agent sizing: keep in sync with the player/bot capsule (radius ~0.3,
+	# height ~1.8). Placeholders, tune in playtest.
+	nav_mesh.agent_radius = 0.4
+	nav_mesh.agent_height = 1.8
+	nav_mesh.agent_max_climb = 0.4
+	nav_mesh.cell_size = 0.2
+	nav_mesh.cell_height = 0.1
+	# Parse the generated visual box meshes as source geometry.
+	nav_mesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_MESH_INSTANCES
+	nav_mesh.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+	nav_region.navigation_mesh = nav_mesh
+	add_child(nav_region)
 
-	_build_floor(m, geometry)
+	_build_floor(m, nav_region)
 	for wall in m["walls"]:
-		_build_solid_box(wall, geometry, Color(0.80, 0.82, 0.88))
+		_build_solid_box(wall, nav_region, Color(0.80, 0.82, 0.88))
 	for box in m["cover"]:
-		_build_solid_box(box, geometry, Color(0.90, 0.45, 0.15))
+		_build_solid_box(box, nav_region, Color(0.90, 0.45, 0.15))
 
 	var regions := Node3D.new()
 	regions.name = REGIONS_ROOT
@@ -170,6 +194,25 @@ func _build(m: Dictionary) -> void:
 		_build_spawn(spawn, spawns)
 
 	_build_lighting()
+	_bake_navigation(nav_region)
+
+
+## Bake the navmesh from the generated geometry, then wait for the nav map to
+## synchronize before announcing readiness. Bots must not query paths earlier.
+func _bake_navigation(nav_region: NavigationRegion3D) -> void:
+	# bake_navigation_mesh() runs on a thread; it emits bake_finished when done.
+	nav_region.bake_navigation_mesh()
+	await nav_region.bake_finished
+	# The baked mesh is applied, but the navigation server needs a physics frame
+	# to synchronize the map before path queries return valid results.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var nm := nav_region.navigation_mesh
+	var polys := nm.get_polygon_count() if nm else 0
+	if polys == 0:
+		push_warning("sandbox_builder: navmesh baked with 0 polygons — check geometry")
+	navigation_is_ready = true
+	navigation_ready.emit()
 
 
 func _clear_generated() -> void:
@@ -292,6 +335,33 @@ func get_spawn(role: String) -> Marker3D:
 		if child is Marker3D and child.get_meta("role", "") == role:
 			return child
 	return null
+
+
+## World-space center of a callout region by ID, or null if not found.
+func get_region_center(region_id: String):
+	var regions := get_node_or_null(NodePath(REGIONS_ROOT))
+	if regions == null:
+		return null
+	for child in regions.get_children():
+		if child.get_meta("region_id", "") == region_id:
+			return child.global_position
+	return null
+
+
+## Query a navigation path between two world points on the baked navmesh.
+## Returns an empty PackedVector3Array if navigation is not ready or no path
+## exists. Person 2's actor controllers move bodies along the returned points;
+## this builder does not move anything.
+func query_path(from: Vector3, to: Vector3) -> PackedVector3Array:
+	if not navigation_is_ready:
+		push_warning("sandbox_builder: query_path called before navigation_ready")
+		return PackedVector3Array()
+	var map_rid := get_world_3d().navigation_map
+	# Region centers sit above the floor; snap endpoints onto the navmesh so
+	# the query starts and ends on walkable surface.
+	var start := NavigationServer3D.map_get_closest_point(map_rid, from)
+	var end := NavigationServer3D.map_get_closest_point(map_rid, to)
+	return NavigationServer3D.map_get_path(map_rid, start, end, true)
 
 
 # --- helpers ---

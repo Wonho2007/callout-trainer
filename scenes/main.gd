@@ -18,6 +18,21 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_spawn_player()
 	_update_hud()
+	# Confirm the navigation bake produced a usable path once it is ready.
+	if not builder.navigation_is_ready:
+		await builder.navigation_ready
+	_verify_navigation()
+
+
+func _verify_navigation() -> void:
+	var from = builder.get_region_center("region_a")
+	var to = builder.get_region_center("region_b")
+	if from == null or to == null:
+		push_warning("main: could not find region centers for nav check")
+		return
+	var path: PackedVector3Array = builder.query_path(from as Vector3, to as Vector3)
+	if path.size() < 2:
+		push_warning("main: navigation path region_a -> region_b is empty; navmesh may not have baked")
 
 
 func _unhandled_input(event: InputEvent) -> void:
