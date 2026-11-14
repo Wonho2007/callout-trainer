@@ -49,6 +49,10 @@ Use short tasks: agent changes one feature -> checks -> human playtest -> specif
 
 Full assignments and hour-by-hour gates are in brief section 9. The 24-hour schedule is a planning assumption, not a verified event deadline.
 
+## Communication training objective
+
+**Clear communication throughout the round is the main skill.** Readiness is one example alongside timely enemy reports, utility planning before entry, useful death reports and appropriate uncertainty. The debrief should identify information the player could reasonably have shared but the teammate did not receive. See [communication coaching](docs/COMMUNICATION_COACHING.md) for eligibility rules, examples and ownership. Unknown facts and parser/delivery failures must not be scored as player omissions. This broader grader is specified, not yet implemented.
+
 ## First integrated milestone
 
 One player, one teammate and one enemy in a synthetic test room. The player sees an enemy that the teammate cannot see. A quick-call message updates the teammate's belief and watched angle. The trace links the delayed message to the decision, and the hidden-state perturbation check passes.

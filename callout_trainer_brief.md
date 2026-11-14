@@ -355,6 +355,18 @@ where `t^-` is just before the callout and `t^+` is after the bots have processe
 - **Counterfactual, tier 1 (core, cheap, exact):** replay the logged observation streams through the belief model with the callout the player should have made injected at the right time (the one that would have maximized gain, or the one the pro made). Show how team belief entropy and each bot's belief would have differed. This is pure math on logs.
 - **Counterfactual, tier 2 (stretch, approximate):** restore the world snapshot at the decision point, replay the player as a ghost from the recorded inputs, inject the callout, and re-run the bots several times with different seeds. Report the share of reruns where the outcome changed (for example "defused in 7 of 10 reruns") instead of a single result. The ghost's aim cannot react to the changed situation and engine physics is not exactly repeatable, so label this an approximate what-if.
 
+#### Clear communication and relevant omissions
+
+**Latest user clarification:** clear team communication is the overall training objective. Readiness/cue coordination is one skill, not the main or only skill. Also coach timely enemy reports, requesting/coordinating appropriate utility before entry, and useful death reports naming the opponent if known and the last-known threat location.
+
+Detect missing information by comparing what the player could reasonably know with what relevant teammates actually received. Score an omission only when the information was available to the player, useful within the scenario's time window, absent from the recipient's usable knowledge, and not already communicated in equivalent natural language. Distinguish player death position from killer location; never demand a hidden shooter identity or exact unseen location. Accept uncertainty and last-seen reports.
+
+Utility requests are situational: require them only in a documented coordination opportunity with feasible utility and no existing adequate plan, not before every entry. Keep the player input channel usable after death so surviving bots can receive reports. Separate absent speech from recognition, interpretation, delivery and execution failures; do not penalize the player when the system dropped a valid report.
+
+The debrief states the missing content, the recipient's information gap, the observed effect if supported, and one actionable retry suggestion. Track eligible-opportunity coverage and information completeness across skills, with readiness as one category. Full rules, ownership and acceptance examples are in docs/COMMUNICATION_COACHING.md; this is a specification, not a completed grader.
+
+The current comms.v1 report supports enemy location/count/hedge but has no explicit identity or death/last-seen fields. Coordinate a versioned extension before adding those to live policy; offline grading annotations can retain them separately.
+
 ### 6.12 Logging, behavior trace, and the leak test
 
 Every decision a bot makes is logged with: tick, bot id, planner goal, controller action, and the **ids of the observation-log entries it used**.

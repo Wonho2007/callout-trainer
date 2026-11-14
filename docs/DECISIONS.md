@@ -4,7 +4,7 @@
 |---|---|---|
 | Engine | Confirmed by user | Godot |
 | Development team | Confirmed by user | Wonho2007, sn-kurup and liedwin49; lane assignments pending |
-| Product | Confirmed direction | Playable small scenario, player communicates with bots |
+| Product | User-confirmed objective | Clear team communication throughout play. Readiness coordination is one subskill; coach timely reports, utility planning, death reports and relevant omissions. See docs/COMMUNICATION_COACHING.md |
 | Editor version | Open; Person 1 | Pin exact stable Godot 4 editor and matching export templates |
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
