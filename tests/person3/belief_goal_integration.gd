@@ -71,7 +71,7 @@ func _initialize() -> void:
 		if record.id in released_step.reports[0].evidence_ids:
 			applied = belief.apply(record, 3).ok
 	check(applied, "belief model applies the released testimony")
-	check(is_equal_approx(belief.snapshot().enemies.enemy_1.logs, 0.8), "sure report moves belief mass toward logs")
+	check(is_equal_approx(belief.snapshot().enemies.enemy_1.logs, 0.933333), "sure report commits belief mass toward logs")
 
 	# Goal change: the planner now repositions to cover the reported region.
 	var reactive: Dictionary = planner.decide(3, belief.snapshot(), goal_state, executor.inbox)

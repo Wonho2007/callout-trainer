@@ -28,7 +28,7 @@ func _initialize() -> void:
 	check(output.reports[0].evidence_ids == [observation.id], "executor preserves original evidence ID")
 	var released: Array = executor.inbox.available()
 	check(released.size() == 1 and belief.apply(released[0], 138).ok, "validated local evidence reaches belief model")
-	check(is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.8), "delayed report changes queried belief")
+	check(is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.933333), "delayed report changes queried belief")
 	check(Audit.check(released, [{"tick": 138, "bot_id": "ally_1", "evidence_ids": belief.snapshot().evidence_ids}]).is_empty(), "cross-lane evidence audits")
 	var duplicate: Dictionary = observation.duplicate(true)
 	duplicate.id = "redelivery"

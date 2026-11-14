@@ -6,27 +6,17 @@ var _bot_id: String
 var _regions: Array
 var _enemies: Array
 var _probabilities: Dictionary = {}
-var _trust: Dictionary = {}
-var _pending: Dictionary = {}
 var _observations: Dictionary = {}
 var _messages: Dictionary = {}
 var _evidence: Array = []
 var _tick: int = -1
-var _window: int
-var _eta_plus: float
-var _eta_minus: float
 
-func _init(bot_id: String, region_ids: Array, enemy_ids: Array,
-		verification_window: int = 60, eta_plus: float = 0.1, eta_minus: float = 0.4) -> void:
+func _init(bot_id: String, region_ids: Array, enemy_ids: Array) -> void:
 	assert(Values.text(bot_id) and not region_ids.is_empty() and not enemy_ids.is_empty())
-	assert(verification_window > 0 and eta_plus >= 0.0 and eta_plus <= 1.0 and eta_minus >= 0.0 and eta_minus <= 1.0)
 	assert(Values.valid(region_ids) and Values.valid(enemy_ids))
 	_bot_id = bot_id
 	_regions = region_ids.duplicate()
 	_enemies = enemy_ids.duplicate()
-	_window = verification_window
-	_eta_plus = eta_plus
-	_eta_minus = eta_minus
 	for region in _regions:
 		assert(Values.text(region) and _regions.count(region) == 1)
 	for enemy in _enemies:
@@ -37,8 +27,12 @@ func _init(bot_id: String, region_ids: Array, enemy_ids: Array,
 		_probabilities[enemy] = prior
 
 func snapshot() -> Dictionary:
+	# `trust` is retained as an always-empty dict for backward compatibility with
+	# Person 2's planner contract (keys_exact requires the key). Trust was removed
+	# as a mechanism (DECISIONS.md 2026-11-14); nothing populates it. Person 2 can
+	# drop the field from their validator in a coordinated change.
 	return {"bot_id": _bot_id, "tick": _tick, "enemies": _probabilities.duplicate(true),
-		"trust": _trust.duplicate(true), "evidence_ids": _evidence.duplicate()}
+		"trust": {}, "evidence_ids": _evidence.duplicate()}
 
 # Caller releases observations using Person 2's inbox. Reject future/foreign values.
 # No wall clock or world queries. Prediction is an explicit separate step.
@@ -60,7 +54,6 @@ func apply(observation: Dictionary, tick: int) -> Dictionary:
 	_tick = tick
 	_observations[observation.id] = observation.duplicate(true)
 	_evidence.append(observation.id)
-	_expire(tick)
 	return {"ok": true, "reason": reason}
 
 func _valid_observation(observation: Dictionary, tick: int) -> bool:
@@ -82,9 +75,10 @@ func _report(observation: Dictionary, tick: int) -> String:
 	var region: String = message.payload.region_id
 	if region not in _regions:
 		return "unknown_region"
-	var tau: float = _trust.get(message.speaker_id, 0.7)
-	# Hedge changes testimony strength, never parser confidence or speaker reliability.
-	var strength: float = tau * {"sure": 1.0, "think": 0.7, "unsure": 0.4}[message.payload.hedge]
+	# No per-speaker trust: the bot believes the call and acts on it. The player's
+	# own hedge is the only strength knob; a wrong call commits the bot and the
+	# consequence is a bad in-round outcome, not a hidden trust penalty.
+	var strength: float = {"sure": 0.9, "think": 0.7, "unsure": 0.4}[message.payload.hedge]
 	# No identity in report_enemy: exchangeable-slot approximation, not a sighting
 	# of every enemy. Count is retained for grading; no slot identity is invented.
 	for enemy in _enemies:
@@ -92,10 +86,7 @@ func _report(observation: Dictionary, tick: int) -> String:
 		for candidate in _regions:
 			likelihood[candidate] = (strength if candidate == region else 0.0) + (1.0 - strength) / _regions.size()
 		_update(enemy, likelihood)
-	_trust[message.speaker_id] = tau
 	_messages[message.message_id] = message.duplicate(true)
-	_pending[message.message_id] = {"speaker_id": message.speaker_id, "region_id": region,
-		"event_tick": message.issued_tick, "deadline": message.issued_tick + _window}
 	return "ok"
 
 func _seen(observation: Dictionary, tick: int) -> String:
@@ -106,20 +97,7 @@ func _seen(observation: Dictionary, tick: int) -> String:
 	for region in _regions:
 		likelihood[region] = 0.99 if region == content.region_id else 0.01 / max(1, _regions.size() - 1)
 	_update(content.enemy_id, likelihood)
-	# A later sighting elsewhere never refutes a report: the enemy may have moved.
-	# Confirm only same-region positive evidence within the event-time window.
-	for id in _pending.keys():
-		var report: Dictionary = _pending[id]
-		if tick <= report.deadline and observation.event_tick >= report.event_tick and observation.event_tick <= report.deadline and content.region_id == report.region_id:
-			var previous: float = _trust[report.speaker_id]
-			_trust[report.speaker_id] = previous + _eta_plus * (1.0 - previous)
-			_pending.erase(id)
 	return "ok"
-
-func _expire(tick: int) -> void:
-	for id in _pending.keys():
-		if tick > _pending[id].deadline:
-			_pending.erase(id)
 
 func _clear(observation: Dictionary, tick: int) -> String:
 	var content: Dictionary = observation.content
@@ -131,14 +109,6 @@ func _clear(observation: Dictionary, tick: int) -> String:
 		likelihood[region] = 0.1 if region == content.region_id else 1.0
 	for enemy in _enemies:
 		_update(enemy, likelihood)
-	for id in _pending.keys():
-		var report: Dictionary = _pending[id]
-		# Only simultaneous full coverage can refute historical testimony here.
-		# Later clearance is negative current-location evidence, not proof of a lie.
-		if tick <= report.deadline and observation.event_tick == report.event_tick and content.region_id == report.region_id:
-			var previous: float = _trust[report.speaker_id]
-			_trust[report.speaker_id] = previous + _eta_minus * (0.0 - previous)
-			_pending.erase(id)
 	return "ok"
 
 func _update(enemy: String, likelihood: Dictionary) -> void:
@@ -178,5 +148,4 @@ func predict(tick: int, transition: Dictionary) -> bool:
 			next[destination] /= mass
 		_probabilities[enemy] = next
 	_tick = tick
-	_expire(tick)
 	return true

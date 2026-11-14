@@ -14,7 +14,8 @@
 | Available development time | User-reported | Approximately 11 hours at the latest scope discussion; earlier 24-hour schedule is historical planning |
 | Target/demo | Open; Person 1 | OS, hardware, export and presentation format |
 | Schemas | Mixed | New communication boundary selected: docs/COMMANDS.md, comms.v1. Other engine contracts remain proposed v0 |
-| Evaluation | Required plan; not run | VOD-only, silent, chatty, full; unseen variants and human receiver if feasible |
+| Trust model | User-directed, 2026-11-14 | **Removed.** Overrides brief §6.7. Bots no longer keep per-speaker trust τ and do not discount or "scar" a player for wrong calls. A callout updates belief using the player's own hedge only (sure/think/unsure → strength 0.9/0.7/0.4); the consequence of a bad call is a bad in-round outcome (the bot commits and can die), not a hidden trust penalty. Affects belief/region_belief.gd (τ, confirm/refute, verification window all dropped) and its tests. Cross-lane: Person 2's planner/controller is where "punish by dying" actually plays out. |
+| Evaluation | Required plan; partially revised 2026-11-14 | VOD-only, silent, chatty, full; unseen variants and human receiver if feasible. The symmetric-vs-asymmetric trust arm (brief §7.3) is dropped with the trust model; other arms stand |
 | Core counterfactual | Required | Belief-only replay; changed combat outcome is approximate stretch |
 | License/assets | Open | Owner chooses license; verify third-party asset redistribution before use |
 | Repo visibility | Public, requested by user | Invite sn-kurup and liedwin49 with write access; collaborators must accept |

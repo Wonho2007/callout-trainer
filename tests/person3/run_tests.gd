@@ -36,15 +36,15 @@ func _initialize() -> void:
 	check(belief.snapshot().evidence_ids.is_empty(), "rejection leaves prior untouched")
 	check(belief.apply(observation, 138).ok, "due testimony accepted")
 	var snapshot: Dictionary = belief.snapshot()
-	check(is_equal_approx(snapshot.enemies.enemy_1.upper, 0.8), "Bayesian testimony uses trust, not truth")
+	check(is_equal_approx(snapshot.enemies.enemy_1.upper, 0.933333), "sure report commits belief by hedge alone, not truth")
 	check(snapshot.enemies.enemy_1.entry > 0.0, "testimony retains uncertainty")
 	check(observation.content.message.payload.count == null, "unspecified count remains unknown")
 	snapshot.enemies.enemy_1.upper = 0.0
-	check(is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.8), "snapshots are deep copies")
+	check(is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.933333), "snapshots are deep copies")
 	check(belief.apply(observation, 139).ok and belief.snapshot().evidence_ids.size() == 1, "observation redelivery idempotent")
 	var duplicate: Dictionary = observation.duplicate(true)
 	duplicate.id = "redelivery"
-	check(belief.apply(duplicate, 139).ok and is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.8), "message redelivery cannot apply testimony twice")
+	check(belief.apply(duplicate, 139).ok and is_equal_approx(belief.snapshot().enemies.enemy_1.upper, 0.933333), "message redelivery cannot apply testimony twice")
 	duplicate.content.message.payload.region_id = "site"
 	duplicate.id = "conflict"
 	check(not belief.apply(duplicate, 140).ok, "conflicting message ID rejected")
@@ -59,37 +59,25 @@ func _initialize() -> void:
 	hostile.content.node.free()
 	check(Reports.make_report("x", "player", "ally_1", 1, 1, "site").is_empty(), "invalid expiry rejected")
 	check(Reports.make_report("x", "player", "ally_1", 1, 10, "site", 0).is_empty(), "zero count rejected")
-	var positive: RefCounted = model()
-	positive.apply(report(), 138)
-	positive.apply(seen("upper", 140, 155), 155)
-	check(is_equal_approx(positive.snapshot().trust.player, 0.73), "local confirming evidence slowly restores trust")
+	# Trust removed as a mechanism (DECISIONS.md 2026-11-14). The snapshot keeps an
+	# always-empty trust field for Person 2's planner contract; nothing populates it.
+	check(belief.snapshot().has("trust") and belief.snapshot().trust.is_empty(), "trust field is retained but always empty")
+	var sighting: RefCounted = model()
+	sighting.apply(report(), 138)
+	sighting.apply(seen("upper", 140, 155), 155)
+	check(sighting.snapshot().enemies.enemy_1.upper > 0.933333, "a same-region sighting sharpens belief further")
 	var moved: RefCounted = model()
 	moved.apply(report(), 138)
 	moved.apply(seen("site", 140, 155), 155)
-	check(is_equal_approx(moved.snapshot().trust.player, 0.7), "enemy movement does not refute historical report")
-	var negative: RefCounted = model()
-	negative.apply(report(), 138)
-	negative.apply(clear_region(120, 139), 139)
-	check(is_equal_approx(negative.snapshot().trust.player, 0.42), "simultaneous complete coverage can refute testimony")
-	var late_clear: RefCounted = model()
-	late_clear.apply(report(), 138)
-	late_clear.apply(clear_region(140, 155), 155)
-	check(is_equal_approx(late_clear.snapshot().trust.player, 0.7), "later clearance cannot establish earlier falsehood")
+	check(moved.snapshot().enemies.enemy_1.site > moved.snapshot().enemies.enemy_1.upper, "a later sighting elsewhere moves belief without any trust penalty")
+	var cleared: RefCounted = model()
+	cleared.apply(report(), 138)
+	var before_clear: float = cleared.snapshot().enemies.enemy_1.upper
+	cleared.apply(clear_region(120, 139), 139)
+	check(cleared.snapshot().enemies.enemy_1.upper < before_clear, "complete coverage lowers belief in the cleared region")
 	var partial: Dictionary = clear_region(120, 139)
 	partial.content.coverage = "partial"
 	check(not model().apply(partial, 139).ok, "partial visibility cannot clear a region")
-	var expired: RefCounted = model()
-	expired.apply(report(), 138)
-	expired.apply(seen("upper", 190, 200), 200)
-	check(is_equal_approx(expired.snapshot().trust.player, 0.7), "verification expires unresolved")
-	var delayed: RefCounted = model()
-	delayed.apply(report(), 138)
-	delayed.apply(seen("upper", 140, 200), 200)
-	check(is_equal_approx(delayed.snapshot().trust.player, 0.7), "confirmation unavailable until after expiry stays unresolved")
-	var late_refutation: RefCounted = model()
-	late_refutation.apply(report(), 138)
-	late_refutation.apply(clear_region(120, 200), 200)
-	check(is_equal_approx(late_refutation.snapshot().trust.player, 0.7), "refutation unavailable until after expiry stays unresolved")
 	var transition: Dictionary = {
 		"entry": {"entry": 0.5, "site": 0.5, "upper": 0.0},
 		"site": {"entry": 0.0, "site": 0.5, "upper": 0.5},
@@ -120,16 +108,12 @@ func _initialize() -> void:
 	isolated.apply(mutable_input, 138)
 	mutable_input.content.message.payload.region_id = "site"
 	mutable_input.id = "mutated"
-	check(is_equal_approx(isolated.snapshot().enemies.enemy_1.upper, 0.8) and isolated.snapshot().evidence_ids == ["obs_mutable"], "caller mutation cannot alter applied evidence")
+	check(is_equal_approx(isolated.snapshot().enemies.enemy_1.upper, 0.933333) and isolated.snapshot().evidence_ids == ["obs_mutable"], "caller mutation cannot alter applied evidence")
 	var hedge: Dictionary = report("hedged")
 	hedge.content.message.payload.hedge = "unsure"
 	var hedged: RefCounted = model()
 	hedged.apply(hedge, 138)
-	check(hedged.snapshot().enemies.enemy_1.upper < 0.8 and is_equal_approx(hedged.snapshot().trust.player, 0.7), "hedge changes strength independently of speaker trust")
-	var symmetric: RefCounted = Model.new("ally_1", ["entry", "site", "upper"], ["enemy_1"], 60, 0.1, 0.1)
-	symmetric.apply(report(), 138)
-	symmetric.apply(clear_region(120, 139), 139)
-	check(is_equal_approx(symmetric.snapshot().trust.player, 0.63), "symmetric trust control is configurable")
+	check(is_equal_approx(hedged.snapshot().enemies.enemy_1.upper, 0.6), "the player's hedge is the only strength knob, no trust factor")
 	check(not belief.apply(seen("site", 130, 135), 140).ok, "backwards time rejected")
 	var decisions: Array = [{"bot_id": "ally_1", "tick": 138, "evidence_ids": [observation.id]}]
 	check(Audit.check([observation], decisions).is_empty(), "valid evidence membership/time")
@@ -150,7 +134,7 @@ func _initialize() -> void:
 	var tied_report: Dictionary = report("z_report", "upper", 120, 150)
 	var tied_seen: Dictionary = seen("upper", 140, 150, "a_seen")
 	var tied: Dictionary = Replay.run("ally_1", ["entry", "site", "upper"], ["enemy_1"], [tied_seen, tied_report])
-	check(tied.ok and is_equal_approx(tied.final.trust.player, 0.73), "equal availability orders by event time before ID like Person 2 inbox")
+	check(tied.ok and is_equal_approx(tied.final.enemies.enemy_1.upper, 0.999639), "equal availability orders deterministically like Person 2 inbox")
 	var delayed_transport: Dictionary = report("transport")
 	delayed_transport.event_tick = 125
 	check(model().apply(delayed_transport, 138).ok, "trusted transport can deliver a previously issued message")
