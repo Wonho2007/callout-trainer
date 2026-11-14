@@ -4,7 +4,7 @@
 |---|---|---|
 | Engine | Confirmed by user | Godot |
 | Development team | Confirmed by user | Wonho2007, sn-kurup and liedwin49; lane assignments pending |
-| Product | Confirmed direction | Playable small scenario, player communicates with bots |
+| Product | User-confirmed objective | Clear team communication throughout play. Readiness coordination is one subskill; coach timely reports, utility planning, death reports and relevant omissions. See docs/COMMUNICATION_COACHING.md |
 | Editor version | Pinned by Person 1 (2026-11-14); team confirmation pending | Godot 4.4.1 stable, Windows 64-bit standard build (Godot_v4.4.1-stable_win64, GDScript, not .NET). Matching 4.4.1-stable export templates to be installed before first export. All developers must use this exact build. |
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
