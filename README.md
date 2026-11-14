@@ -49,6 +49,10 @@ Use short tasks: agent changes one feature -> checks -> human playtest -> specif
 
 Full assignments and hour-by-hour gates are in brief section 9. The 24-hour schedule is a planning assumption, not a verified event deadline.
 
+## Natural-language commands
+
+The selected [communication contract](docs/COMMANDS.md) separates flexible speech from bot actions. Start with enemy reports, flashes and coordinated swings; paraphrases share intents, while countdown timing remains explicit. See the [schema](schemas/comms_v1.schema.json) and [synthetic examples](examples/comms_v1.json). These are specifications, not an implemented speech or bot system.
+
 ## First integrated milestone
 
 One player, one teammate and one enemy in a synthetic test room. The player sees an enemy that the teammate cannot see. A quick-call message updates the teammate's belief and watched angle. The trace links the delayed message to the decision, and the hidden-state perturbation check passes.

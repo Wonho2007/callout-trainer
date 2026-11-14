@@ -1,6 +1,6 @@
 # Team ownership
 
-Team GitHub handles: Wonho2007, sn-kurup and liedwin49. Person-to-lane assignments are unassigned; choose by claiming the matching GitHub issue. These labels refer to developers, not characters in the simulation. The complete task split and timed acceptance gates are in project brief section 9.
+Team GitHub handles: Wonho2007, sn-kurup and liedwin49. Wonho2007 has selected Person 2; Person 1/3 remain unassigned. These labels refer to developers, not characters in the simulation. The complete task split and timed acceptance gates are in project brief section 9.
 
 | Lane | Owns | Must provide | Depends on |
 |---|---|---|---|

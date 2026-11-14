@@ -2,6 +2,10 @@
 
 **Status: proposed, not frozen.** Person 3 coordinates schema definitions; all three confirm them at kickoff. These examples are starting points, not tested engine APIs. The brief's requirements take precedence.
 
+## Selected natural-language boundary
+
+Use [communication contract v1](COMMANDS.md) and its JSON Schema for new player messages. The user selected this interface for implementation: flexible phrasing becomes a validated report, flash command or coordinated swing, with explicit timing and lifecycle results. Person 3 interprets/reports; Person 2 validates/executes; Person 1 supplies mechanics/markers. Other contracts below remain proposed; the old fixture is not silently upgraded.
+
 ## Conventions to confirm
 
 Proposed coordinates: meters, Y up, Godot Vector3 serialized as [x, y, z]. Integer ticks are authoritative; simulation timestamps can be derived from the configured rate. Use stable string IDs, schema_version and named unknown-region handling. The fixture's 60 Hz is illustrative and does not pin runtime settings.

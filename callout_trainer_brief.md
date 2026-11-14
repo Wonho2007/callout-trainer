@@ -279,13 +279,17 @@ $$P(r \mid x) \;=\; \tau\,\mathbb{1}[r = x] + (1-\tau)\,\frac{1}{|X|}$$
 
 A callout is **testimony, not ground truth**. It moves belief in proportion to trust and never sets it directly.
 
-### 6.6 Comms in: speech, parser, "say again"
+### 6.6 Comms in: natural language, commands and clarification
 
-1. **Input:** push-to-talk speech recognition, plus a **quick-call menu** fallback: hold a key, pick a region (and a count) from a list or radial, release to send a structured callout with no parsing at all. Typing mid-fight is impractical in a first-person game, so the quick-call menu is the mandatory fallback and keeps a noisy demo room from breaking the demo. Speech options depend on engine and OS (for example a local Whisper process beside the Godot build, only after confirming target-machine performance). Speech is a nice-to-have, not core.
-2. **Parser to structured callout:** `{type: enemy|utility|spike|status, place: <callout>, count, hedge: sure|think|unsure, t}`.
-3. **Primary parser is a keyword grammar** over the map's callout names and a short verb list, with fuzzy matching. An optional small local model or free-tier LLM can handle messy phrasing, but it must produce the same structured output and must never be required.
-4. **Say again:** if parse confidence is below a threshold or a place is ambiguous, the nearest bot asks a short clarifying question. It never guesses.
-5. Hedge words feed the trust model and the likelihood (an "unsure" call is weighted lower than "sure").
+**Updated user direction:** accept flexible tactical language repeatedly throughout play, including enemy reports, utility requests and coordinated swings. "Swing with me" and "let's peek together" normalize to the same action. "Three, two, one, swing" shares that action but has cue-based timing, not identical execution timing.
+
+1. **Input:** desired push-to-talk speech plus mandatory quick-call fallback. Build against typed transcripts first. Person 3 implements transcription/interpretation and context; provider/model remains open, with no mandatory paid API. A keyword-only vocabulary is insufficient for the desired natural-language behavior, but deterministic aliases/menu remain fallbacks.
+2. **Selected interface:** comms.v1 messages have message_id, speaker_id, recipient_id, issued_tick, expires_tick, kind and payload. Full rules are in docs/COMMANDS.md with schemas/comms_v1.schema.json and examples/comms_v1.json. Model output cannot assign trusted timestamps, invent coordinates or directly operate actors.
+3. **Initial intents:** report_enemy (region/count/hedge), throw_flash (authored flash target), swing_together (authored entry). Reports update beliefs without interrupting actions. Commands are validated/executed by Person 2 using Person 1's shared mechanics; cue/cancel messages manage coordination.
+4. **Timing:** follow_player uses permitted nearby movement observations; now still respects reaction delay; on_cue stages and waits for a ready acknowledgment and explicit go cue. Do not wait for an LLM on the final countdown release path or claim retrospective synchronization from a completed transcript.
+5. **Clarification:** ambiguous "that smoke" or entry references require a question, never guessed coordinates. Interpretation receives conversation/static vocabulary and permitted observations, never hidden ground truth.
+6. **Lifecycle:** validate recipient, IDs, expiry, reachability, actor state and utility. Emit accepted/ready/executing/completed or a specific rejection/failure. New feasible commands can supersede interruptible ones; committed throws cannot be undone; repeated IDs cannot repeat actions. Continue consuming reports during actions.
+7. **Fairness and measurement:** messages become delayed told observations, and decisions cite available evidence. Language understanding is separate from trust in reports. Keep transcripts, normalized messages, status/results and timing for evaluation without feeding private logs into policy.
 
 ### 6.7 Trust model
 
