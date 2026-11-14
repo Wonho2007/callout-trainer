@@ -5,7 +5,7 @@
 | Engine | Confirmed by user | Godot |
 | Development team | Confirmed by user | Wonho2007, sn-kurup and liedwin49; lane assignments pending |
 | Product | Confirmed direction | Playable small scenario, player communicates with bots |
-| Editor version | Open; Person 1 | Pin exact stable Godot 4 editor and matching export templates |
+| Editor version | Pinned by Person 1 (2026-11-14); team confirmation pending | Godot 4.4.1 stable, Windows 64-bit standard build (Godot_v4.4.1-stable_win64, GDScript, not .NET). Matching 4.4.1-stable export templates to be installed before first export. All developers must use this exact build. |
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
 | Scenario | Open; all | Select public clip, map/site, takeover moment and communication opportunity |
@@ -21,3 +21,12 @@
 Record confirmed decisions with date, context and affected interfaces. No map, agent statistic, source clip or human outcome may be invented to fill an open choice.
 
 The PDF advice/requirements were reviewed for the brief, but PDF files are not in this repository. Brief sections 1 and 8 contain the summaries and page mapping. External papers, historical statistics and policy dates remain unverified motivation.
+
+## Decision log
+
+### 2026-11-14 — Godot editor version pinned (Person 1)
+
+- **Decision:** Pin the editor to **Godot 4.4.1 stable, Windows 64-bit standard build** (`Godot_v4.4.1-stable_win64`, GDScript edition, not the .NET/C# build).
+- **Context:** Person 1 owns the editor-version pin (brief §9.1, AGENTS.md). 4.4.1 is a mature stable release; chosen over the newest 4.5 to reduce newest-release risk, and over older 4.3 to stay current. Person 1 has this build downloaded locally.
+- **Still pending:** the other developers (Wonho2007, sn-kurup) must install this same exact build and confirm; matching **4.4.1-stable export templates** must be installed before the first desktop export; launch must be confirmed on the actual demo/target hardware. Until the team confirms, treat this as a Person 1 proposal, not a frozen team decision.
+- **Affected interfaces:** `project.godot` (config version / features), export presets, any version-specific API usage, CI editor version if added later.
