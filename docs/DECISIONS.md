@@ -6,6 +6,7 @@
 | Development team | Confirmed by user | Wonho2007, sn-kurup and liedwin49; lane assignments pending |
 | Product | Confirmed direction | Playable small scenario, player communicates with bots |
 | Editor version | Open; Person 1 | Pin exact stable Godot 4 editor and matching export templates |
+| Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |
 | Scenario | Open; all | Select public clip, map/site, takeover moment and communication opportunity |
 | Initial scope | Planning default | 30-45 seconds; player + two allies vs two enemies; rifle, smoke, flash, defuse |

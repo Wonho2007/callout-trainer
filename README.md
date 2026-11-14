@@ -31,6 +31,14 @@ Paste this into your AI assistant after cloning:
 
 > Read AGENTS.md and callout_trainer_brief.md completely, then docs/TEAM.md, docs/CONTRACTS.md, docs/DECISIONS.md and docs/HANDOFFS.md. I am Person [1/2/3], working on issue #[number]. Inspect the current repository and branch before editing. Work within this lane, preserve the fair-perception boundary, and implement the next handoff against shared fixtures. Record real checks and unresolved dependencies; do not invent completion or change another lane's interfaces silently.
 
+## Building with agents and minimal editor work
+
+Read [the agent-led sandbox workflow](docs/AGENT_WORKFLOW.md). Person 1 builds a JSON-defined synthetic room with a GDScript builder, matching geometry/collision, named regions/spawns and navigation. Get one teammate responding to a callout before recreating a pro site.
+
+Agents write files and run available checks; humans mainly launch, inspect and playtest. One teammate can initially operate Godot. Learn run/stop, scene tree/Inspector, errors and debug views; advanced editor authoring is unnecessary for the first prototype. Headless success does not prove movement, visuals or bot responses are correct.
+
+Use short tasks: agent changes one feature -> checks -> human playtest -> specific feedback. The workflow document includes a first-task prompt, proposed paths and acceptance gates. These are planned implementation files; no game code is included yet.
+
 ## Three lanes
 
 | Lane | Responsibility | First handoff |

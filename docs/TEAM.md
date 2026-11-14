@@ -10,6 +10,12 @@ Team GitHub handles: Wonho2007, sn-kurup and liedwin49. Person-to-lane assignmen
 
 Directories above are reserved ownership boundaries; they are not claims that these modules already exist.
 
+## Beginner-friendly agent workflow
+
+Follow [docs/AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Person 1's first map is generated from world/maps/test_room.json by world/sandbox_builder.gd, with matching meshes/collision and named regions/spawns. Person 2 owns reusable bot behavior and scenarios; Person 3 coordinates debug visibility and the communication trace. The paths are proposed and not implemented.
+
+Person 1 initially operates Godot; all three help playtest. Use synthetic fixtures while dependencies are unfinished. Integrate one callout-driven teammate response before recreating the source site.
+
 ## Work together first
 
 Freeze region IDs, coordinates, collision masks, physics tick rate/order, availability timing, seeds, public information allowlist and schema version before parallel implementation. Use fake adapters and examples until dependencies land.

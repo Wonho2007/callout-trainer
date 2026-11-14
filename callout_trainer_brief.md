@@ -168,6 +168,24 @@ Use one shared **Godot 4 desktop project**. Pin the same stable editor version a
 
 Fixed physics ticks, independently seeded bot RNG, and a consistent observation/belief/planning/action/logging order support repeatable policy tests. Log settings, seeds and tick numbers. Do not promise bit-exact physics or automatic reconstruction from video.
 
+#### Agent-led sandbox construction and minimal editor work
+
+The team has no game-engine experience and intends to develop mainly through coding agents. Use Godot as the runtime and build the initial greybox from code and map data. Humans focus on running, inspecting and playtesting rather than manually placing each wall.
+
+**Person 1's approach:** a small bootstrap scene loads world/sandbox_builder.gd and world/maps/test_room.json. Map records define wall/cover dimensions, positions, named regions and spawn markers. The builder generates visible geometry and matching collision, then prepares navigation from the same geometry. Keep static map data separate from Person 2's round/scenario JSON. Rebuild/reset without duplicating generated objects. Validate IDs, dimensions, clear spawn positions and navigable routes; collision and navigation are separate systems.
+
+Use reusable player and bot scenes rather than one giant procedural script. Proposed paths: scenes/main.tscn and scenes/player/player.tscn (Person 1), scenes/bots/bot.tscn (Person 2 using Person 1's actor components), and ui/debug/ (Person 3 with data from the other lanes). Show regions, navigation, bot goals and available observations in debug views, without leaking privileged debug data into policy.
+
+**Implementation order:** empty synthetic room with movement/collision/reset -> one teammate and one enemy separated by cover -> quick-call changes delayed observation, belief and watched angle, with an evidence trace -> shared combat/smoke/flash/defuse -> source-derived site blockout. Keep the first communication moment small: three regions and one enemy visible to the player but hidden from the teammate. These are development stages, not cuts to the final requirements.
+
+**Who interacts with Godot:** agents create scenes/scripts/data/settings and run available checks; one teammate initially installs/opens the pinned editor and confirms launch on the target machine. Humans learn opening/importing the project, run/stop, scene tree/Inspector, error panel and collision/navigation debug views. Advanced modeling, animation and shaders are unnecessary for this prototype. Map changes can be requests such as moving cover or widening a doorway, implemented as data edits.
+
+**Playtest loop:** agent changes one feature -> automated checks -> human playtest -> concrete feedback. Humans must judge mouse/movement feel, cover/sightlines, stuck bots, sensible callout responses and the exported build. Headless startup does not establish rendering, input or playability. Record automated commands/results separately from manual checks and never mark an unperformed playtest as passed.
+
+Agent autonomy depends on access to files and the Godot executable; GUI inspection also depends on available tools. If an agent cannot launch or inspect the game, it documents exact commands and manual steps for a teammate. No promise of zero editor interaction or a fixed automation percentage. Assign short tasks with explicit acceptance criteria, not a single request to build the whole simulator.
+
+The repository's docs/AGENT_WORKFLOW.md gives the detailed sequence, ownership, beginner workflow and first-task prompt. This section is self-contained for readers of the standalone brief.
+
 ### 6.1 Scenario database and validator
 
 Scenarios are JSON files in the repo. A real database adds nothing at this scale.
@@ -424,11 +442,11 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 **Owns:** world/, actors/, weapons/, utility/, scenes/maps/, scenes/player/, main scene, project.godot and export presets. Others request shared settings changes through this owner.
 
 1. Set up the project, input actions, collision layers, main scene, HUD and offline desktop export. Prove a blank export works on target hardware early.
-2. Greybox one site and relevant approaches: cover, elevation, sightlines, collision, spawn markers, callout Area3D volumes and spike.
+2. Build the JSON-driven sandbox builder and a synthetic test room first; generate matching meshes/collision, named spawns and callout regions. After the communication loop works, replace the room data with one site's relevant cover, elevation, routes and spike position.
 3. Build CharacterBody3D movement/mouse look, one rifle, reload, damage, defuse/detonation and round restart. Bots and player share weapon, damage and utility rules.
 4. Bake navigation, maintain region registry/graph with the others, and expose movement/action execution adapters without live target access for policy.
 5. Implement smoke and flash from shared definitions. Emit footsteps, shots, damage, utility and round events. Test both player and bot effects in scripted scenes.
-6. Supply logged-map outlines/region polygons for the debrief. Integrate/export the build, help collect gameplay runs and record the backup video.
+6. Supply logged-map outlines/region polygons for the debrief. Document reproducible launch/reset/check/export commands, coordinate short human playtests, integrate/export the build, help collect gameplay runs and record the backup video.
 
 **Done when:** the player can finish and restart a retake; navigation/collision match the blockout; smoke blocks sight and flash suppresses vision; the frozen build runs offline.
 
@@ -498,6 +516,8 @@ Use signals and narrow adapters, with restricted bot subscriptions. A global eve
 **Balance:** Person 3 has the heaviest UI/analysis lane. Person 1 handles map drawing data, export and video; Person 2 owns validation and safety telemetry; both help collect evaluation runs. No optional speech/LLM work while debrief is incomplete.
 
 Merge small changes at hours 2, 6, 8, 12 and 16. Separate scene ownership avoids main-scene conflicts. Shared schema changes require updating fixtures and both consumers.
+
+**Beginner/agent workflow:** Person 1 operates the editor initially; all three supply specific playtest feedback. Assign short, independently checkable increments, keep fake adapters available, and record automated versus manual evidence separately. Follow section 6.0 and docs/AGENT_WORKFLOW.md; do not postpone the communication loop for map polish.
 
 **Hour 8 tripwire:** if a structured callout cannot change a bot goal, pause extra mechanics and integrate the information path. **Hour 12 tripwire:** if the retake is unplayable, shorten routes, reduce enemies to one, simplify aim and keep one reactive branch.
 
