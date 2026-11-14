@@ -14,6 +14,7 @@ extends ActorBase
 
 @onready var camera: Camera3D = $Camera3D
 @onready var collision: CollisionShape3D = $CollisionShape3D
+@onready var weapon: Weapon = $Camera3D/Weapon
 
 var _pitch: float = 0.0
 var _mouse_captured: bool = false
@@ -36,6 +37,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = _pitch
 	if event.is_action_pressed("toggle_mouse"):
 		_capture_mouse(not _mouse_captured)
+	# Reload (F). Only when alive and mouse captured (not in a menu).
+	if event.is_action_pressed("reload") and is_alive and _mouse_captured:
+		weapon.reload()
+
+
+func _fire_weapon() -> void:
+	# Fire from the camera along its forward direction. Spread widens while
+	# moving. The weapon raycasts against the world and applies damage itself.
+	var origin := camera.global_position
+	var direction := -camera.global_transform.basis.z
+	var moving := velocity.length() > 0.5
+	weapon.fire(origin, direction, moving, self)
 
 
 func _physics_process(delta: float) -> void:
@@ -62,6 +75,10 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var world_dir := transform.basis * Vector3(input_dir.x, 0, input_dir.y)
 	set_move_dir(world_dir)
+
+	# Hold-to-fire; the weapon rate-limits itself. Only when mouse is captured.
+	if Input.is_action_pressed("fire") and _mouse_captured:
+		_fire_weapon()
 
 	super._physics_process(delta)
 

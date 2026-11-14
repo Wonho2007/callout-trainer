@@ -7,16 +7,19 @@ extends Node3D
 ## later increments.
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
+const ActorScene := preload("res://actors/actor_base.tscn")
 
 @onready var builder = $SandboxBuilder
 
 var _player: ActorBase
+var _target: ActorBase
 
 
 func _ready() -> void:
 	# The builder builds itself on _ready; ensure it is ready before spawning.
 	await get_tree().process_frame
 	_spawn_player()
+	_spawn_target()
 	_update_hud()
 	# Confirm the navigation bake produced a usable path once it is ready.
 	if not builder.navigation_is_ready:
@@ -42,10 +45,6 @@ func _verify_navigation() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
 		_restart()
-	# Debug hook for this increment: damage the player to test death handling.
-	# (Temporary — replaced by weapons in a later increment.)
-	elif event.is_action_pressed("debug_damage_self") and _player:
-		_player.apply_damage(35.0)
 
 
 func _spawn_player() -> void:
@@ -60,6 +59,18 @@ func _spawn_player() -> void:
 		_player.global_position = Vector3(0, 1, 0)
 
 
+func _spawn_target() -> void:
+	# A dummy target actor (Health, no AI) so the rifle has something to hit.
+	# This is a Person 1 test stand-in, not a bot; Person 2 owns real bots.
+	var spawn: Marker3D = builder.get_spawn("enemy")
+	_target = ActorScene.instantiate()
+	add_child(_target)
+	if spawn:
+		_target.teleport_to(spawn)
+	else:
+		_target.global_position = Vector3(7, 1, -7)
+
+
 func _on_player_died() -> void:
 	# The player's combatant state is dead, but input/comms stay available so the
 	# player can still report (COMMUNICATION_COACHING). Round logic hooks here later.
@@ -67,17 +78,20 @@ func _on_player_died() -> void:
 
 
 func _restart() -> void:
-	# Rebuild the room cleanly (no duplicated nodes) and reset the player.
+	# Rebuild the room cleanly (no duplicated nodes) and reset the player/target.
 	builder.build_from_file(builder.map_path)
-	var spawn: Marker3D = builder.get_spawn("player")
-	if _player and spawn:
-		_player.teleport_to(spawn)
+	var pspawn: Marker3D = builder.get_spawn("player")
+	if _player and pspawn:
+		_player.teleport_to(pspawn)
+	var espawn: Marker3D = builder.get_spawn("enemy")
+	if _target and espawn:
+		_target.teleport_to(espawn)
 
 
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | Shift walk | Ctrl crouch | Space jump | R restart | Esc mouse | K damage self (test)"
+		hud.text = "WASD move | Shift walk | Ctrl crouch | Space jump | LMB fire | F reload | R restart | Esc mouse"
 
 
 func _update_status() -> void:
@@ -86,4 +100,12 @@ func _update_status() -> void:
 		return
 	var hp := _player.health.hp if _player.health else 0.0
 	var state := "ALIVE" if _player.is_alive else "DEAD (can still look/report)"
-	label.text = "HP: %d   %s" % [int(hp), state]
+	var ammo := ""
+	var w := _player.get_node_or_null("Camera3D/Weapon")
+	if w:
+		ammo = "   Ammo: %d/%d" % [w.in_mag, w.reserve]
+	var tgt := ""
+	if _target and _target.health:
+		var tstate := "" if _target.is_alive else " (down)"
+		tgt = "   Target HP: %d%s" % [int(_target.health.hp), tstate]
+	label.text = "HP: %d   %s%s%s" % [int(hp), state, ammo, tgt]
