@@ -1,6 +1,6 @@
 # Person 2: resume in a new Codex window
 
-Handoff prepared November 14, 2026. Implementation baseline: `04291d8` (physics-backed sight and navigation-distance hearing). This document is a continuation guide, not a claim that the game is complete. Recheck repository state before acting; newer teammate work may change the integration facts below.
+Handoff updated November 14, 2026. The latest increment adds privileged authored-path movement and command arbitration above the earlier `04291d8` perception baseline. Current automated results and dependencies are in the continuation record at the end and [motion guide](MOTION_CONTROLLER.md). This is not a claim that the game is complete. Recheck repository state before acting; newer teammate work may change integration facts.
 
 ## Start here
 
@@ -13,9 +13,9 @@ Repository: https://github.com/Wonho2007/callout-trainer
 - Local checkout: `C:\Users\Isoto\Documents\GitHub\callout-trainer`.
 - Branch/upstream: `person-2/bot-perception` / `origin/person-2/bot-perception`.
 - Existing draft PR: [#4](https://github.com/Wonho2007/callout-trainer/pull/4), “Add bot perception, knowledge planning, and validated command execution”. Continue this PR rather than creating a duplicate.
-- Last implementation commit: `04291d8`. The working tree was clean when this documentation task began.
+- Resume baseline was `4e0e67e` (guide) above implementation `04291d8`; the motion increment follows it. The working tree was clean at the start of this continuation.
 - Person 3's separate checkout: `C:\Users\Isoto\Documents\GitHub\callout-trainer-person3`, branch `person-3/comms-belief`. Last compatibility test used clean commit `7a5375c`; inspect before reusing it. Never edit it from the Person 2 task.
-- Person 1's remote branch: `origin/person-1/world-scaffold`; last inspected commit `34ce8a9`. Inspect current source read-only rather than assuming these APIs are final.
+- Person 1's remote branch: `origin/person-1/world-scaffold`; fetched/inspected `0fd1285`. Person 3's fetched branch is now `ff2a6d7`; this continuation tests those refs read-only without altering the older local Person 3 checkout.
 
 ## Product and ownership
 
@@ -37,12 +37,13 @@ Feedback about omitted callouts must respect what the player could know, what th
 | Player-command executor | `bots/command_executor.gd`, `validation/comms_validator.gd`: validated swing/flash commands, staging/readiness/cue lifecycle, expiry/cancel/failure, accepted reports and actor intents |
 | Knowledge planner | `bots/knowledge_planner.gd`: hold/cover/reposition/stop or yield to an accepted command; fresh local evidence, role/objective/reachability, deterministic ties and hysteresis |
 | Privileged sensor | `perception/perception_sensor.gd`: real raycast FOV/LOS, multi-point exposure, smoke blockers, blind-status suppression, seeded reaction delay and navigation-path-distance hearing |
+| Privileged movement | `bots/motion_controller.gd`: authored-path movement/watch angles, stage/swing arbitration, physical feedback and safe stops; [API/limitations](MOTION_CONTROLLER.md) |
 | Synthetic data | `scenarios/synthetic_coverage.json`: authored coverage markers and test tuning, explicitly not a pro reconstruction |
 | Automated runners | `validation/run_person2_tests.py`, `tests/person2/`: disposable Godot projects, fake actor demo, real physics/nav fixtures, optional read-only integration with Person 3 |
 
 Detailed APIs: [executor guide](../docs/PERSON2_EXECUTOR.md), [planner guide](README.md), [sensor guide](../perception/README.md), [command contract](../docs/COMMANDS.md), and [communication coaching](../docs/COMMUNICATION_COACHING.md).
 
-These components are **not yet wired into a playable shared bot scene**. Autonomous goals do not yet produce actual movement through a production controller. No complete aiming/combat implementation, pro baseline/branches, live speech integration, scenario safety suite or human playtest is claimed by Person 2.
+These components are **not yet wired into a playable shared bot scene**. The optional integration harness now turns autonomous goals into actual movement through Person 1's actor and generated room. No complete aiming/combat implementation, pro baseline/branches, live speech integration, scenario safety suite or human playtest is claimed by Person 2.
 
 ## Integration rules that must survive
 
@@ -50,7 +51,7 @@ These components are **not yet wired into a playable shared bot scene**. Autonom
 2. Enqueue successful sensor observations and normalized communication into the bot's existing inbox/executor. Do not expose observations before `available_tick` or backdate their actual delivery.
 3. Step the executor once for the tick with its own physical state and actor feedback. Forward only accepted report IDs from its `reports` output to Person 3; rejected raw testimony must not update beliefs.
 4. Apply due valid visual observations to the real belief module, preserving IDs. Query the belief snapshot, then call the planner with the same bot's inbox and executor `active_command_snapshot()`.
-5. Dispatch executor intents exactly once. A planner `command` goal yields control; it must not re-dispatch the command. Other goals require a separate autonomous actor controller. Keep movement ownership unambiguous and report actual physical completion/failure.
+5. Use `motion.step` as the sole movement dispatcher after executor/planner, then drain its feedback into the next executor step. A planner `command` goal yields control; it must not re-dispatch the command. Do not also dispatch those intents through another actor adapter. Report actual physical completion/failure.
 
 Person 3's tested snapshot is `{bot_id, tick, enemies: {enemy_id: {region_id: probability}}, trust, evidence_ids}`. Planner evidence must actually have been delivered by the snapshot tick. Freshness uses the original event time; prediction or unrelated reports must not refresh stale enemy knowledge. Planner scores average enemy-slot regional mass, not the probability of any enemy being present.
 
@@ -58,15 +59,15 @@ Sensor visual content `{type: "enemy_seen", enemy_id, region_id}` is compatible 
 
 Inspected Person 1 physics layer bits: world=1, player=2, bots=4, regions=8. Smoke bit 16 and vision mask 23 are test/proposed settings; coordinate before production use. Flash mechanics must supply `blind_until_tick`. Nonquiet hearing requires synchronized navigation plus walkable sound/listener anchors. No straight-line fallback, PVS filter or full-region-clear evidence exists. Example timing values are placeholders, not measured Valorant behavior.
 
-## Next concrete increment
+## Movement increment status and next integration
 
-Inspect current Person 1 actor/navigation interfaces and Person 3 live-message/belief entry points. Last inspection found `ActorBase.set_move_dir`, `move_toward_point(point)` and a sandbox builder with `navigation_ready`, `navigation_is_ready` and `query_path`. Confirm signatures and return values in current source. Do not copy or replace shared mechanics.
+Inspected fetched Person 1 `0fd1285` and Person 3 `ff2a6d7`. `ActorBase.set_move_dir`, `move_toward_point(point) -> float`, `is_alive`, `navigation_ready`, `navigation_is_ready` and `query_path -> PackedVector3Array` remain available. The new adapter consumes those actual APIs; it does not replace shared mechanics. Person 3 has quick-call model/UI but live shared bootstrap wiring remains pending.
 
-Build the smallest Person 2-owned adapter/controller that can turn a planner's authored coverage marker into movement through the shared actor API, yield to accepted command intents, and stop safely on death, invalid goals or physical failure. Use an isolated test scene/fixture under Person 2 ownership if shared bootstrap/registry hooks are unavailable. Request exact missing interfaces in the handoff rather than editing another lane's files. Do not add a production controller around guessed APIs.
+Implemented/tested the smallest movement adapter in isolated owned fixtures: autonomous coverage navigation/watch angle, command stage/swing priority, physical completion/failure, cancellation/expiry/death/error stops, deduplication and progress failure. `throw_flash` explicitly fails because the shared atomic launch/inventory adapter is not connected. Configure no feasible flash inventory/targets until that dependency is implemented. Full OOD/entropy/circuit-breaker UI and combat remain undone.
 
-Acceptance for the next integrated slice: a delivered enemy report changes coverage goal and real movement/watched angle; a player command overrides routine autonomy; its physical action is not dispatched twice; cancellation/expiry/death/error stop or recover appropriately; decision traces cite only available evidence. Test unavailable/stale observations and hidden-enemy perturbation. Then have a human verify the shared synthetic room visually. Headless assertions alone do not satisfy that manual gate.
+Automated acceptance for this slice passes in a disposable project using real teammate modules: delivered report changes coverage goal/movement/watched angle, command overrides routine movement, one physical swing, cancellation/expiry/death stop, available provenance and actual unseen-node perturbation. Existing planner tests cover stale observations and new motion tests reject unavailable evidence. **The shared synthetic-room human visual gate is still unperformed.** Headless assertions do not satisfy it.
 
-Subsequent work: connect the trusted scene registry/flash/smoke/audio adapters, implement remaining physical behavior and stuck/fallback checks, convert Person 3's verified annotations into baseline/reactive scenarios, validate feasibility, and rehearse the bot -> scenario -> evidence-trace demo. Do not wait for annotation work to implement independent controller tests.
+Next: Person 1 must align its nav map and bake cell settings and coordinate bootstrap/marker IDs. Person 2 then wires this controller and trusted scene registry/flash/smoke/audio adapters; Person 3 connects quick-call delivery, belief updates and visible physical failure reasons. Run a human synthetic-room playtest, implement remaining combat/fallback/scenario checks, convert verified annotations and rehearse the demo. The nav mismatch and temporary fixture adjustment are explained below and in the motion guide.
 
 ## Reproduce automated checks
 
@@ -78,6 +79,7 @@ $godotExe = 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_wi
 & $pythonExe tools/check_repo.py
 & $pythonExe validation/run_person2_tests.py --godot $godotExe
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --person3-root '..\callout-trainer-person3'
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --person1-ref 0fd1285 --person3-ref ff2a6d7
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --demo
 git diff --check
 ```
@@ -110,3 +112,15 @@ GitHub checks passed for the pushed implementation: [docs](https://github.com/Wo
 - No secrets, raw participant recordings, ripped assets or unverified pro facts belong in commits. No additional engine download is needed on this machine.
 
 After each increment update this guide and append Person 2's actual commands/results, changed interfaces, remaining dependencies and next step to `docs/HANDOFFS.md`. Preserve the distinction between implemented kernels, integrated gameplay and manual evidence.
+
+## November 14 continuation: actual results
+
+Changed only `bots/motion_controller.gd`, `bots/MOTION_CONTROLLER.md`, `bots/README.md`, this guide, `validation/run_person2_tests.py`, four `tests/person2/motion_*.gd` files, and Person 2's row/appended record in `docs/HANDOFFS.md`. No teammate source, shared schema/fixture or project setting was edited. The adapter's internal config/status shapes are documented for both consumers in the motion guide; comms.v1, observation and belief shapes are unchanged.
+
+Before edits, the existing 357 checks passed against local Person 3 `7a5375c`, and the original swing/report/flash demo and documentation checker passed. The sandbox certificate-store error initially failed the strict runner; approved execution outside the sandbox passed without weakening error detection.
+
+Final full command above, Godot `4.4.1.stable.official.49a5bc7b6`: **174 command + 72 planner + 92 perception + 57 motion + 10 belief + 9 sensor/belief + 28 shared physical integration = 442 checks passed**, exit 0. Shared integration ran 149 physics ticks. Default CI now runs the 395 owned checks through the existing workflow; the optional 47 cross-lane checks are local only. A preceding 52-check motion version and shared integration passed three consecutive runs after synchronization was corrected; the five added fault/arbitration assertions also pass in the final run. Synthetic command demo, documentation and whitespace checks passed for this increment.
+
+**Discovered dependency:** Person 1 `0fd1285` bakes cells at 0.2/0.1 but its project leaves nav map cells at default 0.25/0.25. The initial integration was rejected for actual Godot errors even with passing assertions. The fixture explicitly aligns only its disposable map; Person 1 must fix/verify production alignment. It also waits for the signal-emitting physics frame to finish before the first query. The shared runtime bake emits a mesh-readback performance warning; no script/engine errors remain in the passing run.
+
+**Manual playtests: none.** No rendered shared scene, UI input, exported build, live voice, full-game fairness or training benefit is established. Concrete manual steps are in the motion guide. Remaining dependencies: production nav settings/bootstrap, agreed marker IDs/reachability, atomic utility execution and flash/smoke/audio/registry inputs, Person 3 live quick-call/belief/failure display, and verified annotations. No teammate merge or main merge was performed; previously reported shared-document conflicts remain an integration dependency.

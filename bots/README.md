@@ -10,6 +10,7 @@ A deterministic, rule-based goal selector above the existing command executor. T
 - [synthetic configuration](../scenarios/synthetic_coverage.json): static authored coverage markers and tuning, explicitly not a real map or pro annotation.
 - [planner tests](../tests/person2/planner_tests.gd): synthetic beliefs, provenance/age validation, priority, role/objective/reachability, stable selection and malformed inputs.
 - [cross-lane test](../tests/person2/planner_belief_integration.gd): real Person 3 region_belief.gd plus Person 2 inbox/executor/planner, copied read-only into a disposable project when requested.
+- [motion controller](MOTION_CONTROLLER.md): privileged authored-path movement and command arbitration, tested with doubles and optional read-only shared actor/room/belief integration.
 
 There is no machine learning, tactical search/rollout model or live enemy-transform access in the planner. The separate Person 2 [perception sensor](../perception/README.md) now has isolated physics tests; it does not grant this policy world access. It does not claim real aiming, combat, navigation, smoke/flash sensing or a playable bot scene.
 
@@ -70,7 +71,7 @@ This is a trusted in-process integration boundary, not a cryptographic proof of 
 
 No report automatically initiates a push toward an enemy. The actor moves only to authored coverage markers. Replan on relevant input changes, age boundaries or the heartbeat. Prefer the current marker on exact score ties; otherwise tie-break by stable marker/region IDs. Switch-margin hysteresis resists small changes while allowing invalidated/unreachable/insufficient choices to be replaced.
 
-Errors return ok=false with a reason and no decision, without committing planner state. Bootstrap code should stop autonomous motion and log the error, rather than dispatch an old autonomous target. Valid player-command execution is a separate controller path; a bad belief snapshot must not fabricate a command cancellation.
+Errors return ok=false with a reason and no decision, without committing planner state. The [motion adapter](MOTION_CONTROLLER.md) stops autonomous motion and reports the error. Valid player-command execution has priority; a bad belief snapshot does not fabricate a command cancellation.
 
 ## Output
 
@@ -82,7 +83,7 @@ Errors return ok=false with a reason and no decision, without committing planner
 
 stop has null target/watch; command has the existing command target and null watch. Other goals use static marker/region IDs. The record can be logged as the planner's behavior trace. Own-state/config-driven decisions can legitimately have no observation evidence; do not fabricate evidence IDs.
 
-hold/cover/reposition are autonomous GOALS, not new comms.v1 commands or implemented movement primitives. A Person 2 physical controller still needs to execute them through Person 1's actor/navigation APIs. Do not send them through the strict player-command schema.
+hold/cover/reposition are autonomous GOALS, not new comms.v1 commands. The separate [physical controller](MOTION_CONTROLLER.md) now executes authored movement/angle goals through Person 1's actor/navigation APIs in the optional integration harness. Do not send these goals through the strict player-command schema. Live shared bootstrap wiring remains pending.
 
 ## Wiring order
 
@@ -105,7 +106,7 @@ python validation/run_person2_tests.py --godot "/path/to/godot" --person3-root "
 python validation/run_person2_tests.py --godot "/path/to/godot" --demo
 ~~~
 
-Default runs the original command suite plus planner and perception suites. Optional --person3-root copies three belief/adapter files read-only into the temporary test project and adds belief/planner and actual-raycast/belief/planner cross-lane checks. It never edits that checkout or requires merging it. Existing CI runs the new default suite automatically via the unchanged workflow.
+Default runs command, planner, perception and motion suites. Optional --person3-root copies three belief/adapter files read-only; --person3-ref instead reads a fetched Git ref. Both add belief/planner and raycast/belief/planner checks. Add --person1-ref for the actual shared actor/room/belief movement harness; see [the motion guide](MOTION_CONTROLLER.md) for its explicit temporary-map settings and remaining production dependency. No checkout is edited or merged. Existing CI runs the default suites automatically via the unchanged workflow; optional integrations remain local.
 
 The wrong-type, foreign/future/missing evidence, historical-delivery, hidden-state-perturbation and dependency checks support the current modules' input boundary. They do not establish end-to-end fairness once real sensors and physical adapters are added.
 
@@ -115,8 +116,8 @@ The wrong-type, foreign/future/missing evidence, historical-delivery, hidden-sta
 
 Remaining dependencies:
 
-- Person 1: stable region/marker IDs, navigation/reachability and shared actor mechanics. Its current actor base was inspected read-only; no production adapter is wired here.
+- Person 1: stable region/marker IDs, navigation/reachability, production map/bake cell alignment and shared bootstrap. Its actor and room now have optional physical movement integration checks; the live game is not wired here.
 - Person 3: accepted report processing and belief snapshots; verified video annotations remain Person 3-owned, per the documentation now on main. The integration test verifies current API compatibility, not its complete lane.
-- Person 2: wire the separately tested sight/hearing/smoke/flash sensor into the actual scene, autonomous goal-to-controller integration, pro-note conversion to baseline/branches, aim/combat tuning and scenario/safety validation.
+- Person 2: wire sensor/controller into the actual scene, implement utility adapters, pro-note conversion to baseline/branches, aim/combat tuning and scenario/safety validation.
 
 Next in-engine milestone: an accepted enemy report changes a teammate's coverage goal and real movement/angle, with a trace, followed by a player command overriding that routine goal. Verify repeated messages, expiry and post-death player communication through the actual input channel separately.
