@@ -28,12 +28,20 @@ FILES = [
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--godot", required=True, help="Godot 4.4.1 executable")
-    parser.add_argument("--demo", action="store_true", help="Print the synthetic command trace")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--demo", action="store_true", help="Print the synthetic command trace")
+    mode.add_argument("--visual-demo", action="store_true", help="Open the standalone interactive movement demo (close window to exit)")
+    mode.add_argument("--visual-smoke", action="store_true", help="Headless automated check of the visual demo's action callbacks")
     person3 = parser.add_mutually_exclusive_group()
     person3.add_argument("--person3-root", type=Path, help="Optional Person 3 checkout; copy belief files read-only to the temporary project")
     person3.add_argument("--person3-ref", help="Optional fetched git ref; read Person 3 belief files without changing a checkout")
     parser.add_argument("--person1-ref", help="Optional fetched git ref; test actual shared actor and baked room (requires Person 3 input)")
     args = parser.parse_args()
+    visual = args.visual_demo or args.visual_smoke
+    if visual:
+        args.person1_ref = args.person1_ref or "0fd1285"
+        if not (args.person3_root or args.person3_ref):
+            args.person3_ref = "ff2a6d7"
     if args.person1_ref and not (args.person3_root or args.person3_ref):
         parser.error("--person1-ref requires --person3-root or --person3-ref")
     godot = shutil.which(args.godot) or str(Path(args.godot).resolve())
@@ -71,8 +79,18 @@ def main():
                 for relative in ["actors/actor_base.gd", "actors/health.gd", "world/sandbox_builder.gd", "world/maps/test_room.json"]:
                     copy_ref(args.person1_ref, relative)
                 shutil.copy2(ROOT / "tests/person2/motion_integration.gd", project / "tests/person2/motion_integration.gd")
+            if visual:
+                for relative in ["scenes/bots/motion_visual_demo.gd", "scenes/bots/motion_visual_demo.tscn"]:
+                    target = project / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(ROOT / relative, target)
             (project / "project.godot").write_text(
                 'config_version=5\n[application]\nconfig/name="Person 2 isolated tests"\n'
+                + ('run/main_scene="res://scenes/bots/motion_visual_demo.tscn"\n'
+                   '[display]\nwindow/size/viewport_width=1440\nwindow/size/viewport_height=900\n'
+                   'window/size/window_width_override=1280\nwindow/size/window_height_override=800\n'
+                   'window/stretch/mode="canvas_items"\n' if visual else '')
+                +
                 '[rendering]\nrenderer/rendering_method="gl_compatibility"\n',
                 encoding="utf-8",
             )
@@ -98,6 +116,20 @@ def main():
                     return 1
                 print("PERSON2_SHARED_IMPORT_PASS (temporary project only)")
                 scripts.append(("motion_integration.gd", "PERSON2_MOTION_INTEGRATION_PASS"))
+            if args.visual_demo:
+                print("Opening interactive Godot demo. Close its window or press Esc to return.", flush=True)
+                # Human-controlled run: keep the temporary project alive until
+                # the window closes; no short test timeout or headless flag.
+                return subprocess.run([godot, "--path", str(project)], check=False).returncode
+            if args.visual_smoke:
+                result = subprocess.run(
+                    [godot, "--headless", "--path", str(project), "--", "--smoke"],
+                    capture_output=True, text=True, timeout=45,
+                )
+                output = result.stdout + result.stderr
+                print(output, end="")
+                return int(bool(result.returncode or "PERSON2_VISUAL_SMOKE_PASS" not in output
+                                or "SCRIPT ERROR" in output or "ERROR:" in output))
             for script, marker in scripts:
                 result = subprocess.run(
                     [godot, "--headless", "--path", str(project), "--script", "res://tests/person2/" + script],

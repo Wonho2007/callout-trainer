@@ -71,4 +71,23 @@ The fixture tests a delayed report causing physical coverage movement and watche
 
 ## Manual gate (not performed)
 
-No rendered/shared-game playtest has been performed. After Person 1 coordinates the shared bootstrap and nav settings, a human must launch the synthetic room using that lane's launch instructions, report a threat hidden from the teammate, observe delayed movement and the final angle, issue/cancel/expire a swing while it is moving, and kill/reset the actor. Check collision/stuck behavior, visible failure reasons and restart. Record tester, build/scene, steps and observed results; no headless pass substitutes for this gate.
+No rendered/shared-game playtest has been performed. A standalone overhead demo is now available without editing the root project or opening the editor:
+
+~~~powershell
+Set-Location C:\Users\Isoto\Documents\GitHub\callout-trainer
+& 'C:\Users\Isoto\AppData\Local\Python\pythoncore-3.14-64\python.exe' validation/run_person2_tests.py --godot 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe' --visual-demo
+~~~
+
+The runner builds a temporary project from the owned demo scene and read-only teammate refs `0fd1285`/`ff2a6d7`, imports it headlessly, then opens a normal Godot game window. Close the window or press Esc to return to the terminal and clean up the temporary project. Godot 4.4.1 is required; use your own executable paths on other machines. These refs must exist locally (fetch first if needed). Override `--person1-ref`/`--person3-ref` to inspect newer compatible revisions. This branch has no shared root main scene to launch with F6/F5 for this demo; the preparation command supplies all dependencies.
+
+Blue is the teammate; yellow shows its forward direction; green is home/staging; pink is the authored coverage destination. This is synthetic movement presentation with injected structured reports, not Person 3's quick-call UI, live speech, physical perception or the first-person game. Buttons have matching shortcuts:
+
+1. Press **1**: after 18 ticks (0.3 s at the default 60 Hz), the teammate should walk from green to pink and turn toward B. The displayed evidence should include the report ID. Freshness expires after 600 ticks (10 s), so it eventually returns home; report again to refresh.
+2. While moving, press **2**: the accepted command takes priority, returns to green to stage, then performs one route to pink. Watch accepted -> ready -> executing -> completed in the status line as they occur.
+3. Press **3**: the teammate stages at green, shows ready, and waits. Press **4** only after ready to release it. An early cue should report not_ready. Waiting without a cue eventually expires the command.
+4. During staging/movement press **X**: after delivery delay, the command is cancelled and its route stops. Routine coverage can resume on the following tick; cancellation is not a permanent freeze.
+5. Press **K**: the actor should stop as dead. Press **R**: revive at home, clear evidence/pending commands, and restart the exercise.
+
+Record tester, build/scene, keys/buttons, observed movement/angle, unexpected clipping/stuck behavior and error messages. The runner's `--visual-smoke` option performs an automated **headless** lifecycle check of these same action callbacks, including physical movement and reset. It does not validate rendering, mouse/keyboard input, on-screen layout or human experience.
+
+The shared-game manual gate still requires Person 1's coordinated bootstrap/nav settings, actual player/quick-call delivery, sightlines and utility wiring. No standalone demo pass substitutes for those integration checks.
