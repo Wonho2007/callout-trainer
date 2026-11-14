@@ -8,12 +8,15 @@ extends Node3D
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const ActorScene := preload("res://actors/actor_base.tscn")
+const SpikeScript := preload("res://world/spike.gd")
 
 @onready var builder = $SandboxBuilder
 @onready var utility: UtilitySystem = $UtilitySystem
 
 var _player: ActorBase
 var _target: ActorBase
+var _spike: Spike
+var _round_state: String = "active"  # active | defused | detonated | player_down
 
 
 func _ready() -> void:
@@ -21,6 +24,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_spawn_player()
 	_spawn_target()
+	_spawn_spike()
 	_update_hud()
 	# Confirm the navigation bake produced a usable path once it is ready.
 	if not builder.navigation_is_ready:
@@ -30,6 +34,17 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_status()
+
+
+func _physics_process(delta: float) -> void:
+	# Hold-to-defuse: while alive, in range, and holding the defuse action.
+	if _round_state != "active" or _spike == null or _player == null:
+		return
+	if _player.is_alive and Input.is_action_pressed("defuse") \
+			and _spike.in_range(_player.global_position):
+		_spike.defuse_step(_player.global_position, delta)
+	else:
+		_spike.stop_defuse()
 
 
 func _verify_navigation() -> void:
@@ -76,10 +91,31 @@ func _spawn_target() -> void:
 		_target.global_position = Vector3(7, 1, -7)
 
 
+func _spawn_spike() -> void:
+	var pos = builder.get_spike_position()
+	if pos == null:
+		return
+	_spike = SpikeScript.new()
+	add_child(_spike)
+	_spike.global_position = pos as Vector3
+	_spike.defused.connect(_on_spike_defused)
+	_spike.detonated.connect(_on_spike_detonated)
+
+
+func _on_spike_defused() -> void:
+	_round_state = "defused"
+
+
+func _on_spike_detonated() -> void:
+	_round_state = "detonated"
+
+
 func _on_player_died() -> void:
 	# The player's combatant state is dead, but input/comms stay available so the
-	# player can still report (COMMUNICATION_COACHING). Round logic hooks here later.
-	pass
+	# player can still report (COMMUNICATION_COACHING). For this single-player
+	# scaffold, the player dying ends the round (no teammates yet).
+	if _round_state == "active":
+		_round_state = "player_down"
 
 
 func _restart() -> void:
@@ -91,15 +127,22 @@ func _restart() -> void:
 	var espawn: Marker3D = builder.get_spawn("enemy")
 	if _target and espawn:
 		_target.teleport_to(espawn)
+	if _spike:
+		var pos = builder.get_spike_position()
+		if pos != null:
+			_spike.global_position = pos as Vector3
+		_spike.reset()
+	_round_state = "active"
 
 
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | LMB fire | F reload | Q smoke | E flash | R restart | Esc mouse"
+		hud.text = "WASD move | LMB fire | F reload | Q smoke | E flash | Hold C defuse | R restart | Esc mouse"
 
 
 func _update_status() -> void:
+	_update_round_label()
 	var label := get_node_or_null("HUD/Status")
 	if label == null or _player == null:
 		return
@@ -114,3 +157,25 @@ func _update_status() -> void:
 		var tstate := "" if _target.is_alive else " (down)"
 		tgt = "   Target HP: %d%s" % [int(_target.health.hp), tstate]
 	label.text = "HP: %d   %s%s%s" % [int(hp), state, ammo, tgt]
+
+
+func _update_round_label() -> void:
+	var label := get_node_or_null("HUD/Round")
+	if label == null:
+		return
+	match _round_state:
+		"defused":
+			label.text = "SPIKE DEFUSED — round won.  Press R to restart."
+		"detonated":
+			label.text = "SPIKE DETONATED — round lost.  Press R to restart."
+		"player_down":
+			label.text = "YOU ARE DOWN — round lost.  Press R to restart."
+		_:
+			if _spike:
+				var pct := int(_spike.defuse_progress * 100.0)
+				var dz := ""
+				if _player and _spike.in_range(_player.global_position):
+					dz = "   [in defuse range — hold C]"
+				label.text = "Spike: %4.1fs   Defuse: %d%%%s" % [_spike.time_left, pct, dz]
+			else:
+				label.text = ""

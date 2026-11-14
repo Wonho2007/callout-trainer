@@ -33,5 +33,6 @@
     { "id": "spawn_player", "role": "player", "position": [-7, 0, 7], "facing_deg": -45 },
     { "id": "spawn_teammate_1", "role": "teammate", "position": [-5, 0, 7], "facing_deg": -45 },
     { "id": "spawn_enemy_1", "role": "enemy", "position": [7, 0, -7], "facing_deg": 135 }
-  ]
+  ],
+  "spike": { "position": [6, 0, 6], "planted": true, "site_region": "region_b" }
 }

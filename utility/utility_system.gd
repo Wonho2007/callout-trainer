@@ -33,18 +33,41 @@ func _load_defs(path: String) -> void:
 		_defs[String(ability.get("id", ""))] = ability
 
 
-## Spawn a smoke at a world position. Returns the Smoke, or null if undefined.
+## Deploy a smoke aimed at world point `at`. The smoke stays where it is aimed;
+## if the aimed point is floating in open air, it falls straight down until it
+## lands on the ground. Returns the Smoke, or null if undefined.
 func throw_smoke(at: Vector3) -> Smoke:
 	if not _defs.has("smoke"):
 		return null
 	var smoke: Smoke = SmokeScript.new()
 	smoke.setup(_defs["smoke"])
 	add_child(smoke)
-	# Raise so the sphere sits on the ground (center at floor + radius).
-	smoke.global_position = at + Vector3(0, smoke.radius, 0)
+
+	# The sphere center sits one radius above a surface so it rests on it.
+	var start_center := at + Vector3(0, smoke.radius, 0)
+	# Raycast straight down from the aimed point to find the ground below.
+	var ground_y = _ground_below(at)
+	var settle_center := start_center
+	if ground_y != null:
+		settle_center = Vector3(at.x, (ground_y as float) + smoke.radius, at.z)
+
+	smoke.deploy(start_center, settle_center)
 	_smokes.append(smoke)
 	smoke.expired.connect(func(): _smokes.erase(smoke))
 	return smoke
+
+
+## Y of the first world surface below `point`, or null if none within reach.
+func _ground_below(point: Vector3):
+	var space := get_world_3d().direct_space_state
+	var from := point + Vector3(0, 0.05, 0)
+	var to := point + Vector3(0, -50.0, 0)
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 1 << 0  # world geometry only
+	var hit := space.intersect_ray(query)
+	if hit:
+		return (hit.position as Vector3).y
+	return null
 
 
 ## Toss a flash projectile from `from` with an initial `velocity`. Returns the

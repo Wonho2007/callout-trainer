@@ -337,6 +337,13 @@ func get_spawn(role: String) -> Marker3D:
 	return null
 
 
+## Planted spike world position from map data, or null if none defined.
+func get_spike_position():
+	if map_data.has("spike"):
+		return _to_vec3(map_data["spike"].get("position", [0, 0, 0]))
+	return null
+
+
 ## World-space center of a callout region by ID, or null if not found.
 func get_region_center(region_id: String):
 	var regions := get_node_or_null(NodePath(REGIONS_ROOT))
