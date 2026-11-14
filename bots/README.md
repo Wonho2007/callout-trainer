@@ -9,7 +9,7 @@ A deterministic, rule-based goal selector above the existing command executor. T
 - [planner tests](../tests/person2/planner_tests.gd): synthetic beliefs, provenance/age validation, priority, role/objective/reachability, stable selection and malformed inputs.
 - [cross-lane test](../tests/person2/planner_belief_integration.gd): real Person 3 region_belief.gd plus Person 2 inbox/executor/planner, copied read-only into a disposable project when requested.
 
-There is no machine learning, tactical search/rollout model, live enemy-transform access or visual perception in this increment. It does not claim real aiming, combat, navigation, smoke/flash sensing or a playable bot scene.
+There is no machine learning, tactical search/rollout model or live enemy-transform access in the planner. The separate Person 2 [perception sensor](../perception/README.md) now has isolated physics tests; it does not grant this policy world access. It does not claim real aiming, combat, navigation, smoke/flash sensing or a playable bot scene.
 
 ## Inputs
 
@@ -103,7 +103,7 @@ python validation/run_person2_tests.py --godot "/path/to/godot" --person3-root "
 python validation/run_person2_tests.py --godot "/path/to/godot" --demo
 ~~~
 
-Default runs the original command suite plus planner suite. Optional --person3-root copies three belief/adapter files read-only into the temporary test project and adds cross-lane checks. It never edits that checkout or requires merging it. Existing CI runs the new default suite automatically via the unchanged workflow.
+Default runs the original command suite plus planner and perception suites. Optional --person3-root copies three belief/adapter files read-only into the temporary test project and adds belief/planner and actual-raycast/belief/planner cross-lane checks. It never edits that checkout or requires merging it. Existing CI runs the new default suite automatically via the unchanged workflow.
 
 The wrong-type, foreign/future/missing evidence, historical-delivery, hidden-state-perturbation and dependency checks support the current modules' input boundary. They do not establish end-to-end fairness once real sensors and physical adapters are added.
 
@@ -115,6 +115,6 @@ Remaining dependencies:
 
 - Person 1: stable region/marker IDs, navigation/reachability and shared actor mechanics. Its current actor base was inspected read-only; no production adapter is wired here.
 - Person 3: accepted report processing and belief snapshots; verified video annotations remain Person 3-owned, per the documentation now on main. The integration test verifies current API compatibility, not its complete lane.
-- Person 2: real sight/hearing/smoke/flash sensing, autonomous goal-to-controller integration, pro-note conversion to baseline/branches, aim/combat tuning and scenario/safety validation.
+- Person 2: wire the separately tested sight/hearing/smoke/flash sensor into the actual scene, autonomous goal-to-controller integration, pro-note conversion to baseline/branches, aim/combat tuning and scenario/safety validation.
 
 Next in-engine milestone: an accepted enemy report changes a teammate's coverage goal and real movement/angle, with a trace, followed by a player command overriding that routine goal. Verify repeated messages, expiry and post-death player communication through the actual input channel separately.

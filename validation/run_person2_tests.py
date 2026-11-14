@@ -18,6 +18,8 @@ FILES = [
     "tests/person2/fake_actor.gd", "tests/person2/run_tests.gd",
     "bots/knowledge_planner.gd", "tests/person2/planner_tests.gd",
     "scenarios/synthetic_coverage.json",
+    "perception/perception_sensor.gd", "tests/person2/perception_tests.gd",
+    "tests/person2/physics_probe.gd",
 ]
 
 
@@ -45,6 +47,7 @@ def main():
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(args.person3_root / relative, target)
                 shutil.copy2(ROOT / "tests/person2/planner_belief_integration.gd", project / "tests/person2/planner_belief_integration.gd")
+                shutil.copy2(ROOT / "tests/person2/perception_belief_integration.gd", project / "tests/person2/perception_belief_integration.gd")
             (project / "project.godot").write_text(
                 'config_version=5\n[application]\nconfig/name="Person 2 isolated tests"\n'
                 '[rendering]\nrenderer/rendering_method="gl_compatibility"\n',
@@ -53,9 +56,11 @@ def main():
             scripts = [("demo.gd", "PERSON2_DEMO_PASS")] if args.demo else [
                 ("run_tests.gd", "PERSON2_TESTS_PASS"),
                 ("planner_tests.gd", "PERSON2_PLANNER_PASS"),
+                ("perception_tests.gd", "PERSON2_PERCEPTION_PASS"),
             ]
             if args.person3_root:
                 scripts.append(("planner_belief_integration.gd", "PERSON2_BELIEF_INTEGRATION_PASS"))
+                scripts.append(("perception_belief_integration.gd", "PERSON2_SENSOR_INTEGRATION_PASS"))
             for script, marker in scripts:
                 result = subprocess.run(
                     [godot, "--headless", "--path", str(project), "--script", "res://tests/person2/" + script],
