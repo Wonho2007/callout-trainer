@@ -16,8 +16,14 @@ extends ActorBase
 @onready var collision: CollisionShape3D = $CollisionShape3D
 @onready var weapon: Weapon = $Camera3D/Weapon
 
+## Injected by main: the shared utility system and the HUD overlays.
+var utility: UtilitySystem
+var flash_overlay: ColorRect
+var smoke_overlay: ColorRect
+
 var _pitch: float = 0.0
 var _mouse_captured: bool = false
+var _flash_blind_remaining: float = 0.0
 
 
 func _ready() -> void:
@@ -40,15 +46,86 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Reload (F). Only when alive and mouse captured (not in a menu).
 	if event.is_action_pressed("reload") and is_alive and _mouse_captured:
 		weapon.reload()
+	# Throw utility: land it where the player is aiming (first geometry hit).
+	if is_alive and _mouse_captured and utility:
+		if event.is_action_pressed("throw_smoke"):
+			utility.throw_smoke(_aim_landing_point())
+		elif event.is_action_pressed("throw_flash"):
+			var from := camera.global_position - camera.global_transform.basis.z * 0.5
+			var toss := -camera.global_transform.basis.z * 12.0 + Vector3.UP * 3.0
+			var f := utility.throw_flash(from, toss)
+			if f:
+				f.detonated.connect(_on_flash_detonated)
+
+
+## Where the player is aiming lands on the first world surface, else a point
+## ahead. Used as the utility deploy position.
+func _aim_landing_point() -> Vector3:
+	var origin := camera.global_position
+	var dir := -camera.global_transform.basis.z
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + dir * 40.0)
+	query.collide_with_bodies = true
+	query.exclude = [get_rid()]
+	var hit := space.intersect_ray(query)
+	if hit:
+		return hit.position
+	return origin + dir * 15.0
+
+
+func _on_flash_detonated(source_position: Vector3) -> void:
+	# Apply the blind to the player using the same geometry rule as bots: the
+	# flash must be visible (clear LOS, not through smoke) to blind.
+	var eye := camera.global_position
+	var forward := -camera.global_transform.basis.z
+	var has_los := _has_clear_los(eye, source_position)
+	# Find the active flash to compute duration.
+	for flash in utility.active_flashes():
+		var dur: float = flash.blind_duration_for(eye, forward, has_los)
+		if dur > _flash_blind_remaining:
+			_flash_blind_remaining = dur
+
+
+## Clear line of sight between two points: not blocked by world geometry or by
+## any active smoke (the shared occlusion rule).
+func _has_clear_los(a: Vector3, b: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(a, b)
+	query.collide_with_bodies = true
+	query.exclude = [get_rid()]
+	var hit := space.intersect_ray(query)
+	if hit:
+		return false
+	if utility and utility.segment_blocked_by_smoke(a, b):
+		return false
+	return true
 
 
 func _fire_weapon() -> void:
 	# Fire from the camera along its forward direction. Spread widens while
-	# moving. The weapon raycasts against the world and applies damage itself.
+	# moving. The weapon raycasts against the world and applies damage itself;
+	# shots whose line crosses active smoke are blocked (shared LOS rule).
+	weapon.occluder = utility
 	var origin := camera.global_position
 	var direction := -camera.global_transform.basis.z
 	var moving := velocity.length() > 0.5
 	weapon.fire(origin, direction, moving, self)
+
+
+func _process(delta: float) -> void:
+	# Fade the first-person flash whiteout.
+	if _flash_blind_remaining > 0.0:
+		_flash_blind_remaining = maxf(0.0, _flash_blind_remaining - delta)
+	if flash_overlay:
+		# Alpha tracks remaining blind time (1.0 when fully blinded).
+		var a := clampf(_flash_blind_remaining, 0.0, 1.0)
+		flash_overlay.color.a = a
+
+	# In-smoke camera fog: fade in when the camera is inside a smoke volume.
+	if smoke_overlay and utility:
+		var inside := utility.point_in_smoke(camera.global_position)
+		var target := 0.9 if inside else 0.0
+		smoke_overlay.color.a = move_toward(smoke_overlay.color.a, target, delta * 4.0)
 
 
 func _physics_process(delta: float) -> void:

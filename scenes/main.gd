@@ -10,6 +10,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const ActorScene := preload("res://actors/actor_base.tscn")
 
 @onready var builder = $SandboxBuilder
+@onready var utility: UtilitySystem = $UtilitySystem
 
 var _player: ActorBase
 var _target: ActorBase
@@ -52,6 +53,10 @@ func _spawn_player() -> void:
 	_player = PlayerScene.instantiate()
 	add_child(_player)
 	_player.died.connect(_on_player_died)
+	# Give the player references it needs for utility (shared mechanics side).
+	_player.utility = utility
+	_player.flash_overlay = get_node_or_null("HUD/FlashOverlay")
+	_player.smoke_overlay = get_node_or_null("HUD/SmokeOverlay")
 	if spawn:
 		_player.teleport_to(spawn)
 	else:
@@ -91,7 +96,7 @@ func _restart() -> void:
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | Shift walk | Ctrl crouch | Space jump | LMB fire | F reload | R restart | Esc mouse"
+		hud.text = "WASD move | LMB fire | F reload | Q smoke | E flash | R restart | Esc mouse"
 
 
 func _update_status() -> void:

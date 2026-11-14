@@ -22,6 +22,11 @@ signal ammo_changed(in_mag: int, reserve: int)
 signal reload_started
 signal reload_finished
 
+## Optional occlusion provider with segment_blocked_by_smoke(a, b) -> bool.
+## When set, a shot whose line to the hit crosses active smoke is blocked (no
+## damage), using the same deterministic test the perception system uses.
+var occluder: Object = null
+
 ## Placeholder rifle stats. Replace with sourced values only if obtained from a
 ## permitted source and documented; otherwise these stay as tuned placeholders.
 @export var damage_body: float = 30.0
@@ -94,7 +99,15 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 		result["hit"] = true
 		result["position"] = hit.position
 		result["collider"] = hit.collider
-		_apply_hit_damage(hit.collider, hit.position)
+		# Smoke occlusion: if the line to the hit crosses active smoke, the shot
+		# is stopped by the smoke and deals no damage (shared LOS rule).
+		var blocked := false
+		if occluder != null and occluder.has_method("segment_blocked_by_smoke"):
+			blocked = occluder.segment_blocked_by_smoke(origin, hit.position)
+		if not blocked:
+			_apply_hit_damage(hit.collider, hit.position)
+		else:
+			result["hit"] = false
 
 	fired.emit(origin, end, result["hit"])
 
