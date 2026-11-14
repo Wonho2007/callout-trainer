@@ -24,9 +24,12 @@ func _ready() -> void:
 	collision_mask = 1 << 0   # collide with layer 1 "world"
 	camera.current = true      # activate this camera for the viewport
 	_capture_mouse(true)
+	super._ready()             # connect Health.died -> is_alive handling
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Mouse look and the mouse/comms channel stay available after death so the
+	# player can still observe and (later) send callouts (COMMUNICATION_COACHING).
 	if event is InputEventMouseMotion and _mouse_captured:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		_pitch = clampf(_pitch - event.relative.y * mouse_sensitivity, -1.4, 1.4)
@@ -36,6 +39,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# When dead, feed no movement input; ActorBase still applies gravity so the
+	# body rests on the floor. Input/comms channel stays alive (handled above).
+	if not is_alive:
+		set_move_dir(Vector3.ZERO)
+		super._physics_process(delta)
+		return
+
 	# Translate input into shared-actor intent, then let ActorBase move the body.
 	var is_crouching := Input.is_action_pressed("crouch")
 	if is_crouching:

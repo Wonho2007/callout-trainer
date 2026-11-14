@@ -16,7 +16,14 @@ offset_left = 12.0
 offset_top = 12.0
 offset_right = 900.0
 offset_bottom = 40.0
-text = "WASD move | Shift walk | Ctrl crouch | Space jump | R restart | Esc free/recapture mouse"
+text = "WASD move | Shift walk | Ctrl crouch | Space jump | R restart | Esc mouse | K damage self (test)"
+
+[node name="Status" type="Label" parent="HUD"]
+offset_left = 12.0
+offset_top = 40.0
+offset_right = 900.0
+offset_bottom = 68.0
+text = "HP: 100   ALIVE"
 
 [node name="Disclaimer" type="Label" parent="HUD"]
 anchors_preset = 2

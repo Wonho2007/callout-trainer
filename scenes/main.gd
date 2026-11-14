@@ -10,7 +10,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 
 @onready var builder = $SandboxBuilder
 
-var _player: CharacterBody3D
+var _player: ActorBase
 
 
 func _ready() -> void:
@@ -22,6 +22,10 @@ func _ready() -> void:
 	if not builder.navigation_is_ready:
 		await builder.navigation_ready
 	_verify_navigation()
+
+
+func _process(_delta: float) -> void:
+	_update_status()
 
 
 func _verify_navigation() -> void:
@@ -38,17 +42,28 @@ func _verify_navigation() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
 		_restart()
+	# Debug hook for this increment: damage the player to test death handling.
+	# (Temporary — replaced by weapons in a later increment.)
+	elif event.is_action_pressed("debug_damage_self") and _player:
+		_player.apply_damage(35.0)
 
 
 func _spawn_player() -> void:
 	var spawn: Marker3D = builder.get_spawn("player")
 	_player = PlayerScene.instantiate()
 	add_child(_player)
+	_player.died.connect(_on_player_died)
 	if spawn:
 		_player.teleport_to(spawn)
 	else:
 		push_warning("main: no player spawn marker found; placing at origin")
 		_player.global_position = Vector3(0, 1, 0)
+
+
+func _on_player_died() -> void:
+	# The player's combatant state is dead, but input/comms stay available so the
+	# player can still report (COMMUNICATION_COACHING). Round logic hooks here later.
+	pass
 
 
 func _restart() -> void:
@@ -62,4 +77,13 @@ func _restart() -> void:
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | Shift walk | Ctrl crouch | Space jump | R restart | Esc free/recapture mouse"
+		hud.text = "WASD move | Shift walk | Ctrl crouch | Space jump | R restart | Esc mouse | K damage self (test)"
+
+
+func _update_status() -> void:
+	var label := get_node_or_null("HUD/Status")
+	if label == null or _player == null:
+		return
+	var hp := _player.health.hp if _player.health else 0.0
+	var state := "ALIVE" if _player.is_alive else "DEAD (can still look/report)"
+	label.text = "HP: %d   %s" % [int(hp), state]

@@ -32,8 +32,37 @@ var _want_jump: bool = false
 ## Optional health component child named "Health", if present.
 @onready var health: Health = get_node_or_null("Health")
 
+## Emitted when this actor dies (combatant state only). Carries no hidden
+## truth — just that this actor died. Consumers: round logic, and Person 3's
+## grader via permitted event forwarding. Does NOT expose a killer.
+signal died
+
+## False once dead: a dead actor stops moving as a combatant. Death does not
+## free the node and (for the player) does not disable the comms/input channel —
+## the player must still be able to report after dying (COMMUNICATION_COACHING).
+var is_alive: bool = true
+
+
+func _ready() -> void:
+	if health:
+		health.died.connect(_on_health_died)
+
+
+func _on_health_died() -> void:
+	is_alive = false
+	move_dir = Vector3.ZERO
+	died.emit()
+
 
 func _physics_process(delta: float) -> void:
+	# A dead combatant does not move, but still falls so it rests on the floor.
+	if not is_alive:
+		_apply_gravity(delta)
+		velocity.x = 0.0
+		velocity.z = 0.0
+		move_and_slide()
+		return
+
 	_apply_gravity(delta)
 	if _want_jump and is_on_floor():
 		velocity.y = jump_velocity
@@ -87,10 +116,19 @@ func move_toward_point(point: Vector3) -> float:
 	return to.length()
 
 
-## Place the actor at a spawn marker (position + yaw). Resets velocity/health.
+## Apply damage via the Health component (if any). The physical executor side;
+## weapons and area effects call this. Does nothing if no Health or already dead.
+func apply_damage(amount: float) -> void:
+	if health:
+		health.apply_damage(amount)
+
+
+## Place the actor at a spawn marker (position + yaw). Resets velocity/health
+## and revives the combatant (used on round restart).
 func teleport_to(marker: Marker3D) -> void:
 	global_position = marker.global_position
 	rotation.y = marker.rotation.y
 	velocity = Vector3.ZERO
+	is_alive = true
 	if health:
 		health.reset()
