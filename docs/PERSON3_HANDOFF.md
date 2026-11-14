@@ -16,6 +16,10 @@ This is the first independent lane increment, not completion of Person 3's full 
 | [records schema](../schemas/person3_records.schema.json) | Proposed observation/decision/snapshot/synthetic-run shapes. Existing shared contracts are not frozen or replaced. |
 | [fake run](../examples/person3_fake_run.json) | Explicitly synthetic testimony, later sighting and illustrative decision. The decision is fixture data, not generated gameplay behavior. |
 | [tests](../tests/person3/run_tests.gd) | Actual Godot assertions covering delayed input, copying, malformed input, deduplication, trust/expiry, prediction, audit, metrics and replay. |
+| [quick_call.gd](../comms/quick_call.gd) | Mandatory deterministic quick-call model. Builds the menu and validated comms.v1 report/command/cue/cancel messages from a fixed scenario vocabulary. No speech, scene, world or invented coordinates. |
+| [quick-call panel](../ui/quick_call/quick_call_panel.gd) | Thin Control view: renders the menu, emits the chosen message and shows lifecycle acknowledgments. Does not edit the main scene. See [the UI README](../ui/quick_call/README.md). |
+| [quick-call tests](../tests/person3/quick_call_tests.gd) | Godot assertions for the quick-call model: menu, message building, rejection of unknown region/hedge/target/timing, acknowledgment mapping. |
+| [goal integration](../tests/person3/belief_goal_integration.gd) | Optional Person 3 harness proving a delayed quick-call changes a bot goal through Person 2's real executor/inbox/planner (copied read-only). |
 
 ## Integration for Persons 1 and 2
 
@@ -59,18 +63,77 @@ python tools/check_repo.py
 git diff --check
 ```
 
-The local Python app-execution alias was inaccessible; checks were run with `C:\Users\Isoto\AppData\Local\Python\pythoncore-3.14-64\python.exe`. Godot executable: `C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe`, reporting `4.4.1.stable.official.49a5bc7b6`. Results are recorded in HANDOFFS.md after verification. The wrapper displays and tolerates only the exact Windows certificate-store diagnostic seen in this sandbox; all script errors, other engine errors, failed assertions, missing pass marker and nonzero exits fail. No network calls occur in the suite.
+The isolated suite now runs `run_tests.gd` and `quick_call_tests.gd`. With
+`--person2-root` it also runs `executor_integration.gd` and the new
+`belief_goal_integration.gd`; the wrapper copies Person 2's `command_executor.gd`,
+`observation_inbox.gd`, `knowledge_planner.gd`, `comms_validator.gd`,
+`plain_data.gd` and `comms_v1.schema.json` read-only.
+
+The local Python app-execution alias was inaccessible; checks were run with
+`C:\Users\Isoto\AppData\Local\Python\pythoncore-3.14-64\python.exe`. Godot
+executable: `C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe`,
+reporting `4.4.1.stable.official.49a5bc7b6`. Results are recorded in HANDOFFS.md
+after verification. The wrapper displays and tolerates only the exact Windows
+certificate-store diagnostic seen in this sandbox; all script errors, other engine
+errors, failed assertions, missing pass marker and nonzero exits fail. No network
+calls occur in the suite.
 
 No manual game/UI playtest has run. Membership/time assertions do not establish the complete fairness gate: policy dependency checks, hidden-state perturbation and actual smoke/flash/physics tests remain Person 2 integration work. JSON schemas describe shape; temporal relationships and normalized probabilities require runtime checks.
 
 Actual results: 47 isolated assertions plus 8 optional executor integration assertions passed on Godot 4.4.1, exit 0. Documentation checks and JSON syntax checks passed. Draft 2020-12 meta-schema validation was unavailable because `jsonschema` is not installed. The integration test uses the current local Person 2 files; it is not a frozen dependency. Equal availability times sort by event tick and then observation ID to match that inbox. Reviewing Person 2's current uncommitted guide also showed Person 1 has proposed Godot 4.4.1; whole-team version/export confirmation remains pending.
 
+### 2026-11-14 continuation: quick-call UI and delayed goal integration
+
+Added the mandatory quick-call model and Control, their isolated test, and a Person 3
+goal-integration harness. New files: `comms/quick_call.gd`, `ui/quick_call/quick_call_panel.gd`,
+`ui/quick_call/quick_call_panel.tscn`, `ui/quick_call/README.md`,
+`tests/person3/quick_call_tests.gd`, `tests/person3/belief_goal_integration.gd`; wired the
+two new scripts into `tests/person3/run_checks.py`. No existing Person 1/2/3 file, schema,
+fixture or main scene was edited. The quick-call emits only validated `comms.v1` messages
+over the existing `report_adapter.gd`; it never invents regions, markers or coordinates.
+
+Automated checks run this session, on a machine **without a Godot executable**:
+
+- `python tools/check_repo.py`: passed (documentation links and synthetic fixture).
+- `python -m json.tool` on all four JSON files: passed (syntax).
+- **Draft 2020-12 meta-schema validation, now actually run** via a local `jsonschema` 4.26.0
+  (installed in an ignored `.venv/`, not committed): `schemas/person3_records.schema.json`
+  and `schemas/comms_v1.schema.json` are valid Draft 2020-12 schemas; `examples/person3_fake_run.json`
+  conforms to the records schema; and all six quick-call message shapes (report with/without
+  count, swing, flash, cue, cancel) conform to the frozen `comms.v1` oneOf. This closes the
+  earlier "meta-schema validation unavailable" gap for these artifacts.
+- Independent re-derivation of the belief/trust formulas (Python) reproduces every numeric
+  assertion in the GDScript suite (report-to-0.8, trust 0.73/0.42/0.63, hedge < 0.8) and the
+  new integration claim (logs to 0.8, above the 0.55 threat threshold, fresh and reachable,
+  so the planner switches to `logs_cover`).
+- Static checks: every `preload` path resolves (Person 2's executor/planner resolve via the
+  wrapper's read-only copy at test time), tab indentation and headers match the lane style,
+  and `run_checks.py` parses.
+
+**Not run this session (honest):** the Godot assertion suite could not execute because no
+Godot 4 stable executable is installed on this machine. The existing 47+8 assertions and the
+new `quick_call_tests.gd` and `belief_goal_integration.gd` still need a Godot run by a
+teammate with the pinned editor (commands above). No manual UI playtest was run: rendering,
+mouse/keyboard input and on-screen layout of the quick-call panel are unverified and remain a
+required human playtest. `git diff --check` was not run in this session's shell (git is only
+reachable through a bundled path here); run it before the PR.
+
 ## Next small increments, in order
 
-1. Review these envelope/content/query shapes with Persons 1/2; integrate one delayed quick-call into a bot goal and run the full shared fairness fixture. Pin editor version with Person 1. Add the mandatory quick-call Control UI and lifecycle acknowledgments without editing the main scene independently.
+1. **Mostly done, pending verification.** The mandatory quick-call Control and
+   lifecycle acknowledgments are implemented (`ui/quick_call/`), and one delayed
+   quick-call is integrated into a bot goal through Person 2's real executor and
+   planner (`tests/person3/belief_goal_integration.gd`). Remaining before this is
+   closed: run the Godot suite with the pinned editor, do the human UI playtest,
+   confirm the envelope/content/query shapes with Persons 1/2, and run the full
+   shared fairness fixture (not just the membership/time audit). Pin the editor
+   version with Person 1. Note: Person 2's `knowledge_planner.gd` already consumes
+   the belief snapshot and ships its own read-only cross-lane test, so the goal path
+   is now proven from both sides against copies; it still needs a real merge and a
+   combined Godot run.
 2. Add player-sighting intervals and time-indexed truth contracts, then precision/recall/median latency and correct-versus-wrong callout metrics. Undefined denominators must return unavailable. Save real runtime observations/decisions and truth separately.
 3. Build the scrubbable truth-versus-belief debrief and visible belief-only counterfactual using fixed observations. Get map outlines from Person 1. This replay helper does not yet choose the best omitted call or render a comparison.
 4. Add silent/chatty/budgeted outputs, repeated-report suppression and channel busy/rate limits from bot-local evidence; keep combat identical. Build the noisy-callout pilot, VOD-only sheet and unseen pre/post protocol. No human or pilot results have been collected.
-5. Typed natural-language interpretation/clarification, then optional speech after the debrief works. Current structured reports are a fallback foundation, not the requested flexible-language interpreter.
+5. Typed natural-language interpretation/clarification, then optional speech after the debrief works. Current structured reports and the quick-call menu are a fallback foundation, not the requested flexible-language interpreter.
 
 Do not claim the full lane, playable integration, debrief, complete grading, evaluation arms, speech or full fairness gate complete from these isolated checks.

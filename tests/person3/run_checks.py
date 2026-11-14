@@ -31,16 +31,20 @@ def main():
         if args.person2_root:
             for relative in ("perception/plain_data.gd", "perception/observation_inbox.gd",
                              "validation/comms_validator.gd", "bots/command_executor.gd",
-                             "schemas/comms_v1.schema.json"):
+                             "bots/knowledge_planner.gd", "schemas/comms_v1.schema.json"):
                 target = project / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(args.person2_root / relative, target)
         (project / "project.godot").write_text(
             'config_version=5\n[application]\nconfig/name="Person 3 isolated checks"\n'
             '[rendering]\nrenderer/rendering_method="gl_compatibility"\n', encoding="utf-8")
-        scripts = [("run_tests.gd", "PERSON3_TESTS_PASS")]
+        scripts = [
+            ("run_tests.gd", "PERSON3_TESTS_PASS"),
+            ("quick_call_tests.gd", "PERSON3_QUICKCALL_PASS"),
+        ]
         if args.person2_root:
             scripts.append(("executor_integration.gd", "PERSON3_INTEGRATION_PASS"))
+            scripts.append(("belief_goal_integration.gd", "PERSON3_GOAL_INTEGRATION_PASS"))
         for script, marker in scripts:
             result = subprocess.run(
                 [godot, "--headless", "--path", str(project), "--script", "res://tests/person3/" + script],
