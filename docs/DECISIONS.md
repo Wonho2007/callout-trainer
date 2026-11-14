@@ -5,7 +5,7 @@
 | Engine | Confirmed by user | Godot |
 | Development team | Confirmed by user | Wonho2007 = Person 2; sn-kurup/liedwin49 choose Persons 1/3 |
 | Natural language | User-directed | Flexible paraphrases; report_enemy, throw_flash, swing_together; cue/cancel support. Interpreter/provider not selected; deterministic fallback remains required |
-| Product | Confirmed direction | Playable small scenario, player communicates with bots |
+| Product | User-confirmed objective | Clear team communication throughout play. Readiness coordination is one subskill; coach timely reports, utility planning, death reports and relevant omissions. See docs/COMMUNICATION_COACHING.md |
 | Editor version | Person 1 proposal; Person 2 tested | Person 1 branch commit d742751 proposes Godot 4.4.1 stable standard GDScript. Person 2 headless checks use that exact build. Export templates and whole-team confirmation remain pending |
 | Development workflow | User-directed | Agent-led, code-generated/data-driven greybox; human launch/inspection/playtesting remains required |
 | Language/renderer | Proposed default | Typed GDScript / Compatibility; confirm against skills and hardware |

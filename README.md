@@ -53,6 +53,10 @@ Full assignments and hour-by-hour gates are in brief section 9. The 24-hour sche
 
 The selected [communication contract](docs/COMMANDS.md) separates flexible speech from bot actions. Start with enemy reports, flashes and coordinated swings; paraphrases share intents, while countdown timing remains explicit. See the [schema](schemas/comms_v1.schema.json) and [synthetic examples](examples/comms_v1.json). The bot-side inbox/executor is implemented against this boundary; speech interpretation and 3D mechanics remain pending.
 
+## Communication training objective
+
+**Clear communication throughout the round is the main skill.** Readiness is one example alongside timely enemy reports, utility planning before entry, useful death reports and appropriate uncertainty. The debrief should identify information the player could reasonably have shared but the teammate did not receive. See [communication coaching](docs/COMMUNICATION_COACHING.md) for eligibility rules, examples and ownership. Unknown facts and parser/delivery failures must not be scored as player omissions. This broader grader is specified, not yet implemented.
+
 ## First integrated milestone
 
 One player, one teammate and one enemy in a synthetic test room. The player sees an enemy that the teammate cannot see. A quick-call message updates the teammate's belief and watched angle. The trace links the delayed message to the decision, and the hidden-state perturbation check passes.
