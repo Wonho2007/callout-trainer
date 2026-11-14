@@ -1,0 +1,68 @@
+{
+  "schema_version": "proposed-v0",
+  "synthetic": true,
+  "description": "Illustrative bot-local testimony and resulting goal; not pro data or a gameplay test.",
+  "config": {
+    "ticks_per_second": 60,
+    "seed": 7
+  },
+  "regions": [
+    {
+      "id": "entry",
+      "name": "Synthetic Entry"
+    },
+    {
+      "id": "site",
+      "name": "Synthetic Site"
+    },
+    {
+      "id": "upper",
+      "name": "Synthetic Upper"
+    }
+  ],
+  "callouts": [
+    {
+      "id": "call_1",
+      "speaker": "player",
+      "type": "enemy",
+      "region_id": "upper",
+      "count": 1,
+      "hedge": "sure",
+      "event_tick": 120
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs_1",
+      "bot_id": "ally_1",
+      "event_tick": 120,
+      "available_tick": 138,
+      "source": "told",
+      "speaker": "player",
+      "confidence": 0.7,
+      "content": {
+        "callout_id": "call_1",
+        "type": "enemy",
+        "region_id": "upper",
+        "count": 1
+      },
+      "provenance": [
+        "call_1"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "tick": 140,
+      "bot_id": "ally_1",
+      "goal_region_id": "site",
+      "action": "hold_angle",
+      "aim_region_id": "upper",
+      "evidence_ids": [
+        "obs_1"
+      ],
+      "reason": "Player reports upper; cover that route from site.",
+      "fallback": false
+    }
+  ]
+}

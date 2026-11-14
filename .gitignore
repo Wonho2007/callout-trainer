@@ -1,0 +1,25 @@
+# Godot generated/cache/export files
+.godot/
+.import/
+export.cfg
+export_credentials.cfg
+build/
+builds/
+dist/
+# Local tooling
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+!.env.example
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Raw/private artifacts: deliberately sanitized fixtures belong in examples/
+runs/
+recordings/
+reference-footage/
+*.log
