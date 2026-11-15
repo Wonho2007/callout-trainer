@@ -119,15 +119,19 @@ func _spawn_target() -> void:
 
 
 func _wire_minimap() -> void:
+	var foes: Array = []
+	if _target:
+		foes.append(_target)
+	# The scan orb tests against the same enemy list.
+	if _player:
+		_player.scan_targets = foes
 	var mm := get_node_or_null("HUD/Minimap")
 	if mm == null:
 		return
 	mm.builder = builder
 	mm.player = _player
-	var foes: Array = []
-	if _target:
-		foes.append(_target)
 	mm.enemies = foes
+	mm.utility = utility   # so the minimap can draw decaying recon marks
 	mm.refresh()
 
 
@@ -184,7 +188,7 @@ func _restart() -> void:
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD | LMB fire | V dash | R reload | Q smoke | E flash | G wave | X molly | Hold C defuse | F restart | Esc mouse"
+		hud.text = "WASD | LMB fire | V dash | R reload | Q smoke | E flash | G wave | X molly | T scan | Hold C defuse | F restart | Esc mouse"
 
 
 func _update_status() -> void:

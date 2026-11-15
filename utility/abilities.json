@@ -36,6 +36,13 @@
       "damage_per_second": 35.0,
       "tick_interval_s": 0.5,
       "deploy_delay_s": 1.5
+    },
+    {
+      "id": "scan_orb",
+      "primitive": "recon",
+      "fuse_s": 0.8,
+      "scan_radius_m": 14.0,
+      "reveal_duration_s": 4.0
     }
   ]
 }

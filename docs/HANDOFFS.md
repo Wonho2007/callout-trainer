@@ -171,3 +171,14 @@ User-assigned: Person 3 watches and annotates videos; Person 2 converts verified
 - Manual playtest and results: tester confirmed V dashes (collision-respecting, cooldown), G sends a through-walls blind wave that blacks out the screen with an extra second, E flash whites out, and the minimap renders the room with a rotating view cone and shows the enemy only when actually visible.
 - Remaining work/dependency: these are beyond the brief's first slice (second blind variant, dash, live minimap) and sit near the cut/polish list — trim candidates for the final demo. Minimap enemy list is currently just the dummy target; Person 2's bots would populate it. Values are documented placeholders.
 - Next integration step: data-driven character/loadout system over the primitives, or the region-graph/sound/actor-command backbone.
+
+### 2026-11-14 — Person 1: fair scan orb with decaying through-wall outline
+
+- Branch/PR and owning lane: `person-1/scan-orb`; Person 1 (utility/ + ui/ + input).
+- Changed files: `utility/scan_orb.gd` (new), `utility/recon_outline.gd` (new), `utility/abilities.json`, `utility/utility_system.gd`, `ui/minimap.gd`, `scenes/player/player.gd`, `scenes/main.gd`, `scenes/main.tscn`, `project.godot`.
+- Interface/schema changes and consumers: a generic recon ability (original, not a kit replica). `ScanOrb` is a thrown projectile that, on a short fuse, scans its radius and reveals an enemy ONLY if it has clear line of sight to it from the orb (a fair sensor, same rules as perception — nothing behind cover is revealed). Reveals are LAST-KNOWN snapshots that decay (~4s): a yellow minimap mark (`UtilitySystem.recon_marks()`) and a `ReconOutline` that renders through walls (no_depth_test) and fades. `UtilitySystem.throw_scan_orb(from, velocity, targets)`. Player key T; main passes the enemy list as `scan_targets`/minimap `enemies`.
+- FAIRNESS: the through-wall outline is PLAYER-ONLY visual, built from the orb's fair LOS scan, and decays. It is NOT wired into bot policy — no hidden truth reaches any bot, so the leak model is intact. The reveal is a snapshot of information the player could legitimately gather (and then call out), not a live wallhack.
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally. Project loads/runs clean in Godot 4.4.1.
+- Manual playtest and results: tester confirmed T throws a scanning orb that reveals an in-LOS target as a decaying yellow minimap mark and a through-wall outline, both fading after a few seconds; targets the orb cannot see are not revealed.
+- Remaining work/dependency: past the brief's first slice (trim candidate for the demo). Enemy list is the dummy target until Person 2's bots exist. Values are documented placeholders.
+- Next integration step: data-driven character/loadout system, or the region-graph/sound/actor-command backbone.
