@@ -302,3 +302,9 @@ Main advanced during the work: merged `233e092` as `16affb7`, preserving Person 
 Person 3 `57f809d` published local STT scaffolding and scenario schema/structural validator/coordinate helper. Inspected those read-only. Its voice results table is unfilled; no target-machine accuracy/latency/offline confirmation is claimed here. The grounded interpreter/local-model host/game bridge are still dependencies, so earlier no-STT notes describe only the prior `b078210` snapshot. Person 2 should consume the structural scenario helper while retaining physical reachability/LOS/baseline validation ownership. No Person 3 source, dependencies or microphone setup was changed.
 
 Final verification after this update: default/cross-lane runner against Person 1 233e092 and Person 3 57f809d passed 465 checks; first-person smoke passed 21, total 486, both exit 0. Docs/whitespace checks pass. The known bake performance warning remains; no manual/voice/model test is claimed.
+
+## Person 2: first-person launcher ownership fix
+
+Reproduced the user's git-show failure as the normal Windows user: Git's dubious-ownership check rejected this sandbox-owned checkout, not a missing belief file. The owned runner now scopes safe.directory to the exact resolved checkout for each read-only Git invocation and exposes actual stderr. No global Git setting/ownership or teammate source changed. Updated bots/FIRST_PERSON.md and the owning handoff.
+
+Automated: Godot 4.4.1 first-person smoke passed 21 checks as the normal Windows user with no manually supplied Git trust environment variables; binary Git read, textual listing and missing-ref diagnostics also passed. Docs/whitespace checks pass. Known bake performance warning remains; no manual/voice result claimed. User can rerun the same --first-person command.

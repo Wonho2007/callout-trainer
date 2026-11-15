@@ -26,6 +26,24 @@ FILES = [
 ]
 
 
+def git_read(arguments, *, text=False):
+    # This launcher intentionally reads THIS checkout's committed files. The
+    # shared Windows workspace may be owned by the sandbox account instead of
+    # the person launching it. Trust only this resolved root for this command;
+    # never persist global config or trust an arbitrary parent/directory list.
+    result = subprocess.run(
+        ["git", "-c", "safe.directory=" + ROOT.resolve().as_posix(), *arguments],
+        cwd=ROOT, capture_output=True, text=text, timeout=15,
+    )
+    if result.returncode:
+        detail = result.stderr if text else result.stderr.decode("utf-8", errors="replace")
+        raise RuntimeError(
+            "Git read failed: git " + " ".join(arguments) + "\n" + detail.strip()
+            + "\nIf the named revision is unavailable, fetch the teammate branches with git fetch origin."
+        )
+    return result.stdout
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--godot", required=True, help="Godot 4.4.1 executable")
@@ -63,11 +81,7 @@ def main():
             def copy_ref(ref, relative):
                 target = project / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
-                content = subprocess.run(
-                    ["git", "show", ref + ":" + relative], cwd=ROOT,
-                    capture_output=True, timeout=15, check=True,
-                )
-                target.write_bytes(content.stdout)
+                target.write_bytes(git_read(["show", ref + ":" + relative]))
 
             if args.person3_root or args.person3_ref:
                 for relative in ["belief/plain_values.gd", "belief/region_belief.gd", "comms/report_adapter.gd"]:
@@ -85,15 +99,14 @@ def main():
                 shutil.copy2(ROOT / "tests/person2/motion_integration.gd", project / "tests/person2/motion_integration.gd")
             if first_person:
                 # Reuse the actual shared FPS scene/settings/assets, read-only.
-                listing = subprocess.run(
-                    ["git", "ls-tree", "-r", "--name-only", args.person1_ref, "--",
+                listing = git_read(
+                    ["ls-tree", "-r", "--name-only", args.person1_ref, "--",
                      "actors", "weapons", "utility", "world", "scenes/player",
                      "scenes/main.gd", "scenes/main.gd.uid", "scenes/main.tscn",
                      "recording/game_events.gd", "recording/game_events.gd.uid",
-                     "ui/minimap.gd", "ui/minimap.gd.uid", "project.godot", "icon.svg"], cwd=ROOT,
-                    capture_output=True, text=True, timeout=15, check=True,
+                     "ui/minimap.gd", "ui/minimap.gd.uid", "project.godot", "icon.svg"], text=True,
                 )
-                for relative in listing.stdout.splitlines():
+                for relative in listing.splitlines():
                     copy_ref(args.person1_ref, relative)
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "scenes/bots/first_person.gd", "scenes/bots/first_person.tscn",

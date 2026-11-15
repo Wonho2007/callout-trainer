@@ -20,6 +20,8 @@ $godotExe = 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_wi
 
 The runner makes a disposable project from read-only Person 1 main `233e092`, Person 3 belief files at `57f809d`, and the current Person 2 source. It copies Person 1's input settings and changes only the **temporary** entry scene. No shared main, player, project settings or teammate checkout is edited. Override `--person1-ref` / `--person3-ref` if needed; refs must exist locally. Use official Godot 4.4.1 stable. The earlier `--visual-demo` remains an overhead developer fixture and does not meet the first-person product direction.
 
+On this shared Windows workspace, the directory may be owned by the sandbox account. The runner uses a command-scoped `safe.directory` exception for this exact resolved checkout when reading committed files; it does not change global Git configuration. Failed reads show Git's actual stderr, with fetch guidance for missing revisions. No manual environment-variable setup is needed.
+
 WASD moves, mouse looks, LMB fires, R reloads, Q/E use smoke/flash, F restarts, Esc releases/recaptures the mouse. Additional utility keys remain Person 1's current inputs. Close the window to exit. There is no player comm shortcut/menu: the voice host must connect to the runtime below before speech can cause movement. Do not interpret a stationary fallback teammate as proof that a microphone/LLM path exists.
 
 ## Proposed Person 3 seam (review before production adoption)
