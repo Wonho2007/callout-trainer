@@ -29,16 +29,19 @@ var occluder: Object = null
 
 ## Placeholder rifle stats. Replace with sourced values only if obtained from a
 ## permitted source and documented; otherwise these stay as tuned placeholders.
-@export var damage_body: float = 30.0
-@export var damage_head_multiplier: float = 2.0
+## Per-hitbox damage: head/body/legs. Resolved from which hitbox Area3D the shot hits.
+@export var damage_head: float = 160.0
+@export var damage_body: float = 40.0
+@export var damage_legs: float = 34.0
 @export var rounds_per_second: float = 8.0
 @export var magazine_size: int = 25
 @export var reserve_ammo: int = 75
 @export var reload_time_s: float = 2.0
 @export var range_m: float = 80.0
 ## Spread in radians: base, extra while firing continuously, extra while moving.
+## Moving spread is very large: shooting while moving is extremely inaccurate.
 @export var spread_base: float = 0.004
-@export var spread_moving: float = 0.03
+@export var spread_moving: float = 0.18
 @export var spread_firing: float = 0.02
 
 var in_mag: int = 0
@@ -111,7 +114,9 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 
 	var space: PhysicsDirectSpaceState3D = shooter.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(origin, to)
-	query.collide_with_areas = false
+	# Hit both world bodies AND enemy hitbox areas (head/body/legs). The closest
+	# intersection wins, so a hitbox in front of a wall registers the body part.
+	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	if shooter is CollisionObject3D:
 		query.exclude = [shooter.get_rid()]
@@ -143,7 +148,12 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 	if collider == null:
 		return
-	# Find an ActorBase at the hit (the collider or one of its ancestors).
+	# A hitbox Area3D carries a "hit_part" meta (head/body/legs) and links to its actor
+	# via "hit_actor_path" (or an ActorBase ancestor). Resolve the part -> damage.
+	var part := ""
+	if collider is Node and (collider as Node).has_meta("hit_part"):
+		part = String((collider as Node).get_meta("hit_part"))
+	# Find the ActorBase (the hitbox's ancestor, or the collider's ancestor).
 	var node := collider as Node
 	var actor: ActorBase = null
 	while node != null:
@@ -151,13 +161,23 @@ func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 			actor = node
 			break
 		node = node.get_parent()
-	if actor != null:
-		# Simple head/body split by height of the hit relative to the actor.
-		var local_y := hit_pos.y - actor.global_position.y
-		var dmg := damage_body
-		if local_y > 1.5:
-			dmg *= damage_head_multiplier
-		actor.apply_damage(dmg)
+	if actor == null:
+		return
+	var dmg: float
+	match part:
+		"head": dmg = damage_head
+		"legs": dmg = damage_legs
+		"body": dmg = damage_body
+		_:
+			# No hitbox part (e.g. hit the plain body capsule): fall back to a height split.
+			var local_y := hit_pos.y - actor.global_position.y
+			if local_y > 1.5:
+				dmg = damage_head
+			elif local_y < 0.8:
+				dmg = damage_legs
+			else:
+				dmg = damage_body
+	actor.apply_damage(dmg)
 
 
 func reload() -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://cac70rbase001"]
+[gd_scene load_steps=9 format=3 uid="uid://cac70rbase001"]
 
 [ext_resource type="Script" path="res://actors/actor_base.gd" id="1"]
 [ext_resource type="Script" path="res://actors/health.gd" id="2"]
@@ -14,6 +14,15 @@ height = 1.8
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.3, 0.6, 0.9, 1)
 
+[sub_resource type="BoxShape3D" id="HeadShape"]
+size = Vector3(0.45, 0.3, 0.45)
+
+[sub_resource type="BoxShape3D" id="BodyShape"]
+size = Vector3(0.65, 0.75, 0.4)
+
+[sub_resource type="BoxShape3D" id="LegsShape"]
+size = Vector3(0.55, 0.8, 0.4)
+
 [node name="Actor" type="CharacterBody3D"]
 collision_layer = 4
 collision_mask = 1
@@ -27,6 +36,33 @@ shape = SubResource("CapsuleShape3D_1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_1")
 material_override = SubResource("StandardMaterial3D_1")
+
+[node name="HitHead" type="Area3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+metadata/hit_part = "head"
+
+[node name="HeadCol" type="CollisionShape3D" parent="HitHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+shape = SubResource("HeadShape")
+
+[node name="HitBody" type="Area3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+metadata/hit_part = "body"
+
+[node name="BodyCol" type="CollisionShape3D" parent="HitBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.125, 0)
+shape = SubResource("BodyShape")
+
+[node name="HitLegs" type="Area3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+metadata/hit_part = "legs"
+
+[node name="LegsCol" type="CollisionShape3D" parent="HitLegs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("LegsShape")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("2")
