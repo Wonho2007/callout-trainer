@@ -1,5 +1,11 @@
 # Person 2 GPU capability spike — 2026-11-15
 
+**Follow-up go/no-go:** actual concurrent engine goal calls later missed the existing
+two-second context budget, including the smaller-model trial. The selected sprint
+configuration is now **LLM interpretation + deterministic goal selection**, explicitly
+allowed by the final-sprint handoff. See [VOICE_GAME.md](../bots/VOICE_GAME.md) for
+measured failures, the passing interpret-only physical integration and current limits.
+
 The user explicitly made `docs/FINAL_SPRINT_PERSON2.md` at Person 3 commit
 `4c85f398239780322caf524681e225a64f5e7292` authoritative: approximately six hours,
 two developers, Person 2 owns the GPU/model runtime and inherits Person 1's world work.

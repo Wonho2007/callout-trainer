@@ -109,6 +109,12 @@ func submit_intent(candidate: Dictionary) -> Dictionary:
 func current_tick() -> int:
 	return _tick
 
+func invalidate_model_goal() -> void:
+	# A disconnected/timed-out local host immediately relinquishes model control.
+	# The pure gate rejects this empty candidate and clears the current proposal.
+	if _configured:
+		_gate.propose({}, _tick)
+
 func finish_round(reason: String) -> void:
 	# Trusted bootstrap calls for public round completion, not hidden events.
 	_configured = false

@@ -2,6 +2,34 @@
 
 ## Priority override — six-hour final sprint, 2026-11-15
 
+### Latest: local voice-to-engine integration
+
+Implemented [the synthetic voice game](../bots/VOICE_GAME.md): PC microphone/STT and
+Person 3 interpreter feed a localhost-only copied-data bridge. Godot stamps real
+receipt ticks and uses the existing delayed inbox, beliefs and physical controller.
+No wall-time backdating, shared-main replacement or invented seven-region mapping.
+New internal host/scene protocol and runtime `invalidate_model_goal()` are owned
+integration seams; shared observation/comms/belief schemas are unchanged.
+
+Actual full-goal spike did not meet the current context budget (Llama and smaller
+Qwen timeouts; constrained-goal checks still fail). Per authoritative sprint go/no-go,
+default is **LLM interprets, deterministic planner decides**. Experimental goals are
+opt-in, unaccepted, and logged; the full-goal fixture stays nonzero when they fail.
+Goal expiry was not loosened to manufacture a pass. See exact results/limits in the
+voice-game guide. Source Person 3 belief `57f809d` remains pinned for compatibility;
+coordinated trust-field/full-acceptance alignment still remains.
+
+Fresh automated evidence: 552 default/cross-lane assertions; existing FPS baseline
+41; new socket fixture initially 19; 3 Python boundary tests; real local-model
+interpret-only engine fixture passes actual delayed report/physical movement.
+Recorded-boundary audit of that run passes 33 contexts, 28 changed decisions,
+157 deliveries and one model record. This is not full-game fairness. Final socket
+HUD/disconnect checks pass **22**, Python boundary/capture tests pass **4**.
+User has been offered the live spoken game test; no new human in-engine success is
+inferred from the earlier standalone microphone test. Root/shared source and Person
+3 implementation remain unchanged. Next: spoken game acceptance, source/schema
+coordination and the inherited seven-region scenario/world work.
+
 The user explicitly makes `docs/FINAL_SPRINT_PERSON2.md` on Person 3 commit `4c85f39`
 the highest-priority handoff. Person 1 has left; Person 2 owns GPU/model/STT runtime,
 inherited world/greybox/spawning, scenario authoring and live engine integration.

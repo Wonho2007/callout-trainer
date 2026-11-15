@@ -1,5 +1,16 @@
 # Person 2: resume in a new Codex window
 
+**Newest continuation:** [VOICE_GAME.md](VOICE_GAME.md) runs local STT/LLM proposals
+through real Godot delayed delivery and shared movement. Default is the six-hour
+handoff's explicit fallback scope, **LLM interpretation + scripted goal selection**:
+Llama/Qwen goal runs missed the existing context budget; full goal mode is opt-in
+and not passing. Real-model typed engine fixture passes; socket delay/dedup/reset/
+disconnect tests and recorded-context audit pass. Standalone five-call microphone
+acceptance remains valid; spoken in-game movement has been offered to the user and
+is pending confirmation. Keep this distinction. New internal protocol does not
+change shared schemas, root settings, Person 3 source or the synthetic map's three
+region names. Seven-region scenario/world and coordinated belief changes remain.
+
 **Latest user priority (2026-11-15):** the six-hour final-sprint handoff at
 `4c85f39:docs/FINAL_SPRINT_PERSON2.md` supersedes older assignments. Person 2 owns this
 GPU PC's model/STT runtime and inherits Person 1's world work. PR #4 is already merged
