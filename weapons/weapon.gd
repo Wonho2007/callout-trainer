@@ -174,9 +174,9 @@ func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 		_:
 			# No hitbox part (e.g. hit the plain body capsule): fall back to a height split.
 			var local_y := hit_pos.y - actor.global_position.y
-			if local_y > 1.5:
+			if local_y > 1.76:
 				dmg = damage_head
-			elif local_y < 0.8:
+			elif local_y < 0.90:
 				dmg = damage_legs
 			else:
 				dmg = damage_body

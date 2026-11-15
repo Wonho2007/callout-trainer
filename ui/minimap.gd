@@ -153,8 +153,10 @@ func _draw() -> void:
 		if e == null or not is_instance_valid(e):
 			continue
 		if _player_can_see(ppos, forward, e.global_position):
-			draw_circle(_to_map(e.global_position.x, e.global_position.z), 4.0,
-				Color(1.0, 0.3, 0.3))
+			var at := _to_map(e.global_position.x, e.global_position.z)
+			draw_circle(at, 4.0, Color(1.0, 0.3, 0.3))
+			if e.has_method("is_blinded") and e.is_blinded():
+				draw_arc(at, 6.5, 0.0, TAU, 16, Color(1.0, 0.9, 0.2), 1.5)
 
 	# Decaying recon marks from a scan orb (last-known, not live tracking).
 	if utility and utility.has_method("recon_marks"):
@@ -214,6 +216,12 @@ func _player_can_see(eye: Vector3, forward: Vector3, target: Vector3) -> bool:
 		return false
 	var eye_pos := eye + Vector3(0, 1.6, 0)
 	var torso := Vector3(target.x, target.y + 1.0, target.z)
+	if utility and utility.has_method("point_in_smoke"):
+		if utility.point_in_smoke(eye_pos) and not utility.point_in_smoke(torso):
+			return false
+	if utility and utility.has_method("segment_blocked_by_smoke"):
+		if utility.segment_blocked_by_smoke(eye_pos, torso):
+			return false
 	var space := player.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(eye_pos, torso)
 	query.collision_mask = 1 << 0  # world geometry only

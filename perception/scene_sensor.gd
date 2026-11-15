@@ -175,6 +175,8 @@ func _update_blind(tick: int, eye: Vector3, forward: Vector3) -> void:
 			duration += 1.0
 		if duration > 0.0:
 			_blind_until = maxi(_blind_until, tick + int(ceil(duration * Engine.physics_ticks_per_second)))
+			if is_instance_valid(_actor) and _actor.has_method("apply_blind"):
+				_actor.apply_blind(duration, "blinded" if is_wave else "flashed")
 
 func _sounds(tick: int) -> Array:
 	for actor in _audio_actors:

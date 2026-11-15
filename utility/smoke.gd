@@ -42,7 +42,10 @@ func setup(ability: Dictionary) -> void:
 ## visually falling from `start_center` at a constant speed. If the two are the
 ## same (aimed at a surface), there is no fall. Call right after adding to tree.
 func deploy(start_center: Vector3, settle_center: Vector3) -> void:
-	global_position = settle_center
+	if is_inside_tree():
+		global_position = settle_center
+	else:
+		position = settle_center
 	_build()
 	# Offset the visual body up to the start, then fall it to the settle center.
 	var drop := start_center - settle_center
@@ -63,15 +66,20 @@ func _build() -> void:
 	shape.shape = sphere
 	_body.add_child(shape)
 
-	# Translucent visual so the smoke reads in-engine.
+	# Opaque visual with double-sided rendering (CULL_DISABLED).
+	# This ensures the interior surface forms a closed dome when standing inside,
+	# completely cutting off all vision of the world outside the smoke.
 	var mesh_instance := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = radius
 	mesh.height = radius * 2.0
 	mesh_instance.mesh = mesh
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.85, 0.9, 0.75)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.24, 0.25, 0.28, 1.0)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	mat.roughness = 0.95
 	mesh_instance.material_override = mat
 	_body.add_child(mesh_instance)
 
