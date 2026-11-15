@@ -43,6 +43,7 @@ var _scenario_policy: RefCounted
 var _player_goal: Dictionary = {}
 var _position_orders: Dictionary = {}
 var _last_position_serial: int = 0
+var _completed_player_moves: Dictionary = {}
 
 func attach_scenario_policy(policy: RefCounted) -> void:
 	_scenario_policy = policy
@@ -169,13 +170,35 @@ func _update_player_goal() -> void:
 
 func _player_position_plan(own: Dictionary) -> Dictionary:
 	var target: String = _player_goal.target_id
+	var watch: String = _player_goal.get("watch_region_id", target)
 	var reachable: bool = target in own.reachable_marker_ids
 	return {"ok": true, "errors": [], "replanned": true, "decision": {
 		"tick": _tick, "bot_id": _bot_id,
 		"goal": ("hold" if own.marker_id == target else "reposition") if reachable else "stop",
-		"target_id": target if reachable else null, "watch_region_id": target if reachable else null,
+		"target_id": target if reachable else null, "watch_region_id": watch if reachable else null,
 		"reason": "persistent_player_position" if reachable else "player_position_unreachable",
 		"evidence_ids": _player_goal.evidence_ids.duplicate(), "score": 0.0}}
+
+func _retain_completed_movement(result: Dictionary) -> void:
+	# Completion is physical executor feedback, not merely a proposed/accepted
+	# command. Keep its destination as the new position instead of spike fallback.
+	if _bot_id != "ally" or result.status != "completed" or _completed_player_moves.has(result.message_id):
+		return
+	for observation in _executor.inbox.available():
+		if observation.id not in result.evidence_ids or observation.source != "told" or observation.speaker_id != "player":
+			continue
+		var message: Dictionary = observation.content.get("message", {})
+		if message.get("message_id") != result.message_id or message.get("kind") != "command":
+			continue
+		var payload: Dictionary = message.get("payload", {})
+		if payload.get("action") != "swing_together" or not _entries.has(payload.get("target_id")):
+			continue
+		var entry: Dictionary = _entries[payload.target_id]
+		var target: String = entry.route_marker_ids[-1]
+		var watch: String = entry.get("watch_region_id", _markers[target].watch_points.keys()[0])
+		_completed_player_moves[result.message_id] = true
+		_player_goal = {"target_id": target, "watch_region_id": watch, "evidence_ids": result.evidence_ids.duplicate()}
+		return
 
 func current_tick() -> int:
 	return _tick
@@ -268,6 +291,7 @@ func _physics_process(_delta: float) -> void:
 				if not applied.ok:
 					output.errors.append("belief_rejected_accepted_report")
 	for result in output.results:
+		_retain_completed_movement(result)
 		if result.status != "rejected":
 			for id in result.evidence_ids:
 				_promote(id)

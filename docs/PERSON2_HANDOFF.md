@@ -337,18 +337,29 @@ waits real time. A guarded test health pool is fixture-only and resets to normal
 The teammate now retains explicit player positioning ("play Heaven with me") as
 its goal after reaching the requested authored zone. It no longer returns to the
 spike merely because the short action/old command window ended or a report arrived.
-New positioning orders/cancel supersede it; death/round reset clear it. Temporary
-swing/flash actions retain priority and then resume the position. Grounding uses
+New positioning orders/cancel supersede it; death/round reset clear it. Flash
+actions retain priority and then resume the position; completed swings retain their
+physically reached endpoint as the next position. Grounding uses
 public region names through a local delayed player_position observation, not a new
 shared schema or player-transform tracking. See bots/SITE_SCENARIO.md. The parallel
 combat UI worker remains isolated in its own worktree; this change touches runtime,
 voice bridge, site tests and a narrow runner selector, not its UI implementation.
 
-Regression evidence for this update: required suite 575 assertions on 0260f28,
-existing site scene 46 checks, and legacy-room TCP voice 35 checks on 8712f7d pass.
+The live test exposed a missing path in the first positioning fix: the logged
+"Let's push a link together" was interpreted as swing_together/a_link/now, completed
+at tick 1010, then immediately replanned to b_pit. "Come main with me" did correctly
+hold Main. The follow-up recognizes explicit push positioning and, independently,
+retains any physically completed player swing destination. Duplicate completed
+messages cannot overwrite newer instructions. This fixes the demonstrated action
+completion path, not merely the particular phrase. Private run logs remain ignored.
+
+Latest regression evidence: required suite 575 assertions on 0260f28, updated site
+scene 47 checks, explicit positions 24 checks, completed movements 10 checks pass.
+The earlier legacy-room TCP voice 35 checks on 8712f7d predate this follow-up.
 The TCP room fixture must use its matching source; selecting 0260f28 for that old
 room fixture fails map/navigation validation. The new position regression runs
-separately via --site-smoke --position-orders-only and passes 24 checks, preserving strict 45s timeouts;
+separately via --site-smoke --position-orders-only; completed movement uses
+--site-smoke --completed-movement-only, preserving strict 45s timeouts;
 combining the long hold with the original scene suite exceeded that limit. No fresh
 human microphone acceptance is claimed. Windows certificate-store access still
 requires permitted execution outside the sandbox; existing bake/ObjectDB warnings

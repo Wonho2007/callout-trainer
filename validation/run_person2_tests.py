@@ -70,6 +70,7 @@ def main():
     mode.add_argument("--site-smoke", action="store_true", help="Seven-zone B site scenario and source-map integration checks")
     parser.add_argument("--site-capture", type=Path, help="Optional rendered B site capture from --site-smoke")
     parser.add_argument("--position-orders-only", action="store_true", help="Run dedicated positioning regression with --site-smoke")
+    parser.add_argument("--completed-movement-only", action="store_true", help="Run completed movement hold regression with --site-smoke")
     parser.add_argument("--voice-port", type=int, default=8765)
     parser.add_argument("--voice-headless", action="store_true", help="Developer external-host fixture, no window")
     parser.add_argument("--voice-interpret-only", action="store_true", help="External fixture requires LLM interpretation with scripted goals")
@@ -83,8 +84,10 @@ def main():
     person3.add_argument("--person3-ref", help="Optional fetched git ref; read Person 3 belief files without changing a checkout")
     parser.add_argument("--person1-ref", help="Optional fetched git ref; test actual shared actor and baked room (requires Person 3 input)")
     args = parser.parse_args()
-    if args.position_orders_only and not args.site_smoke:
-        parser.error("--position-orders-only requires --site-smoke")
+    if (args.position_orders_only or args.completed_movement_only) and not args.site_smoke:
+        parser.error("Positioning regression selectors require --site-smoke")
+    if args.position_orders_only and args.completed_movement_only:
+        parser.error("Run positioning regression selectors separately")
     if args.hud_capture and not args.hud_smoke:
         parser.error("--hud-capture requires --hud-smoke")
     if args.lotus_capture and not args.lotus_smoke:
@@ -264,6 +267,8 @@ def main():
                 command = [godot, *([] if args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
                 if args.position_orders_only:
                     command.append("--position-orders-only")
+                if args.completed_movement_only:
+                    command.append("--completed-movement-only")
                 if args.hud_capture:
                     command.append("--hud-capture=" + str(args.hud_capture.resolve()))
                 if args.voice_smoke or args.lotus_smoke or args.site_smoke:

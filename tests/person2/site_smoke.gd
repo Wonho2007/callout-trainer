@@ -9,6 +9,11 @@ func expect(ok: bool, label: String) -> void:
 		printerr("FAIL: ", label)
 
 func run(scene: Node) -> void:
+	if OS.get_cmdline_user_args().has("--completed-movement-only"):
+		await _test_completed_movement(scene)
+		print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks, " scope=completed_movement")
+		get_tree().quit(1 if failed else 0)
+		return
 	if OS.get_cmdline_user_args().has("--position-orders-only"):
 		await _test_player_position(scene)
 		print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks, " scope=position_orders")
@@ -102,6 +107,45 @@ func run(scene: Node) -> void:
 	print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)
 
+func _test_completed_movement(scene: Node) -> void:
+	await _reset(scene)
+	var runtime: Node = scene.runtime
+	var bridge: Node = scene.voice_bridge
+	expect(bridge._requested_position("Let's push a link together.") == "a_link", "exact live push utterance grounds to persistent A Link position")
+	# Exercise the actual swing executor too, so synonyms are not the only fix.
+	var results: Array = []
+	runtime.comm_result.connect(func(result: Dictionary): results.append(result))
+	bridge._receive({"type": "proposal", "session": bridge.session, "id": "swing-a-link",
+		"transcript": "swing a link now", "result": "command", "proposal": {"kind": "command",
+		"payload": {"action": "swing_together", "target_id": "a_link", "timing": {"mode": "now"}}}})
+	var message: Dictionary = bridge.events[-1].message.duplicate(true)
+	expect(runtime.snapshot().player_goal.is_empty(), "command acceptance does not fabricate a completed position")
+	for _i in range(550):
+		await get_tree().physics_frame
+		if results.any(func(result: Dictionary): return result.status in ["completed", "failed", "expired"]): break
+	expect(results.any(func(result: Dictionary): return result.status == "completed"), "real swing reaches A Link and reports physical completion")
+	expect(runtime.snapshot().player_goal.get("target_id") == "a_link", "completed swing sets its destination as the persistent goal")
+	var p: Array = scene._scenario.motion_markers.a_link.position
+	var destination := Vector3(p[0], p[1], p[2])
+	var returned_to_pit: bool = false
+	for _i in range(660):
+		await get_tree().physics_frame
+		returned_to_pit = returned_to_pit or runtime.snapshot().plan.decision.get("target_id") == "b_pit"
+	expect(not returned_to_pit, "completed movement never falls back to the bomb during the following eleven seconds")
+	expect(scene.teammate.global_position.distance_to(destination) < 0.5, "teammate physically remains at A Link after command expiry")
+	bridge._receive({"type": "proposal", "session": bridge.session, "id": "new-heaven", "transcript": "play heaven with me", "result": "clarify"})
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.get("target_id") == "b_heaven", "new instruction supersedes the completed movement position")
+	runtime.submit_comm(message)
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.get("target_id") == "b_heaven", "cached duplicate completion cannot revive the older A Link order")
+	bridge._receive({"type": "proposal", "session": bridge.session, "id": "logged-push-a-link",
+		"transcript": "Let's push a link together.", "result": "command", "proposal": {"kind": "command",
+		"payload": {"action": "swing_together", "target_id": "a_link", "timing": {"mode": "now"}}}})
+	expect(bridge.events[-1].get("position_order") == "a_link", "exact live model proposal is normalized into a persistent push order")
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.get("target_id") == "a_link" and runtime.snapshot().active_command.is_empty(), "push instruction goes directly toward its requested zone without Pit staging")
+
 func _test_player_position(scene: Node) -> void:
 	await _reset(scene)
 	var runtime: Node = scene.runtime
@@ -189,8 +233,10 @@ func _test_box_jumps(scene: Node) -> void:
 	expect(jumping and on_box, "teammate physically jumps and lands on existing box_3")
 	expect(completed and scene.teammate.global_position.y > 1.9, "second physical jump reaches Upper and completes the command")
 	if not completed: print("BOX_JUMP_DIAGNOSTIC ", scene.teammate.global_position, " states=", states, " results=", results)
-	# After the completed player command, ordinary defensive autonomy returns
-	# to Pit. This exercises descending jump links without inventing a command.
+	# Hold the commanded elevation until the player explicitly requests Pit.
+	for _i in range(30): await get_tree().physics_frame
+	expect(scene.runtime.snapshot().player_goal.get("target_id") == "b_upper" and scene.teammate.global_position.y > 1.9, "completed Upper move holds elevation instead of automatically returning to spike")
+	scene.runtime.submit_position_order("b_pit")
 	var returned: bool = false
 	for _i in range(580):
 		if scene.teammate.is_on_floor() and scene.teammate.global_position.y < -2.8:

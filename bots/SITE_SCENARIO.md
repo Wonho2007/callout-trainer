@@ -71,11 +71,18 @@ than resuming spike coverage when the short action ends. All seven static site
 regions are supported. This holds the requested region; it does not track the
 player's live transform. Calls with multiple locations need clarification.
 
+"Let's push A Link together" is also a persistent movement order. A completed
+explicit swing now retains its physically reached route endpoint as the next
+position, so completing an action cannot silently restore spike coverage. Duplicate
+completion results cannot overwrite a newer player order. Swing preparation/cues
+still use the existing executor and do not invent completion before arrival.
+
 Positioning follows the same 18-tick delivery delay as other comms. Its delivered
 evidence persists until another positioning order, cancel, death or round end/reset;
 the old ten-second command/model expiry does not revoke the position. Unrelated
-enemy reports update beliefs without replacing it. Combat and temporary swing/flash
-actions still work, with the position resuming afterward. A new positioning order
+enemy reports update beliefs without replacing it. Combat and flash actions still
+work, with the position resuming afterward; a completed swing sets its new destination.
+A new positioning order
 cancels an existing cancellable action through normal executor rules. An unreachable
 position stops honestly instead of substituting spike coverage.
 
@@ -89,11 +96,15 @@ restore an obsolete goal. No hidden actor state enters policy inputs.
 The focused integration regression is separate to preserve the existing 45-second
 per-run timeout. It passes 24 checks, including real travel/holding in Heaven,
 delayed evidence, prepared-action replacement, same-tick ordering and reset.
-Existing site (46), TCP voice (35) and required bot (575) checks also pass in their
-documented source configurations. No new human microphone acceptance is claimed.
+The updated site suite passes 47 checks, and the required bot suite passes 575.
+The dedicated --completed-movement-only selector passes 10 checks reproducing the
+live A Link command, actual swing completion, holding after expiry and duplicate
+completion protection. The earlier 35-check TCP voice result predates the
+completed-movement fix. No new human microphone acceptance is claimed.
 
 ```powershell
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --site-smoke --position-orders-only --person3-ref 57f809d
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --site-smoke --completed-movement-only --person3-ref 57f809d
 ```
 
 Spawn heights follow the updated map: Pit -2.9m, Heaven/Upper 2.1m, A Link 0.6m.

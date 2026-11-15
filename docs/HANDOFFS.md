@@ -26,7 +26,11 @@ PR #4 was already merged before this branch; no current-main merge is claimed.
 
 Teammate positioning now persists: "play Heaven with me" navigates and holds Heaven
 until a new position/cancel or round/death reset. Enemy reports and short action
-expiry no longer restore spike coverage. The implementation stays in the primary
+expiry no longer restore spike coverage. A live follow-up found that "Let's push
+A Link together" still completed a swing then returned to Pit; push positioning
+and completed-swing destination retention now cover that path. Latest checks:
+575 required, 47 site, 24 positioning and 10 completed-movement checks pass.
+The implementation stays in the primary
 runtime/voice lane; the combat UI worktree remains separate. Current site guidance
 documents the focused --position-orders-only regression.
 

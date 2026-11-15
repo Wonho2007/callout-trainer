@@ -35,7 +35,7 @@ func _requested_position(transcript: String) -> String:
 	# catalog even if the swing/flash-only interpreter asks for clarification.
 	var words: String = transcript.to_lower().replace("_", " ").strip_edges()
 	var imperative := RegEx.new()
-	imperative.compile("^(please\\s+)?(can\\s+you\\s+)?(let's\\s+|lets\\s+)?(play|hold|stay|come|go|move|rotate|group|join|meet|take|watch)\\b")
+	imperative.compile("^(please\\s+)?(can\\s+you\\s+)?(let's\\s+|lets\\s+)?(play|hold|stay|come|go|move|rotate|group|join|meet|take|watch|push)\\b")
 	if imperative.search(words) == null or _requests_direct_flash(words) or _requests_swing_preparation(words):
 		return ""
 	# Do not steal multi-action utility/swing requests or enemy reports.
