@@ -24,6 +24,21 @@ var _overlay: Dictionary = {}
 var _world_min := Vector2(-10, -10)
 var _world_max := Vector2(10, 10)
 
+## Callout-region colors, matching the annotator's overlay guide
+## (annotations/fnc_prx_lotus_toronto2024_gf.md §2). Keyed by region id.
+const REGION_COLORS := {
+	"b_main":   Color(0.95, 0.95, 0.95),  # white
+	"b_cubby":  Color(0.95, 0.45, 0.80),  # pink
+	"b_heaven": Color(0.35, 0.90, 0.40),  # green
+	"b_upper":  Color(0.95, 0.88, 0.25),  # yellow
+	"b_pit":    Color(0.92, 0.28, 0.25),  # red
+	"c_link":   Color(0.62, 0.48, 0.92),  # purple
+	"a_link":   Color(0.25, 0.45, 0.90),  # blue
+}
+
+## Toggle the static callout-region overlay on the minimap.
+@export var show_regions: bool = true
+
 
 func _ready() -> void:
 	pass  # Overlay is refreshed by the owner (main) once builder/player are set.
@@ -66,7 +81,30 @@ func _draw() -> void:
 	if _overlay.is_empty():
 		return
 
-	# Cover, then walls (callout regions are not drawn on the live minimap).
+	# Static callout regions (annotation colors), drawn first so walls/cover sit on top.
+	if show_regions:
+		for r in _overlay.get("regions", []):
+			var rid := String(r.get("id", ""))
+			var col: Color = REGION_COLORS.get(rid, Color(0.6, 0.6, 0.6))
+			var top_left := _to_map(float(r["x"]) - float(r["w"]) * 0.5,
+				float(r["z"]) - float(r["d"]) * 0.5)
+			var bot_right := _to_map(float(r["x"]) + float(r["w"]) * 0.5,
+				float(r["z"]) + float(r["d"]) * 0.5)
+			var rect := Rect2(top_left, bot_right - top_left)
+			var fill := col
+			fill.a = 0.18
+			draw_rect(rect, fill, true)
+			draw_rect(rect, Color(col.r, col.g, col.b, 0.9), false, 1.5)
+			# Callout name near the region center.
+			var label := String(r.get("name", rid))
+			var center := _to_map(float(r["x"]), float(r["z"]))
+			var font := ThemeDB.fallback_font
+			var fsize := 10
+			var tw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
+			draw_string(font, center - Vector2(tw * 0.5, -3.0), label,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(col.r, col.g, col.b, 0.95))
+
+	# Cover, then walls (drawn over the region overlay).
 	for c in _overlay.get("cover", []):
 		_draw_world_rect(c, Color(0.9, 0.55, 0.3, 0.6))
 	for w in _overlay.get("walls", []):

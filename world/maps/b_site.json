@@ -39,17 +39,17 @@
     { "id": "divot_top_right", "center": [2.7, 0, 0.8], "radius": 1.0, "depth": 0.6 }
   ],
   "regions": [
-    { "id": "c_link",   "name": "C Link",   "center": [-3.875, 2, -5.875], "size": [3.75, 5, 5.75] },
-    { "id": "b_upper",  "name": "B Upper",  "center": [0, 2, -5.875],      "size": [4, 5, 5.75] },
-    { "id": "b_heaven", "name": "B Heaven", "center": [3.875, 2, -5.875],  "size": [3.75, 5, 5.75] },
-    { "id": "b_cubby",  "name": "B Cubby",  "center": [-3.875, 2, 1.5],    "size": [3.75, 5, 9] },
-    { "id": "b_pit",    "name": "B Pit",    "center": [0, 2, 1.5],         "size": [4, 5, 9] },
-    { "id": "a_link",   "name": "A Link",   "center": [3.875, 2, 1.5],     "size": [3.75, 5, 9] },
-    { "id": "b_main",   "name": "B Main",   "center": [0, 2, 9.375],       "size": [11.5, 5, 6.75] }
+    { "id": "c_link",   "name": "C Link",   "center": [-2.64, 2, -5.2],  "size": [6.21, 5, 7.1] },
+    { "id": "b_heaven", "name": "B Heaven", "center": [3.11, 2, -5.2],   "size": [5.29, 5, 7.1] },
+    { "id": "b_cubby",  "name": "B Cubby",  "center": [-3.56, 2, 2.11],  "size": [4.37, 5, 7.53] },
+    { "id": "b_upper",  "name": "B Upper",  "center": [0.69, 2, -0.04],  "size": [4.14, 5, 3.22] },
+    { "id": "a_link",   "name": "A Link",   "center": [4.25, 2, 2.11],   "size": [2.99, 5, 7.53] },
+    { "id": "b_pit",    "name": "B Pit",    "center": [0.69, 2, 3.72],   "size": [4.14, 5, 4.3] },
+    { "id": "b_main",   "name": "B Main",   "center": [0, 2, 9.31],      "size": [11.5, 5, 6.88] }
   ],
   "spawns": [
     { "id": "spawn_player", "role": "player", "position": [-4, 0, 11.5], "facing_deg": 90 },
     { "id": "spawn_enemy_1", "role": "enemy", "position": [-2, 0, -4], "facing_deg": 0 }
   ],
-  "spike": { "position": [0, 0, 1.5], "planted": true, "site_region": "b_pit" }
+  "spike": { "position": [0.69, 0, 3.72], "planted": true, "site_region": "b_pit" }
 }
