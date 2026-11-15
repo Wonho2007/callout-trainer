@@ -1,5 +1,9 @@
 # Current seven-zone B site scenario
 
+**Known blocker:** after `29ba6d7`, the user reports the flash is still not fully
+functional in play. The implementation below is not human-accepted; automated
+checks passing does not resolve that report. See the [current handoff](../docs/PERSON2_HANDOFF.md).
+
 ```powershell
 .\validation\run_voice_game.ps1
 ```

@@ -1,109 +1,106 @@
-# Prompt for a new Codex window
+# Prompt for the next AI window
 
-Copy the block below into a fresh Codex conversation. It intentionally points to the
-current handoff rather than duplicating the entire development history.
+Paste this into a fresh AI/Codex window with repository access:
 
 ```text
-Continue working on Callout Trainer as Person 2 in:
+Continue as Person 2 in:
 C:\Users\Isoto\Documents\GitHub\callout-trainer
+Branch: person-2/model-capability-spike
 Repository: https://github.com/Wonho2007/callout-trainer
 
-Read AGENTS.md, README.md, docs/PROJECT_DESCRIPTION.md,
-docs/PERSON2_HANDOFF.md, docs/DECISIONS.md, docs/TEAM.md and docs/CONTRACTS.md.
-Then read bots/SITE_SCENARIO.md and bots/VOICE_GAME.md for implementation details.
-Inspect git status, current branch/log and source before changing anything.
+Inspect git status and recent commits; preserve existing edits. Read AGENTS.md,
+README.md, docs/PROJECT_DESCRIPTION.md, docs/PERSON2_HANDOFF.md, docs/DECISIONS.md,
+docs/TEAM.md, docs/CONTRACTS.md, bots/SITE_SCENARIO.md and bots/VOICE_GAME.md.
+Use docs/PERSON2_HANDOFF.md as the single current handoff. Do not follow retired
+handoffs, restart completed setup, overwrite teammate work, reset/clean, blindly
+merge, or merge this branch into main.
 
-Current work branch is person-2/model-capability-spike. Bot checkpoint is 86a54aa;
-map branch merged at 513b2e9. Newer integration commits may follow. Previous checkpoints are
-156c581 (voice/game bridge) and 2a33eda (GPU/live mic). PR #4 is already merged.
-Do not reset/clean, switch to the obsolete person-2/bot-perception branch, blindly
-merge main, overwrite teammate changes or merge this branch into main.
+IMMEDIATE TASK: the user reports that the flash is STILL NOT FULLY FUNCTIONAL
+after 29ba6d7. The previous window was asked to commit/push and hand off. Reproduce
+the actual spoken-to-game failure and fix its cause. Automated passes are NOT
+human acceptance. Do not assume the bug is solved or guess the failing stage.
 
-The user's six-hour final-sprint reassignment takes priority over older plans.
-Person 1 left. We own this GPU PC's model/STT runtime and inherited world/spawning/
-engine work as well as the Person 2 bot/perception/scenario lane. Person 3 supplies
-non-GPU interpretation/glue, beliefs, logging/audits, annotation and demo support.
-The six hours was the sprint's starting budget; do not assume six hours remain now.
-Archived documents are history, not instructions.
+Required: "flash c link" turns the teammate toward C Link, checks visibility,
+and throws from its current spot if visible and within physical throw limits.
+Walk ONLY when the zone is occluded after turning; stop seeking a viewpoint and
+throw as soon as visibility opens. The last implementation provides one extra
+teammate flash per round, seven authored zone targets, world/smoke LOS checks,
+20m range, static sample points, on-cue preparation and cancellation before release.
+Those limits are diagnostic candidates, not an established explanation for the bug.
+This extra flash is a user-requested prototype addition, not recorded Omen inventory.
+There is NO teammate molly voice command; scripted enemy grenade/molly use is separate.
 
-Current product: first-person voice-only communication practice. Local Whisper
-small.en CUDA -> local Llama 3.1 8B interpretation -> localhost proposal -> Godot
-receipt tick -> delayed inbox -> beliefs/deterministic planner -> shared physics.
-The measured sprint scope is LLM INTERPRETS + DETERMINISTIC PLANNER DECIDES.
-Full model goal attempts missed current expiry and remain opt-in/unaccepted;
-do not claim they work, silently enable them or loosen checks to force a pass.
+Trace the latest ignored runs/voice-game-* logs locally: transcript, exact model
+prompt/raw output, bridge message, acceptance/readiness/execution, motion/LOS,
+flash inventory and projectile creation. Confirm a freshly launched disposable
+project is running. Key code:
+- bots/visible_flash_controller.gd, flash_controller.gd, motion_controller.gd,
+  command_executor.gd, teammate_runtime.gd
+- scenes/bots/voice_bridge.gd, site_playtest.gd
+- bots/voice_host.py, scenarios/site_coverage.json, utility/flash.gd
 
-Latest user rule: the scenario starts WHEN THE SPIKE IS PLANTED. Unknown enemies
-must not be guessed or spawned offscreen at t0. Materialize them only at their
-first known annotation positions: Chronicle/crashies in Heaven, kaajak in C Link,
-Boaster in B Main at +23s. Boaster's earlier remote smoke does not locate him.
-His first-localized death position is used for an explicitly labeled alive
-continuation; do not force the source kills or result. Keep unknown starts unknown.
+Project: a first-person voice communication practice game. Godot 4.4.1 stable,
+GDScript, Compatibility renderer. Local Whisper small.en CUDA transcribes speech;
+local Llama 3.1 8B interprets it; Godot stamps receipt, imposes 18 ticks of delivery
+delay, and deterministic bot planners/shared physics execute it. Selected scope is
+LLM INTERPRETS, DETERMINISTIC PLANNER DECIDES. -ModelGoals remains experimental
+and unaccepted after latency/validity failures. Do not enable it or relax expiry
+for passing tests. Models/environments are installed; no download/training needed.
 
-The default voice game now uses Person 3's seven-zone B site map from
-person-3/greybox-b-site at 76b8eaa, merged at 513b2e9 after preserving local work
-at 86a54aa. Main was fetched but still at 8712f7d; the map was on that teammate
-branch. Do not switch back to the custom Lotus approximation. Source geometry
-and zones are unchanged; world/site_builder.gd adapts plant/spawn metadata and
-scenarios/site_coverage.json supplies new bot anchors. Circular Pit uses radius
-and Upper wins their deliberate overlap. Player starts Heaven, ally/spike Pit;
-unknown enemies still arrive only at +23s. Metric placements remain authored.
+Default map: Person 3's seven-zone world/maps/b_site.json from 76b8eaa on
+person-3/greybox-b-site, merged at 513b2e9; integration 47846f8. Main was fetched
+but still at 8712f7d: the map was on that teammate branch. Do not revert to the old
+custom Lotus map. world/site_builder.gd preserves imported geometry/zones and
+adapts plant/spawn metadata; scenarios/site_coverage.json maps bot anchors.
+Circular Pit and Upper overlap use Upper precedence, matching the minimap.
 
-run_voice_game.ps1 defaults to this new map. -Lotus is a compatibility alias;
--LegacyRoom and -LegacyLotus explicitly select old profiles. V talks and B dashes.
-Annotated movement/utility baseline and evidence-driven deviations are implemented;
-exact agent kits/continuous trajectories remain approximate. The larger map has
-four seconds of physical utility staging grace; model/message expiry is unchanged.
-Flashed enemies cannot shoot, show a white head circle, and dead bots disappear.
-Player control and unforced kills/results remain required.
+Start at plant: human in Heaven, ally/spike in Pit. Unknown enemies have no actors
+or colliders before their first-known +23s positions: Chronicle/crashies Heaven,
+kaajak C Link, Boaster B Main. His earlier remote smoke does not locate him; his
+alive continuation at a recorded-death location is explicitly authored. Never force
+source kills/results or automate human movement. Bots follow annotated movement/
+utility beats until delivered calls, observed deviations or own damage cause changes.
+Exact kits, metric placements and continuous trajectories remain approximate.
 
-Models/policy get only copied delivered observations, own allowed state, local
-beliefs and static authored affordances. No hidden target transforms, scene refs,
-truth streams or player-only minimap/recon. Spawning/registration is privileged
-and injects no testimony. Preserve pending evidence and actual delivery clocks.
-Valid delivered player calls are accepted even if wrong; no credibility/history
-feature. The pinned belief behavior still needs alignment. Audit exact recorded
-model inputs/prompts/outputs; don't claim full fairness from a grep or doc check.
+Preserve other requested behavior:
+- "Get ready to swing" prepares and waits; a separate "swing"/"go" releases it.
+  Engine-side timing guard at 32b427c prevents an incorrect immediate model proposal.
+- Rifle damage: 40 body / 160 head for player and bots.
+- V push-to-talk; B dash; F restart; Esc releases mouse.
+- Flashed enemies cannot shoot and show a white head circle.
+- Dead enemy/teammate bots disappear and lose collision.
 
-Dependencies are deliberately split: Python Person 3 modules come read-only from
-b84cc93, while the running Godot scene pins belief 57f809d with the current planner's
-inert trust compatibility field. Person 3's newer field removal and the approved
-drop-trust-planner changes must be reviewed/tested TOGETHER. Don't just change the
-Person 3 ref and break the planner. Don't use the headless Python belief mirror's
-immediate future-tick application as a live simulation clock.
+Policy/model inputs must remain copied delivered observations, local beliefs,
+allowed own-state and static affordances. No live enemy Nodes/hidden transforms,
+truth scene-tree lookups or player-only minimap/recon. Privileged physical adapters
+may access geometry but must not leak hidden enemy state. Valid delivered player
+reports are accepted even when wrong; no credibility/history system. The pinned
+belief has a known full-acceptance/hedge gap; do not claim that fixed.
 
-Installed tools:
-- Python: %LOCALAPPDATA%\Programs\Python\Python312\python.exe
-- Voice Python: %USERPROFILE%\.cache\callout-voice-venv\Scripts\python.exe
-- Godot: %USERPROFILE%\.cache\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe
-- Ollama locally serving llama3.1:8b at http://127.0.0.1:11434
-Use exact Godot 4.4.1. Weights and environments are outside Git; don't redownload
-or train unnecessarily. Launchers recreate the read-only Person 3 snapshot if needed.
+Dependencies: shared/map source 76b8eaa; Godot belief 57f809d with the current
+planner's inert trust compatibility field; read-only Python Person 3 modules from
+b84cc93. Do not upgrade belief alone: paired belief/planner changes require review.
+Person 1 left; Person 2 owns this PC/runtime, bots, world/engine integration.
+Person 3 supplies non-GPU interpretation/beliefs/logging/annotation. Preserve their
+checkouts. The old six-hour sprint budget is historical, not a new deadline.
 
-Launch from PowerShell after closing any older voice-host console:
-cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
-.\validation\run_voice_game.ps1
-V talks, F restarts at plant, Esc releases the mouse. Running root
-project.godot directly is not the current voice-enabled scenario entry point.
+Launch after closing old game/voice-host windows:
+  .\validation\run_voice_game.ps1
+This defaults to the imported map; -Lotus is a compatibility alias. -LegacyRoom /
+-LegacyLotus explicitly select older profiles. Root project.godot is the authoring
+scaffold, not the integrated voice game. Installed paths and exact check commands
+are in the current handoff; use pinned Godot 4.4.1. Ollama is at 127.0.0.1:11434.
 
-Evidence already recorded: five standalone human mic calls semantically correct
-(one cue/queue spelling error); real-model typed engine report/delay/movement;
-575 default/cross-lane assertions; prior legacy 139 live-perception/53 scenario
-checks; seven Python authoring/voice-boundary tests. Current imported-map checks:
-23 functional / 24 rendered, capture inspected. Exact commands
-and scopes are in the current handoff. New human voice-to-current-site acceptance, export/
-offline acceptance, backup video and full-game fairness remain unconfirmed.
-Do not present historical totals or typed/rendered tests as fresh human results.
+Prior actual evidence: 36 synthetic current-map checks, 35 TCP voice checks and
+575 required bot assertions pass. One typed real-model "flash c link" returned
+throw_flash/c_link/now. Nevertheless, the user subsequently reported flash still
+broken. Earlier 24-check rendered map capture preceded the flash update. No fresh
+human flash acceptance, full-game fairness, offline/export acceptance or training
+benefit is established. Sandbox Godot may need approved execution outside the
+sandbox for Windows certificate-store access; never filter errors/extend timeouts.
 
-Continue with useful work, not another plan-only response:
-1. Verify the current spoken voice-to-current-site loop on this PC and record actual results.
-2. Coordinate/test paired belief/planner changes and full report acceptance.
-3. Human-check the implemented baseline/utility and deviation behavior, preserving first-known spawns,
-   physical feasibility, player control or evidence guards.
-4. Prioritize final safety/fairness, offline/export, backup video and rehearsal.
-Grading/debrief/counterfactual/evaluation remain deferred; don't build them first.
-
-Preserve existing work, keep changes reviewable, run relevant checks, update the
-single current handoff/component guides with honest results and push the current
-branch. Do not merge main or invent source facts, latency, benefits or completion.
+Fix the observed flash failure first, add a meaningful reproducing regression,
+run relevant checks, and update the current handoff with honest results/limits.
+Preserve the map and other work. Commit/push this branch; do not merge into main.
+Grading/debrief/evaluation remain deferred.
 ```

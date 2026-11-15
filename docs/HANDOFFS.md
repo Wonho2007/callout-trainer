@@ -1,6 +1,8 @@
 # Current integration status
 
-Updated 2026-11-15. This is a current index, not an append-only journal.
+Updated 2026-11-15. **Current blocker: user reports the flash still not fully
+functional after `29ba6d7`; reproduce/debug this first. Automated passes are not
+human acceptance.** This is a current index, not an append-only journal.
 
 | Work area | Implemented / evidence | Next or unresolved |
 |---|---|---|

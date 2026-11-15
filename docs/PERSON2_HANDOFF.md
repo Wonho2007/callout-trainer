@@ -1,6 +1,7 @@
 # Current Person 2 continuation handoff
 
-Updated 2026-11-15 after checkpoint **86a54aa** and teammate-map merge **513b2e9**. This replaces the old
+Updated 2026-11-15 after flash checkpoint **29ba6d7**. The user reports that the
+flash is still not fully functional; fixing it is the immediate continuation task. This replaces the old
 accumulated handoff. Read [project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
 and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not below.
 
@@ -24,7 +25,36 @@ Person 3 supplies non-GPU components/support. The six hours was the starting bud
 not a fresh timer now. Latest user rule: plant is t0; spawn unknown enemies only at
 their first known annotation positions.
 
-## What works now
+## Current blocker: flash still fails in human play
+
+**The user explicitly reported that the flash is still not fully functional after
+29ba6d7. Do not call it fixed or accepted because automated tests pass.** The final
+request in this window is to commit/push and hand off, not continue implementing.
+The next window should reproduce and fix the real spoken-to-physical flash flow.
+
+Required behavior: ?flash c link? turns the teammate toward C Link, throws from
+its present location if it can see the zone within physical throw limits, and walks
+only if the zone is occluded after turning. Stop seeking a viewpoint and throw as
+soon as visibility opens. ?Get ready to swing? must prepare/wait; a later ?swing?
+releases it. There is no spoken teammate molly command; do not describe scripted
+enemy grenade/molly use as one.
+
+Inspect the latest ignored `runs/voice-game-*` logs locally: game/game-errors,
+transcript, actual model prompt/output, submitted normalized message, command
+acceptance/readiness/execution/feedback, flash count and projectile creation. Check
+that the user is running the fresh disposable project from the current launcher.
+Follow the actual failing stage instead of assuming a cause. Potential constraints
+to distinguish from bugs: one flash per round, 20m range, smoke/world LOS, temporary
+blindness, ten-second command expiry, authored region sample points and fallback
+navigation. These are diagnostic candidates, not established explanations.
+
+Relevant changes: `29ba6d7` visibility-first flash, `32b427c` swing preparation/cue,
+`47846f8` current map integration. Focus on `bots/visible_flash_controller.gd`,
+`flash_controller.gd`, `motion_controller.gd`, `command_executor.gd`,
+`teammate_runtime.gd`, `scenes/bots/voice_bridge.gd`, `bots/voice_host.py`,
+`scenarios/site_coverage.json`, and the shared `utility/flash.gd`.
+
+## Implementation present (acceptance limits below)
 
 User-requested flash behavior: current site supplies one extra teammate flash per
 round and targets for all seven zones. `bots/visible_flash_controller.gd` turns
@@ -166,7 +196,8 @@ unaccepted full-goal experiment, not an ordinary passing regression. Keep its fa
 
 ## Actual evidence and limits
 
-- Flash update: 36 current-map checks and 575 required bot assertions pass. The
+- Flash update: 36 synthetic current-map checks and 575 required bot assertions
+  pass, but the user subsequently reported the flash still not fully functional. The
   unchanged local Llama interpreter returned `throw_flash/c_link/now` for a typed
   "flash c link" sample. No new human microphone acceptance is claimed. Controller
   uses only own pose/static zone affordances/world-smoke occlusion, not enemy truth.
@@ -221,9 +252,11 @@ waits real time. A guarded test health pool is fixture-only and resets to normal
 
 ## Next work, in order
 
-1. Inspect current code/status and any new Person 3 updates without overwriting work.
-   Validate the current spoken voice-to-new-site path on the actual PC and record results.
-   Do not redo the completed model download/standalone five-call test unless needed.
+1. Reproduce the user-reported nonfunctional flash on the current map and trace
+   voice/model -> bridge -> executor -> motion/LOS -> shared projectile. Fix the
+   observed failure and add a regression that captures it. Preserve existing edits.
+   Do not redo completed model downloads/setup or accept synthetic tests as a
+   substitute for the reported human failure.
 2. Coordinate the paired belief/planner schema removal and full player-report acceptance;
    test both consumers. Preserve valid uncertainty and actual delivery clocks.
 3. Human-check the implemented annotation baseline and reactive transitions,
