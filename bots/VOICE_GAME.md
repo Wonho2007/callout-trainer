@@ -31,7 +31,11 @@ Final swing/go/cancel interpretation uses the existing deterministic cue path.
 Early cues, expired commands, invalid targets and stale round sessions retain their
 existing guards. Preparation timing adjustments are recorded in the actual submitted
 event as `timing_guard: preparation_waits_for_cue`; raw model logs remain unchanged.
-Flash routes exist only in the legacy room configuration, not the current B site.
+The current B site supports all seven flash targets with one extra teammate flash
+per round. "Flash C Link" looks first and throws from the current position when
+visible and within range; only an occluded zone permits repositioning. "Flash C Link
+on my cue" prepares and waits. See [site details](SITE_SCENARIO.md). There is no
+player-issued molly command; scripted enemy grenade use is separate.
 
 **Selected sprint scope:** local LLM interpretation with the deterministic knowledge
 planner as the primary goal selector. The sprint handoff expressly permits this

@@ -135,7 +135,8 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 			_feedback.append({"command_id": command_id, "phase": "completed" if released.ok else "failed"})
 			return _status("released" if released.ok else "failed", released.reason)
 		if intent.op == "stage" and _flash != null and _flash.targets().has(intent.target_id):
-			_start(command_id, "stage", intent.target_id, [_flash.targets()[intent.target_id].stage_marker_id], null)
+			var flash_stage: String = "visible_flash_stage" if _flash.has_method("uses_visibility") and _flash.uses_visibility(intent.target_id) else "stage"
+			_start(command_id, flash_stage, intent.target_id, [_flash.targets()[intent.target_id].stage_marker_id], null)
 			continue
 		if not _entries.has(intent.target_id):
 			_halt()
@@ -194,6 +195,8 @@ func _start(command: String, op: String, target: String, route: Array, watch: Va
 func _advance() -> Dictionary:
 	if not _navigation.navigation_is_ready:
 		return _physical_failure("navigation_not_ready")
+	if _task.op == "visible_flash_stage":
+		return _advance_visible_flash()
 	if _task.done:
 		if not _at_marker(_task.route[-1]):
 			if _task.op == "stage":
@@ -272,6 +275,45 @@ func _advance() -> Dictionary:
 	else:
 		_face(next)
 	return _status("moving", "following_navigation")
+
+func _advance_visible_flash() -> Dictionary:
+	var ready: Dictionary = _flash.prepare_visible(_task.target_id)
+	if ready.state == "failed":
+		return _physical_failure(ready.reason)
+	if ready.state in ["turning", "paused"]:
+		_stop_actor()
+		_progress_tick = _clock
+		return _status(ready.state, ready.reason)
+	if ready.state == "ready":
+		_stop_actor()
+		if not _task.done:
+			_task.done = true
+			_feedback.append({"command_id": _task.command_id, "phase": "staged"})
+		return _status("holding", "flash_ready")
+	# A completed turn and blocked static zone are the only authorization to
+	# walk. Recheck every tick and stop at the first visible launch position.
+	var destination: Vector3 = _vec(_markers[_task.route[0]].position)
+	if _path.is_empty():
+		_path = _navigation.query_path(_actor.global_position, destination)
+		_path_index = 0
+		if _path.is_empty() or _path[0].distance_to(_actor.global_position) > 0.75 or _path[-1].distance_to(destination) > 0.75:
+			return _physical_failure("no_reachable_flash_viewpoint")
+	var previous: int = _path_index
+	while _path_index < _path.size() and _at_point(_path[_path_index]):
+		_path_index += 1
+	if previous != _path_index:
+		_progress_distance = INF
+		_progress_tick = _clock
+	if _path_index >= _path.size():
+		return _physical_failure("flash_zone_still_occluded")
+	var remaining: float = _horizontal(_actor.global_position, _path[_path_index])
+	if remaining < _progress_distance - 0.1:
+		_progress_distance = remaining
+		_progress_tick = _clock
+	elif _clock - _progress_tick >= _stuck_ticks:
+		return _physical_failure("stuck")
+	_actor.move_toward_point(_path[_path_index])
+	return _status("moving", "seeking_visible_flash_position")
 
 func _watch() -> void:
 	if _task.watch_region_id is String:

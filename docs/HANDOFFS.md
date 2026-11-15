@@ -27,11 +27,17 @@ the integration runner overlays the shared weapon script onto its pinned source.
 
 ## Evidence to preserve
 
+Current teammate flash: one extra charge per round, all seven region targets; turn,
+check static world/smoke LOS, throw in place if visible/in range, otherwise seek a
+viewpoint and stop once visible. Cancellation before release preserves inventory.
+There is no teammate molly voice command. This is a user-requested kit extension.
+
 Preparation commands now enforce `on_cue` at the engine bridge: "get ready to swing"
 waits for a separate "swing"/"go". A real TCP 35-check regression verifies a wrong
 model `now` proposal cannot release early; delivery/readiness/expiry stay intact.
 
-Current imported map: 23 functional / 24 rendered checks pass, capture inspected;
+Current imported map: 36 functional checks pass with visibility-first flash commands;
+earlier 24 rendered map checks passed and capture was inspected before that update;
 voice launcher syntax passes. Main was already included at `8712f7d`; new map
 arrived from `person-3/greybox-b-site` at `76b8eaa`. Existing bot/voice/damage changes
 were checkpointed before the merge. Source geometry/zones remain unchanged.

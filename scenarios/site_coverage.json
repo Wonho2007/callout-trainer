@@ -1,7 +1,7 @@
 {
   "schema_version": "person2.coverage.v1",
   "synthetic": true,
-  "note": "Plant-hold integration on Person 3 greybox 76b8eaa. Geometry and seven region shapes are imported unchanged. Scenario anchors, placements and trajectories are authored, not VOD metric coordinates.",
+  "note": "Plant-hold integration on Person 3 greybox 76b8eaa. Geometry and seven region shapes are imported unchanged. Scenario anchors, placements and trajectories are authored, not VOD metric coordinates. User-requested extra teammate flash: one per round, visibility-first throws at authored zone points; not part of recorded Omen utility.",
   "map_id": "b_site_plant",
   "perception_seed": 73,
   "perception": {
@@ -44,8 +44,368 @@
     "facing_deg": -90
   },
   "player_entry_sensing": {},
-  "flash_charges": 0,
-  "flash_targets": {},
+  "flash_charges": 1,
+  "flash_targets": {
+    "flash_c_link": {
+      "stage_marker_id": "c_link",
+      "target_marker_id": "c_link",
+      "aim_points": [
+        [
+          -12.19,
+          1.6,
+          -15.6
+        ],
+        [
+          -12.19,
+          1.6,
+          -17.556
+        ],
+        [
+          -12.19,
+          1.6,
+          -13.643
+        ],
+        [
+          -21.852,
+          1.6,
+          -15.6
+        ],
+        [
+          -21.852,
+          1.6,
+          -17.556
+        ],
+        [
+          -21.852,
+          1.6,
+          -13.643
+        ],
+        [
+          -2.528,
+          1.6,
+          -15.6
+        ],
+        [
+          -2.528,
+          1.6,
+          -17.556
+        ],
+        [
+          -2.528,
+          1.6,
+          -13.643
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_b_heaven": {
+      "stage_marker_id": "b_heaven",
+      "target_marker_id": "b_heaven",
+      "aim_points": [
+        [
+          14.0,
+          1.6,
+          -15.61
+        ],
+        [
+          14.0,
+          1.6,
+          -18.203
+        ],
+        [
+          14.0,
+          1.6,
+          -13.016
+        ],
+        [
+          7.87,
+          1.6,
+          -15.61
+        ],
+        [
+          7.87,
+          1.6,
+          -18.203
+        ],
+        [
+          7.87,
+          1.6,
+          -13.016
+        ],
+        [
+          20.13,
+          1.6,
+          -15.61
+        ],
+        [
+          20.13,
+          1.6,
+          -18.203
+        ],
+        [
+          20.13,
+          1.6,
+          -13.016
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_b_upper": {
+      "stage_marker_id": "b_upper",
+      "target_marker_id": "b_upper",
+      "aim_points": [
+        [
+          7.79,
+          1.6,
+          -7.22
+        ],
+        [
+          7.79,
+          1.6,
+          -8.195
+        ],
+        [
+          7.79,
+          1.6,
+          -6.245
+        ],
+        [
+          4.686,
+          1.6,
+          -7.22
+        ],
+        [
+          4.686,
+          1.6,
+          -8.195
+        ],
+        [
+          4.686,
+          1.6,
+          -6.245
+        ],
+        [
+          10.894,
+          1.6,
+          -7.22
+        ],
+        [
+          10.894,
+          1.6,
+          -8.195
+        ],
+        [
+          10.894,
+          1.6,
+          -6.245
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_b_pit": {
+      "stage_marker_id": "b_pit",
+      "target_marker_id": "b_pit",
+      "aim_points": [
+        [
+          2.77,
+          1.6,
+          -1.83
+        ],
+        [
+          2.77,
+          1.6,
+          -5.73
+        ],
+        [
+          2.77,
+          1.6,
+          2.07
+        ],
+        [
+          -1.13,
+          1.6,
+          -1.83
+        ],
+        [
+          -1.13,
+          1.6,
+          -5.73
+        ],
+        [
+          -1.13,
+          1.6,
+          2.07
+        ],
+        [
+          6.67,
+          1.6,
+          -1.83
+        ],
+        [
+          6.67,
+          1.6,
+          2.07
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_a_link": {
+      "stage_marker_id": "a_link",
+      "target_marker_id": "a_link",
+      "aim_points": [
+        [
+          21.41,
+          1.6,
+          0.21
+        ],
+        [
+          21.41,
+          1.6,
+          -3.674
+        ],
+        [
+          21.41,
+          1.6,
+          4.094
+        ],
+        [
+          17.529,
+          1.6,
+          0.21
+        ],
+        [
+          17.529,
+          1.6,
+          -3.674
+        ],
+        [
+          17.529,
+          1.6,
+          4.094
+        ],
+        [
+          25.291,
+          1.6,
+          0.21
+        ],
+        [
+          25.291,
+          1.6,
+          -3.674
+        ],
+        [
+          25.291,
+          1.6,
+          4.094
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_b_cubby": {
+      "stage_marker_id": "b_cubby",
+      "target_marker_id": "b_cubby",
+      "aim_points": [
+        [
+          -10.26,
+          1.6,
+          -1.28
+        ],
+        [
+          -10.26,
+          1.6,
+          -6.123
+        ],
+        [
+          -10.26,
+          1.6,
+          3.562
+        ],
+        [
+          -11.54,
+          1.6,
+          -1.28
+        ],
+        [
+          -11.54,
+          1.6,
+          -6.123
+        ],
+        [
+          -11.54,
+          1.6,
+          3.562
+        ],
+        [
+          -8.979,
+          1.6,
+          -1.28
+        ],
+        [
+          -8.979,
+          1.6,
+          -6.123
+        ],
+        [
+          -8.979,
+          1.6,
+          3.562
+        ]
+      ],
+      "max_range_m": 20.0
+    },
+    "flash_b_main": {
+      "stage_marker_id": "b_main",
+      "target_marker_id": "b_main",
+      "aim_points": [
+        [
+          -5.77,
+          1.6,
+          15.03
+        ],
+        [
+          -5.77,
+          1.6,
+          11.793
+        ],
+        [
+          -5.77,
+          1.6,
+          18.267
+        ],
+        [
+          -15.751,
+          1.6,
+          15.03
+        ],
+        [
+          -15.751,
+          1.6,
+          11.793
+        ],
+        [
+          -15.751,
+          1.6,
+          18.267
+        ],
+        [
+          4.211,
+          1.6,
+          15.03
+        ],
+        [
+          4.211,
+          1.6,
+          11.793
+        ],
+        [
+          4.211,
+          1.6,
+          18.267
+        ]
+      ],
+      "max_range_m": 20.0
+    }
+  },
   "planner": {
     "regions": [
       "b_main",
@@ -514,7 +874,15 @@
       "c_link": "c_link",
       "a_link": "a_link"
     },
-    "throw_flash": {}
+    "throw_flash": {
+      "b_main": "flash_b_main",
+      "b_cubby": "flash_b_cubby",
+      "b_heaven": "flash_b_heaven",
+      "b_upper": "flash_b_upper",
+      "b_pit": "flash_b_pit",
+      "c_link": "flash_c_link",
+      "a_link": "flash_a_link"
+    }
   },
   "enemy_ids": [
     "chronicle",

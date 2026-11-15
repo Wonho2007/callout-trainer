@@ -85,5 +85,85 @@ func run(scene: Node) -> void:
 		await get_tree().physics_frame
 	expect(scene.enemies.is_empty() and scene.teammate.is_alive and scene.teammate.visible and scene.utility.active_smokes().is_empty(), "restart restores clean new-map baseline and removes old effects")
 	expect(scene.runtime._sensing._region(scene._player.global_position + Vector3.UP) == "b_heaven", "restart preserves human's annotated Heaven start")
+	await _test_flash_commands(scene)
 	print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)
+
+func _flash_request(scene: Node, id: String, transcript: String) -> void:
+	# Deliberately model the wrong action/timing: explicit flash speech must
+	# still map to a flash, not an accidental swing toward the target region.
+	scene.voice_bridge._receive({"type": "proposal", "session": scene.voice_bridge.session,
+		"id": id, "result": "command", "transcript": transcript, "proposal": {"kind": "command",
+		"payload": {"action": "swing_together", "target_id": "c_link", "timing": {"mode": "follow_player"}}}})
+
+func _reset(scene: Node) -> void:
+	scene._restart()
+	while scene._restart_pending:
+		await get_tree().physics_frame
+	await get_tree().physics_frame
+
+func _test_flash_commands(scene: Node) -> void:
+	var releases: Array = []
+	scene.utility.deployed.connect(func(ability: String, _owner: String, point: Vector3):
+		if ability == "flash": releases.append(point))
+	expect(scene.runtime.snapshot().flash_count == 1, "teammate starts with the user-requested one flash per round")
+	var start: Vector3 = scene.teammate.global_position
+	var initial_yaw: float = scene.teammate.rotation.y
+	_flash_request(scene, "visible-c-link", "flash c link")
+	var movement: float = 0
+	for _i in range(150):
+		movement = maxf(movement, Vector2(scene.teammate.global_position.x - start.x, scene.teammate.global_position.z - start.z).length())
+		if not releases.is_empty(): break
+		await get_tree().physics_frame
+	expect(scene.voice_bridge.events[-1].message.payload.action == "throw_flash", "flash utterance cannot become a swing command")
+	expect(releases.size() == 1 and scene.runtime.snapshot().flash_count == 0, "flash C Link physically throws one shared projectile and consumes one charge")
+	expect(movement < 0.15, "visible part of C Link is flashed without walking toward its center")
+	expect(absf(angle_difference(initial_yaw, scene.teammate.rotation.y)) > deg_to_rad(20), "teammate actually turns toward the flash destination")
+	_flash_request(scene, "depleted-c-link", "flash c link")
+	for _i in range(25): await get_tree().physics_frame
+	expect(releases.size() == 1, "depleted flash inventory cannot create another projectile")
+	await _reset(scene)
+	releases.clear()
+	# An actual active smoke blocks all zone rays while the bot is inside it.
+	# Moving is permitted only after the turn confirms that occlusion.
+	var smoke: Node3D = scene.utility.throw_smoke(scene.teammate.global_position)
+	while not smoke.is_active: await get_tree().physics_frame
+	start = scene.teammate.global_position
+	_flash_request(scene, "occluded-c-link", "flash c link")
+	var walked: bool = false
+	var faced_first: bool = false
+	var p: Array = scene._scenario.motion_markers.c_link.position
+	var center := Vector3(p[0], p[1], p[2])
+	for _i in range(150):
+		var displacement: float = Vector2(scene.teammate.global_position.x - start.x, scene.teammate.global_position.z - start.z).length()
+		if displacement > 0.05 and not walked:
+			walked = true
+			var heading: Vector3 = center - scene.teammate.global_position
+			faced_first = absf(angle_difference(scene.teammate.rotation.y, atan2(-heading.x, -heading.z))) < deg_to_rad(5)
+		if displacement > 0.8: break
+		await get_tree().physics_frame
+	expect(walked and faced_first, "occluded C Link is approached only after turning toward it")
+	expect(releases.is_empty() and scene.runtime.snapshot().flash_count == 1, "blocked zone is not flashed blindly and inventory is retained")
+	scene.voice_bridge._receive({"type": "cancel", "session": scene.voice_bridge.session, "id": "cancel-blocked-flash", "transcript": "cancel"})
+	for _i in range(25): await get_tree().physics_frame
+	expect(scene.runtime.snapshot().active_command.is_empty() and releases.is_empty() and scene.runtime.snapshot().flash_count == 1, "blocked flash can be cancelled without consuming a charge")
+	_flash_request(scene, "retry-occluded-c-link", "flash c link")
+	for _i in range(25): await get_tree().physics_frame
+	smoke.is_active = false
+	for _i in range(150):
+		if not releases.is_empty(): break
+		await get_tree().physics_frame
+	expect(releases.size() == 1, "pending flash releases when a zone point becomes visible")
+	expect(scene.teammate.global_position.distance_to(center) > 5, "bot stops seeking visibility and throws before walking all the way into C Link")
+	await _reset(scene)
+	releases.clear()
+	_flash_request(scene, "cue-c-link", "flash c link on my cue")
+	for _i in range(150):
+		if scene.runtime.snapshot().active_command.get("phase") == "ready": break
+		await get_tree().physics_frame
+	expect(scene.runtime.snapshot().active_command.get("phase") == "ready" and releases.is_empty(), "on-cue flash prepares in place and waits")
+	scene.voice_bridge._receive({"type": "cue", "session": scene.voice_bridge.session, "id": "flash-go", "transcript": "go"})
+	for _i in range(65):
+		if not releases.is_empty(): break
+		await get_tree().physics_frame
+	expect(releases.size() == 1, "separate cue releases a prepared visibility-first flash")

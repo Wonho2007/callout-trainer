@@ -25,6 +25,7 @@ FILES = [
     "tests/person2/motion_actor.gd", "tests/person2/motion_navigation.gd",
     "bots/intent_gate.gd", "tests/person2/intent_gate_tests.gd",
     "bots/flash_controller.gd",
+    "bots/visible_flash_controller.gd",
     "tests/person2/flash_tests.gd",
     "bots/combat_policy.gd", "bots/combat_controller.gd",
     "tests/person2/combat_tests.gd",

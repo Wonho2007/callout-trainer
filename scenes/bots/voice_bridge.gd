@@ -25,6 +25,11 @@ func configure(owner_scene: Node, port: int = 8765) -> bool:
 	scene = owner_scene
 	return server.listen(port, "127.0.0.1") == OK
 
+func _requests_direct_flash(transcript: String) -> bool:
+	var flash := RegEx.new()
+	flash.compile("^(please\\s+)?(can\\s+you\\s+)?(flash|throw\\s+(a\\s+)?flash)\\b")
+	return flash.search(transcript.strip_edges().to_lower()) != null
+
 func attach(bot_runtime: Node) -> void:
 	runtime = bot_runtime
 	session = str(Time.get_ticks_usec())
@@ -141,6 +146,9 @@ func _receive(packet: Dictionary) -> void:
 		message["kind"] = proposal.kind
 		message["payload"] = proposal.payload.duplicate(true)
 		if proposal.kind == "command":
+			if _requests_direct_flash(str(packet.get("transcript", ""))):
+				message.payload["action"] = "throw_flash"
+				message.payload["timing"] = {"mode": "on_cue" if _requests_swing_preparation(str(packet.transcript)) else "now"}
 			if message.payload.get("action") == "swing_together" and _requests_swing_preparation(str(packet.get("transcript", ""))):
 				message.payload["timing"] = {"mode": "on_cue"}
 				preparation_guard = true

@@ -6,6 +6,7 @@ const Planner = preload("res://bots/knowledge_planner.gd")
 const Motion = preload("res://bots/motion_controller.gd")
 const Gate = preload("res://bots/intent_gate.gd")
 const FlashController = preload("res://bots/flash_controller.gd")
+const VisibleFlashController = preload("res://bots/visible_flash_controller.gd")
 const CombatPolicy = preload("res://bots/combat_policy.gd")
 const CombatController = preload("res://bots/combat_controller.gd")
 signal policy_context_ready(context: Dictionary)
@@ -56,8 +57,10 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 	_markers = markers.duplicate(true)
 	_entries = entries.duplicate(true)
 	var schema: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://schemas/comms_v1.schema.json"))
-	_flash = FlashController.new(actor, utility, flash_targets, markers, flash_charges)
-	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": _flash.targets().keys(), "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
+	var visible_flashes: bool = flash_targets.values().any(func(target: Variant): return target is Dictionary and target.has("aim_points"))
+	_flash = VisibleFlashController.new(actor, utility, flash_targets, markers, flash_charges) if visible_flashes else FlashController.new(actor, utility, flash_targets, markers, flash_charges)
+	var visibility_flashes: Array = _flash.targets().keys() if visible_flashes else []
+	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": _flash.targets().keys(), "visibility_flashes": visibility_flashes, "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
 	_planner = Planner.new(bot_id, configuration)
 	_motion = Motion.new(bot_id, actor, navigation, markers, entries)
 	_motion.attach_flash(_flash)
@@ -200,7 +203,7 @@ func _physics_process(_delta: float) -> void:
 		if reachable:
 			reachable_entries.append(id)
 	for id in _flash.targets():
-		if _flash.targets()[id].stage_marker_id in own.reachable_marker_ids:
+		if (_flash.has_method("uses_visibility") and _flash.uses_visibility(id)) or _flash.targets()[id].stage_marker_id in own.reachable_marker_ids:
 			reachable_entries.append(id)
 	var output: Dictionary = _executor.step(_tick, {"alive": _actor.is_alive,
 		"flash_count": _flash.remaining(), "reachable_target_ids": reachable_entries}, _motion.take_feedback())

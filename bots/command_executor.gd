@@ -157,7 +157,7 @@ func _accept(msg: Dictionary, state: Dictionary, evidence: Array) -> void:
 	_active = {"message": msg.duplicate(true), "phase": "accepted", "committed": false,
 		"started_tick": -1, "ready_tick": -1, "evidence_ids": evidence.duplicate()}
 	_result(msg.message_id, "accepted", "ok", evidence)
-	if msg.payload.action == "throw_flash" and msg.payload.timing.mode == "now":
+	if msg.payload.action == "throw_flash" and msg.payload.timing.mode == "now" and msg.payload.target_id not in _catalog.get("visibility_flashes", []):
 		_start(state)
 	else:
 		_intent("stage")

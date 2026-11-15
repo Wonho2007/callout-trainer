@@ -26,6 +26,16 @@ their first known annotation positions.
 
 ## What works now
 
+User-requested flash behavior: current site supplies one extra teammate flash per
+round and targets for all seven zones. `bots/visible_flash_controller.gd` turns
+first, checks static zone-point world/smoke LOS, and throws from the current spot
+when visible/in range. Only occlusion permits movement, which stops at the first
+visible throw point. Immediate flashes stage physically before commit; on-cue
+flashes wait for release; cancelling during visibility seeking retains the charge.
+The bridge preserves an explicit flash action instead of accepting a mistaken swing.
+No spoken teammate molly command exists. This extra flash is an authored user-requested
+extension, not recorded Omen inventory. Shared comms schema is unchanged.
+
 User-requested rifle tuning: 40 body damage, 160 head damage (4x multiplier),
 shared by player and bots. The integration runner overlays local `weapons/weapon.gd`
 so the pinned shared-source snapshot uses these values too.
@@ -156,6 +166,11 @@ unaccepted full-goal experiment, not an ordinary passing regression. Keep its fa
 
 ## Actual evidence and limits
 
+- Flash update: 36 current-map checks and 575 required bot assertions pass. The
+  unchanged local Llama interpreter returned `throw_flash/c_link/now` for a typed
+  "flash c link" sample. No new human microphone acceptance is claimed. Controller
+  uses only own pose/static zone affordances/world-smoke occlusion, not enemy truth.
+
 - Preparation/cue fix: real TCP voice regression passes **35 checks** using shared
   source `8712f7d` / belief `57f809d`. A deliberately incorrect `now` proposal for
   "get ready to swing" becomes `on_cue`, physically stages, waits 60 ticks, and
@@ -163,8 +178,9 @@ unaccepted full-goal experiment, not an ordinary passing regression. Keep its fa
   explicit "swing now" detection are checked. This is a synthetic socket test,
   not a fresh human/model speech acceptance claim. Same bridge serves current map.
 
-- Imported-map integration: **23 functional checks** pass on `76b8eaa` / belief
-  `57f809d`; **24 rendered checks** pass including screenshot save. Capture inspected.
+- Current imported-map integration: **36 functional checks** pass on `76b8eaa` / belief
+  `57f809d`, including visibility-first flashes, cancellation, inventory and cues.
+  The earlier **24 rendered checks** preceded the flash update; capture inspected.
   Source walls/zones, seven navigation anchors, circular Pit/Upper precedence,
   real staged smoke, first-known arrivals, flash/no-fire/head circle, death/reset pass.
   Required bot regression also passes **575** with shared source **76b8eaa** and
