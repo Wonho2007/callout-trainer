@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://cm4in00000001"]
+[gd_scene load_steps=5 format=3 uid="uid://cm4in00000001"]
 
 [ext_resource type="Script" uid="uid://dfec0kcp4d87e" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" uid="uid://cwwxwe76bs0qx" path="res://world/sandbox_builder.gd" id="2"]
 [ext_resource type="Script" uid="uid://ogm6vrlqe11l" path="res://utility/utility_system.gd" id="3"]
+[ext_resource type="Script" uid="uid://c21bk8knme58h" path="res://ui/minimap.gd" id="4"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1")
@@ -22,6 +23,13 @@ anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
+[node name="BlindOverlay" type="ColorRect" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
 [node name="SmokeOverlay" type="ColorRect" parent="HUD"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,7 +42,7 @@ offset_left = 12.0
 offset_top = 12.0
 offset_right = 900.0
 offset_bottom = 40.0
-text = "WASD | LMB fire | R reload | Q smoke | E flash | X molly | Hold C defuse | F restart | Esc mouse"
+text = "WASD | LMB fire | V dash | R reload | Q smoke | E flash | G wave | X molly | Hold C defuse | F restart | Esc mouse"
 
 [node name="Round" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -80,3 +88,16 @@ offset_top = -32.0
 offset_right = 600.0
 offset_bottom = -12.0
 text = "Synthetic greybox prototype. Not affiliated with Riot Games."
+
+[node name="Minimap" type="Control" parent="HUD"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -212.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 212.0
+grow_horizontal = 0
+script = ExtResource("4")

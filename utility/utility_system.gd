@@ -10,6 +10,7 @@ class_name UtilitySystem
 const SmokeScript := preload("res://utility/smoke.gd")
 const FlashScript := preload("res://utility/flash.gd")
 const MollyScript := preload("res://utility/molly.gd")
+const BlindWaveScript := preload("res://utility/blind_wave.gd")
 
 ## Emitted when utility is deployed, for the privileged recorder/grader (not a
 ## policy input). Carries the ability id, thrower id and world position.
@@ -21,6 +22,7 @@ var _defs: Dictionary = {}
 var _smokes: Array[Smoke] = []
 var _flashes: Array[Flash] = []
 var _mollies: Array[Molly] = []
+var _blind_waves: Array[BlindWave] = []
 
 
 func _ready() -> void:
@@ -106,6 +108,26 @@ func throw_molly(from: Vector3, velocity: Vector3) -> Molly:
 	molly.expired.connect(func(): _mollies.erase(molly))
 	molly.ignited.connect(func(pos): deployed.emit("molly", "player", pos))
 	return molly
+
+
+## Launch a blind wave from `from` travelling along horizontal `direction`.
+## Returns the BlindWave, or null if undefined.
+func throw_blind_wave(from: Vector3, direction: Vector3) -> BlindWave:
+	if not _defs.has("blind_wave"):
+		return null
+	var wave: BlindWave = BlindWaveScript.new()
+	wave.setup(_defs["blind_wave"])
+	add_child(wave)
+	wave.launch(from, direction)
+	_blind_waves.append(wave)
+	wave.expired.connect(func(): _blind_waves.erase(wave))
+	wave.detonated.connect(func(pos): deployed.emit("blind_wave", "player", pos))
+	return wave
+
+
+## Live blind waves, for the player/perception to query on detonation.
+func active_blind_waves() -> Array[BlindWave]:
+	return _blind_waves
 
 
 ## True if any active smoke blocks the straight segment a -> b. Perception and

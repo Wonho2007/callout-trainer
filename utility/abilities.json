@@ -19,6 +19,16 @@
       "range_m": 20.0
     },
     {
+      "id": "blind_wave",
+      "primitive": "blind",
+      "wave_speed": 14.0,
+      "travel_m": 18.0,
+      "max_blind_s": 1.6,
+      "min_blind_s": 0.4,
+      "radius_m": 6.0,
+      "through_walls": true
+    },
+    {
       "id": "molly",
       "primitive": "area_damage",
       "radius": 2.5,
