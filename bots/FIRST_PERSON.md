@@ -46,6 +46,8 @@ Quick manual sequence: press **F6**, wait for `Last seen: enemy in entry`, then 
 
 These are privileged **test tools** in the owned inherited scene. Placement changes world state only; it does not submit a report, force perception or update beliefs. The HUD receives only the runtime's copied delivered snapshot and own blindness. No pending samples, hidden target pose, live visibility query or player-only recon data enters its knowledge display or policy.
 
+If the teammate dies while the player survives, the panel says **teammate down** and marks vision inactive. Last-seen information remains aged memory. This uses existing copied physical status; it does not infer an enemy kill or end the surviving player's round. Restart restores normal live status.
+
 Automated controls/HUD check:
 
 ~~~powershell

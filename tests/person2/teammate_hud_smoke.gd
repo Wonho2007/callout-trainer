@@ -139,6 +139,15 @@ func run(scene: Node3D) -> void:
 	shared_player._sample_passing_waves()
 	expect(shared_player.get("_wave_blind_remaining") == player_once, "shared player applies each passing wave only once")
 	await wait_ticks(runtime, 160)
+	# Own death stops sight even after the blind timer expires. Keep the player
+	# alive so this exercises actor_dead separately from public round completion.
+	var last_seen: String = panel.text_for("Sight")
+	scene.teammate.health.apply_damage(scene.teammate.health.max_hp)
+	await wait_ticks(runtime, 3)
+	panel.update_information(runtime.snapshot())
+	expect(panel.text_for("Vision").contains("inactive") and panel.text_for("Vision").contains("teammate down"), "dead teammate cannot advertise ready vision after blind recovery")
+	expect(panel.text_for("Action") == "Action: teammate down" and panel.text_for("Smoke").contains("no live view"), "own death clearly disables live information status without ending surviving player's round")
+	expect(panel.text_for("Sight").contains("unknown region") == last_seen.contains("unknown region"), "own death preserves last-seen memory rather than inventing new information")
 	scene._restart()
 	while scene.get("_restart_pending"):
 		await get_tree().physics_frame

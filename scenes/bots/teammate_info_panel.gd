@@ -135,6 +135,11 @@ func update_information(state: Dictionary) -> void:
 	# Round completion intentionally stops the runtime clock/sensing. Do not
 	# present frozen last-known status as live readiness or a still-active plan.
 	var physical: Dictionary = state.get("physical", {})
+	if physical.get("reason") == "actor_dead":
+		_labels.Action.text = "Action: teammate down"
+		_labels.Vision.text = "Vision: inactive — teammate down"
+		_labels.Vision.add_theme_color_override("font_color", Color(1, 0.75, 0.35))
+		_labels.Smoke.text = "Smoke: no live view — teammate down"
 	if physical.get("reason") in ["detonated", "defused", "team_eliminated"]:
 		_labels.Action.text = "Action: round ended — press F to reset"
 		_labels.Vision.text = "Vision: inactive — round ended"

@@ -23,7 +23,7 @@ func expect(ok: bool, label: String) -> void:
 		failed = true
 		printerr("FAIL: ", label)
 
-func fresh() -> void:
+func fresh(perception_seed: int = -1) -> void:
 	if is_instance_valid(scene.runtime):
 		scene.runtime.free()
 	var settings: Dictionary = scene.get("_scenario")
@@ -33,7 +33,7 @@ func fresh() -> void:
 	runtime.configure("ally", bot, scene.builder, Belief.new("ally", settings.planner.regions, ["enemy"]),
 		settings.planner, settings.motion_markers, settings.entries, 900)
 	runtime.attach_perception(SceneSensor.new("ally", bot, scene.builder, scene.utility,
-		{"enemy": enemy}, settings.perception, int(settings.perception_seed), 900, player, settings.player_entry_sensing))
+		{"enemy": enemy}, settings.perception, int(settings.perception_seed) if perception_seed < 0 else perception_seed, 900, player, settings.player_entry_sensing))
 	runtime.set_physics_process(false)
 	runtime.observation_delivered.connect(func(o: Dictionary, tick: int): deliveries.append({"observation": o, "tick": tick}))
 	runtime.policy_context_ready.connect(func(c: Dictionary): contexts.append(c))
@@ -228,6 +228,55 @@ func verify_aim_delivery() -> void:
 	expect(typed_since("enemy_aim", cutoff).is_empty() and typed_since("enemy_lost", cutoff).size() == 1, "actual flash stops fresh aim and queues aim loss")
 	await advance(maxi(1, blind_until - runtime.current_tick() + 25))
 	expect(not typed_since("enemy_aim", blind_until).is_empty(), "torso aim reacquires only after blindness, exposure and delayed availability")
+
+func verify_aim_reacquisition_order() -> void:
+	# Reacquire before earlier aim/loss envelopes finish their random delays.
+	# Real map collision and the real inbox must preserve each lock's lifetime.
+	bot.global_position = Vector3(-2, 0, 11.5)
+	player.global_position = Vector3(-4, 0, 11.5)
+	yaw = -PI / 2.0
+	for seed_value in [7, 73, 191]:
+		enemy.global_position = Vector3(2, 0, 11.5)
+		fresh(seed_value)
+		for cycle in 5:
+			enemy.global_position = Vector3(2, 0, 11.5)
+			await advance(3)
+			if cycle == 0:
+				expect(typed_since("enemy_aim").is_empty(), "rapid lock waits for reaction delay seed=" + str(seed_value))
+			enemy.global_position = Vector3(-4, 0, 3)
+			await advance(1)
+		await advance(24)
+		var sequence: Array = []
+		var legal: bool = true
+		var prior_event: int = -1
+		var ids: Dictionary = {}
+		for item in deliveries:
+			var observation: Dictionary = item.observation
+			if observation.content.get("type") not in ["enemy_aim", "enemy_lost"]:
+				continue
+			sequence.append(observation.content.type)
+			legal = legal and observation.event_tick > prior_event and observation.available_tick <= item.tick and not ids.has(observation.id)
+			prior_event = observation.event_tick
+			ids[observation.id] = true
+		expect(sequence == ["enemy_aim", "enemy_lost", "enemy_aim", "enemy_lost", "enemy_aim", "enemy_lost", "enemy_aim", "enemy_lost", "enemy_aim", "enemy_lost"], "rapid reacquisition delivers all five aim/loss pairs in causal order seed=" + str(seed_value))
+		expect(legal, "rapid reacquisition preserves unique evidence and event/delivery provenance seed=" + str(seed_value))
+		var loss_count: int = typed_since("enemy_lost").size()
+		await advance(20)
+		expect(typed_since("enemy_lost").size() == loss_count and typed_since("enemy_aim", 20).is_empty(), "continued hidden state cannot renew loss or aim seed=" + str(seed_value))
+	# A target dying after a recognized but pending aim grants no kill/position
+	# knowledge. Only the ordinary delayed loss of usable torso sight may leave.
+	enemy.global_position = Vector3(2, 0, 11.5)
+	fresh()
+	await advance(3)
+	var cutoff: int = next_tick()
+	enemy.health.apply_damage(enemy.health.max_hp)
+	enemy.global_position = Vector3(-4, 0, 3)
+	await advance(25)
+	expect(not enemy.is_alive and typed_since("enemy_aim").size() == 1 and typed_since("enemy_aim", cutoff).is_empty(), "death preserves only the legitimate pre-death pending aim")
+	var losses: Array = typed_since("enemy_lost", cutoff)
+	expect(losses.size() == 1 and losses[0].observation.content == {"type": "enemy_lost", "enemy_id": "enemy"}, "dead target yields one delayed loss without hidden death/position disclosure")
+	enemy.health.reset()
+	enemy.is_alive = true
 
 func verify_player_entry() -> void:
 	var definitions: Dictionary = scene.utility.get("_defs")
@@ -482,6 +531,7 @@ func run(host: Node3D) -> void:
 	expect("non_monotonic_scene_sample" in decisions[-1].errors, "failed sensor sample retains its exact error in decision telemetry")
 	await verify_natural_smoke()
 	await verify_aim_delivery()
+	await verify_aim_reacquisition_order()
 	await verify_player_entry()
 	# Fresh equal-seed trials perturb genuinely hidden live truth and compare
 	# newly generated contexts AND fallback decisions, not one frozen dictionary.
