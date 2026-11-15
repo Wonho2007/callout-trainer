@@ -180,6 +180,8 @@ func _build(m: Dictionary) -> void:
 		_build_solid_box(wall, nav_region, Color(0.80, 0.82, 0.88))
 	for box in m["cover"]:
 		_build_solid_box(box, nav_region, Color(0.90, 0.45, 0.15))
+	for divot in m.get("divots", []):
+		_build_divot(divot, nav_region)
 
 	var regions := Node3D.new()
 	regions.name = REGIONS_ROOT
@@ -228,13 +230,72 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 	var fx := float(size2[0])
 	var fz := float(size2[1])
 	var fy := float(floor_data.get("y", 0))
-	# Represent the floor as a thin solid box so collision matches the mesh.
+	# Solid thin box floor (collision matches the mesh). Divots cut their own
+	# hole via _build_divot, which also carves the floor collision locally.
 	var floor_box := {
 		"id": "floor",
 		"position": [0, fy - 0.05, 0],
 		"size": [fx, 0.1, fz],
 	}
 	_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
+
+
+## A shallow circular divot (recessed disc) in the floor. Rendered as a darker
+## sunken cylinder with a thin rim so it reads as a depression. For the greybox
+## A walk-in circular divot: a recessed floor disc with a sloped conical rim so
+## the player can walk down into it and back out without sliding or jumping. The
+## slope is kept at/under the floor angle limit. Built as a procedural mesh with
+## matching trimesh collision. `radius` is the flat bottom radius; `depth` is how
+## deep; the sloped rim extends `depth` further out (45-degree walkable ramp).
+func _build_divot(divot: Dictionary, parent: Node3D) -> void:
+	var id := String(divot.get("id", "divot"))
+	var center := _to_vec3(divot.get("center", [0, 0, 0]))
+	var bottom_radius := float(divot.get("radius", 2.0))
+	var depth := float(divot.get("depth", 0.9))
+	# A 45-degree ramp: horizontal run equals the vertical depth.
+	var top_radius := bottom_radius + depth
+	var segments := 48
+
+	var body := StaticBody3D.new()
+	body.name = id
+	body.position = Vector3(center.x, 0.0, center.z)
+	body.collision_layer = LAYER_WORLD
+	body.collision_mask = 0
+	parent.add_child(body)
+
+	# Build the surface: flat bottom disc at y=-depth + a conical ramp wall from
+	# the top rim (y=0, top_radius) down to the bottom edge (y=-depth, bottom_radius).
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var bottom_center := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var top0 := Vector3(cos(a0) * top_radius, 0.0, sin(a0) * top_radius)
+		var top1 := Vector3(cos(a1) * top_radius, 0.0, sin(a1) * top_radius)
+		var bot0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var bot1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		# Ramp wall (two triangles per segment), wound to face up/inward.
+		st.add_vertex(top0); st.add_vertex(bot0); st.add_vertex(top1)
+		st.add_vertex(top1); st.add_vertex(bot0); st.add_vertex(bot1)
+		# Flat bottom fan.
+		st.add_vertex(bot0); st.add_vertex(bottom_center); st.add_vertex(bot1)
+	st.generate_normals()
+	var mesh := st.commit()
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.24, 0.25, 0.29)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED  # visible from inside the pit
+	mesh_instance.material_override = mat
+	body.add_child(mesh_instance)
+
+	# Matching collision from the same surface so the player walks the ramp/floor.
+	var collision := CollisionShape3D.new()
+	var shape := mesh.create_trimesh_shape()
+	collision.shape = shape
+	body.add_child(collision)
 
 
 func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6, 0.6, 0.62)) -> void:
