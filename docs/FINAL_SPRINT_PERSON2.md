@@ -46,8 +46,11 @@ enough to use mid-round, BEFORE anything is built on it.
 
 You own, in priority order:
 
-1. **Model runtime on the PC** — Ollama + model pulled; the capability spike; keep it running
-   so Person 3's interpreter can hit `http://localhost:11434`.
+1. **Model + STT runtime on the PC** — Ollama + model pulled; the capability spike; keep the
+   model serving so Person 3's interpreter can hit `http://localhost:11434`. Also run the
+   **live speech-to-text** (`voice/` module, Antigravity Track D) on the PC: it needs the mic
+   + GPU. **Live mic is a central part of the product, not a stretch** — the player speaks, so
+   plan PC time for it. See §3.
 2. **Greybox Lotus B** (inherited from Person 1) — build the compact B site from the 7 frozen
    region ids (see `annotations/fnc_prx_lotus_toronto2024_gf.md` §2 and the region table):
    `b_main`, `b_cubby`, `b_heaven`, `b_upper`, `b_pit`, `c_link`, `a_link`. Use the existing
@@ -71,7 +74,27 @@ You own, in priority order:
 
 ---
 
-## 2. Trust is fully removed — coordinate this merge
+## 2. Live speech-to-text on the PC (central, not a stretch)
+
+The player speaks comms out loud — voice is the only player input, so **live mic/STT is core
+to the demo, not optional.** The STT module is `voice/` on branch `person-3/voice-track`
+(Antigravity Track D), isolated in the `callout-trainer-voice` worktree. It needs the PC's
+mic + GPU, so running and verifying it is yours.
+
+Tasks:
+1. On the PC, run the `voice/` done-test (push-to-talk → transcript + latency). Confirm it
+   works offline (no network during transcription) and record real latency/accuracy numbers.
+2. Wire the transcript into the interpreter: push-to-talk ends → transcript string →
+   `comms.interpreter.interpret(transcript, vocab, OllamaClient(...))` → `comms.v1` → the
+   belief/intent path. Person 3 builds this hand-off shape headless (Person 3 §1.1); you
+   connect the live transcript source to it on the PC.
+3. Keep push-to-talk so the player controls when a comm starts/ends and the channel is not
+   open while the player is mid-sentence.
+
+The end-to-end chain to demo is: **player speaks → STT text → grounded LLM interprets →
+belief updates → teammate reacts**, all local/offline.
+
+## 3. Trust is fully removed — coordinate this merge
 
 A coordinated cross-lane trust removal is pushed on branch **`person-3/drop-trust-planner`**
 (off `main`). It edits YOUR files — `bots/knowledge_planner.gd` (drops `trust` from
@@ -87,18 +110,18 @@ snapshot is now exactly `{bot_id, tick, enemies, evidence_ids}` — no `trust`.
 
 ---
 
-## 3. The merge problem (Person 1 gone)
+## 4. The merge problem (Person 1 gone)
 
 With Person 1 gone, decide which Person 1 branches land on `main`. `main` already has the
-world scaffold, player, utility, nav (via PR #4 lineage). Unmerged Person 1 branches exist
-(`person-1/b-site-map`, `-/molly-*`, `-/scan-orb`, `-/dash-ability`, `-/map-deeper-room`,
-`-/divot-floor-hole`, `-/weapon-tracers`). Pick only what the Lotus B demo needs; do not pull
-half-finished map experiments that break the build. The greybox you build (#1.2) likely
-supersedes the test-room maps.
+world scaffold, player, utility (molly is already in the greybox/utility), nav. Unmerged
+Person 1 branches exist (`person-1/b-site-map`, `-/scan-orb`, `-/dash-ability`,
+`-/map-deeper-room`, `-/divot-floor-hole`, `-/weapon-tracers`). Pick only what the Lotus B
+demo needs; do not pull half-finished map experiments that break the build. The greybox you
+build (§1.2) likely supersedes the test-room maps.
 
 ---
 
-## 4. Contracts you consume from Person 3 (already built, stable)
+## 5. Contracts you consume from Person 3 (already built, stable)
 
 - **Interpreter** `comms/interpreter.py`: `interpret(transcript, vocab, client) -> proposal`.
   Returns a `comms.v1`-shaped report/command/clarify/unsupported/empty. Trips a deterministic
@@ -113,26 +136,30 @@ supersedes the test-room maps.
 
 ---
 
-## 5. Never cut (keep even at 6 hours)
+## 6. Never cut (keep even at 6 hours)
 
-Player-controlled shooting, smoke/flash, fair perception + reaction delay, the **leak test**
-(fairness proof against the decision log), one new-situation branch, a visible fallback
-reason/banner, and a **backup video** of a working run. If the live build wobbles at demo
-time, the backup video is the demo.
+**Live mic / speech-to-text** (voice is the only player input — this is central to the
+product), player-controlled shooting, smoke/flash, fair perception + reaction delay, the
+**leak test** (fairness proof against the decision log), one new-situation branch, a visible
+fallback reason/banner, and a **backup video** of a working run (ideally a real spoken-comm
+run). If the live build wobbles at demo time, the backup video is the demo.
 
-## 6. Drop (ruthless, in this order if time is short)
+## 7. Drop (ruthless, in this order if time is short)
 
-Live mic/STT (type the comms instead — the interpreter is identical on typed text); molly /
-2nd weapon / autonomous utility timing (keep scripted smoke/flash); multiple scenarios and
-extra enemy branches (one line + one branch); grading/debrief/counterfactual (already
-deferred); evaluation arms. Report only what you measured.
+2nd weapon / autonomous utility timing (keep scripted smoke/flash; molly already exists in
+the greybox); multiple scenarios and extra enemy branches (one line + one branch);
+grading/debrief/counterfactual (already deferred); evaluation arms. Report only what you
+measured. **Do NOT drop live mic/STT** — it is the product.
 
 ---
 
-## 7. Handoff checkpoints
+## 8. Handoff checkpoints
 
-- **+0:30** capability spike done; non-determinism go/no-go called; trust PR merged.
+- **+0:30** capability spike done; non-determinism go/no-go called; trust PR merged; `voice/`
+  done-test run on the PC (latency/accuracy recorded).
 - **+2:30** greybox + 7 regions + bot spawn; scenario JSON loads.
-- **+4:00** a typed comm changes a teammate goal in-engine (the integration tripwire).
-- **+5:00** one reactive branch + fallback banner; **backup video recorded**.
+- **+4:00** a **spoken** comm (mic → STT → interpret) changes a teammate goal in-engine (the
+  integration tripwire). Typed text is the fallback if the live chain is still being wired.
+- **+5:00** one reactive branch + fallback banner; **backup video recorded** (a real
+  spoken-comm run if possible).
 - **+6:00** freeze, rehearse (bot → scenario → trace), package offline build.

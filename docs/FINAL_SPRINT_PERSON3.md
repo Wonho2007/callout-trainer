@@ -13,13 +13,17 @@ fixtures, and hand Person 2 code that works the moment the model/engine are pres
 
 ## 1. Your lane this sprint (priority order)
 
-1. **Interpreter → belief → intent glue (headless).** The pieces exist; wire them end to end
-   as a pure function/path, testable without the GPU or engine:
+1. **Interpreter → belief → intent glue (headless + live-ready).** The pieces exist; wire them
+   end to end as a pure path, testable without the GPU or engine, and shaped so a **live mic
+   transcript** drops in unchanged on Person 2's PC:
    `transcript` → `comms.interpreter.interpret()` → `comms.v1` message → a `told` observation
    (reaction delay applied) → `belief/region_belief.gd` update → snapshot → the shape Person
-   2's intent gate consumes. Use a stub model client (Echo/Broken) so it runs offline; the
-   real `OllamaClient` drops in on Person 2's PC unchanged. Test every branch: valid report,
-   clarify, unsupported, model-illegal → deterministic fallback.
+   2's intent gate consumes. The transcript source is interchangeable: a typed string for your
+   headless tests, the `voice/` STT output on the PC. Use a stub model client (Echo/Broken) so
+   it runs offline; the real `OllamaClient` drops in on the PC. Test every branch: valid
+   report, clarify, unsupported, model-illegal → deterministic fallback. **Define the exact
+   transcript hand-off shape with Person 2 so the live mic plugs straight in** (default: a
+   function that takes a transcript string + timestamp and returns the proposal).
 
 2. **Decision-log wiring (the fairness spine).** Because the LLM is non-deterministic, the
    recorded decision log — not replay — proves fairness. Make sure every interpret/decide call
@@ -58,13 +62,16 @@ fixtures, and hand Person 2 code that works the moment the model/engine are pres
 
 ---
 
-## 3. STT / voice (hand to Person 2; likely dropped for the demo)
+## 3. Live speech-to-text (central — Person 2 runs it on the PC, you own the hand-off)
 
-The `voice/` module (Antigravity Track D) is on `person-3/voice-track`, isolated in its own
-worktree. It needs the PC + a mic to measure latency. **For the 6-hour demo, type the comms**
-— the interpreter is identical on typed text, so STT is a stretch, not a dependency. If time
-remains after integration, Person 2 runs the `voice/` done-test on the PC and we wire the
-transcript into the glue from #1. Do not block the demo on the mic.
+The player speaks comms out loud — **voice is the only player input, so live mic/STT is core
+to the product and is NOT dropped.** The `voice/` module (Antigravity Track D) is on
+`person-3/voice-track`, isolated in the `callout-trainer-voice` worktree. It needs the PC's
+mic + GPU, so Person 2 runs and verifies it on the PC. **Your job is to make the transcript
+plug straight into the interpreter glue (§1):** define the hand-off shape (transcript string +
+timestamp → proposal), test it headless with typed strings, and confirm with Person 2 that
+the `voice/` output matches that shape so the live mic connects with no rework. The demo chain
+is **player speaks → STT text → grounded LLM interprets → belief updates → teammate reacts.**
 
 ---
 
@@ -83,10 +90,11 @@ Keep these stable so Person 2 can integrate without waiting on you:
 
 ## 5. Never cut / Drop
 
-**Never cut:** the leak test (fairness proof against the decision log), the deterministic
-fallback path, a visible fallback reason, honest labeling, and helping produce the backup
-video. **Drop if short:** live mic/STT (type comms), grading/debrief/counterfactual (deferred),
-evaluation arms, multiple scenarios. Report only what was measured.
+**Never cut:** **live mic / speech-to-text** (voice is the only player input — central to the
+product), the leak test (fairness proof against the decision log), the deterministic fallback
+path, a visible fallback reason, honest labeling, and helping produce the backup video.
+**Drop if short:** grading/debrief/counterfactual (deferred), evaluation arms, multiple
+scenarios. Report only what was measured. **Do NOT drop live mic/STT.**
 
 ---
 
@@ -95,7 +103,8 @@ evaluation arms, multiple scenarios. Report only what was measured.
 - **+0:30** after the capability spike, confirm with Person 2 whether the glue targets
   LLM-decides (full non-determinism) or LLM-interprets-only + deterministic decide. The glue
   supports both; it is a client/config choice, not a rebuild.
-- **+2:30** interpreter→belief→intent glue + decision-log wiring done and green headless.
+- **+2:30** interpreter→belief→intent glue + decision-log wiring done and green headless;
+  transcript hand-off shape confirmed with Person 2 so the live mic plugs in.
 - **+4:00** leak-test/fairness audit green on a sample decision log; ready for the real run.
-- **+5:00** demo script written; assist the backup video.
+- **+5:00** demo script written; assist the backup video (a real spoken-comm run if possible).
 - **+6:00** rehearse the trace narrative; package.
