@@ -1,51 +1,684 @@
 {
   "schema_version": 1,
   "synthetic": true,
-  "note": "Greybox: a small room with corner boxes, a vertical entry hallway at the bottom-middle, opening into a horizontal corridor spanning the room width. Fully walled (no falling off). Top-down: -Z top, -X left, +Z bottom. Synthetic prototype. Units: meters, Y up, [x, y, z]. Not affiliated with Riot Games.",
+  "note": "Flat grey platform traced from the hand-drawn outline; walls straightened to pure axis-aligned segments (slants treated as hand-drawing error) and raised to full 3 m height. Single flat floor. Player spawns at the red dot. Not affiliated with Riot Games.",
   "id": "b_site_box",
   "bounds": {
-    "min": [-6, -1, -9],
-    "max": [6, 5, 13]
+    "min": [
+      -29.5,
+      -1,
+      -22.1
+    ],
+    "max": [
+      29.5,
+      4.0,
+      22.1
+    ]
   },
   "floor": {
-    "size": [14, 26],
+    "size": [
+      57.0,
+      42.1
+    ],
     "y": 0
   },
-  "ceiling_height": 5,
-  "wall_thickness": 0.5,
+  "ceiling_height": 3.0,
+  "wall_thickness": 0.3,
   "walls": [
-    { "id": "wall_north", "position": [0, 2.5, -9], "size": [12, 5, 0.5] },
-    { "id": "wall_east", "position": [6, 2.5, -1.5], "size": [0.5, 5, 15] },
-    { "id": "wall_west", "position": [-6, 2.5, -1.5], "size": [0.5, 5, 15] },
-
-    { "id": "wall_south_left", "position": [-3.75, 2.5, 6], "size": [4.5, 5, 0.5] },
-    { "id": "wall_south_right", "position": [3.75, 2.5, 6], "size": [4.5, 5, 0.5] },
-
-    { "id": "hall_wall_left", "position": [-1.5, 2.5, 8], "size": [0.5, 5, 4] },
-    { "id": "hall_wall_right", "position": [1.5, 2.5, 8], "size": [0.5, 5, 4] },
-    { "id": "arch_lintel", "position": [0, 4.25, 6], "size": [3, 1.5, 0.5] },
-
-    { "id": "corridor_front_left", "position": [-3.75, 2.5, 10], "size": [4.5, 5, 0.5] },
-    { "id": "corridor_front_right", "position": [3.75, 2.5, 10], "size": [4.5, 5, 0.5] },
-    { "id": "corridor_back", "position": [0, 2.5, 13], "size": [12.5, 5, 0.5] },
-    { "id": "corridor_end_left", "position": [-6, 2.5, 11.5], "size": [0.5, 5, 3] },
-    { "id": "corridor_end_right", "position": [6, 2.5, 11.5], "size": [0.5, 5, 3] }
+    {
+      "id": "w0",
+      "position": [
+        14.0,
+        1.5,
+        -20.05
+      ],
+      "size": [
+        20.06,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w1",
+      "position": [
+        23.88,
+        1.5,
+        -15.6
+      ],
+      "size": [
+        0.3,
+        3.0,
+        9.19
+      ]
+    },
+    {
+      "id": "w2",
+      "position": [
+        18.44,
+        1.5,
+        -11.16
+      ],
+      "size": [
+        11.17,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w3",
+      "position": [
+        13.01,
+        1.5,
+        -4.73
+      ],
+      "size": [
+        0.3,
+        3.0,
+        13.14
+      ]
+    },
+    {
+      "id": "w4",
+      "position": [
+        14.0,
+        1.5,
+        1.69
+      ],
+      "size": [
+        2.28,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w5",
+      "position": [
+        14.99,
+        1.5,
+        -2.26
+      ],
+      "size": [
+        0.3,
+        3.0,
+        8.2
+      ]
+    },
+    {
+      "id": "w6",
+      "position": [
+        21.41,
+        1.5,
+        -6.22
+      ],
+      "size": [
+        13.14,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w7",
+      "position": [
+        27.83,
+        1.5,
+        -0.29
+      ],
+      "size": [
+        0.3,
+        3.0,
+        12.16
+      ]
+    },
+    {
+      "id": "w8",
+      "position": [
+        22.4,
+        1.5,
+        5.64
+      ],
+      "size": [
+        11.17,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w9",
+      "position": [
+        16.96,
+        1.5,
+        6.13
+      ],
+      "size": [
+        0.3,
+        3.0,
+        1.29
+      ]
+    },
+    {
+      "id": "w10",
+      "position": [
+        7.57,
+        1.5,
+        6.63
+      ],
+      "size": [
+        19.07,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w11",
+      "position": [
+        -1.81,
+        1.5,
+        9.59
+      ],
+      "size": [
+        0.3,
+        3.0,
+        6.23
+      ]
+    },
+    {
+      "id": "w12",
+      "position": [
+        -0.33,
+        1.5,
+        12.56
+      ],
+      "size": [
+        3.26,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w13",
+      "position": [
+        1.15,
+        1.5,
+        11.07
+      ],
+      "size": [
+        0.3,
+        3.0,
+        3.26
+      ]
+    },
+    {
+      "id": "w14",
+      "position": [
+        5.6,
+        1.5,
+        9.59
+      ],
+      "size": [
+        9.19,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w15",
+      "position": [
+        10.04,
+        1.5,
+        15.03
+      ],
+      "size": [
+        0.3,
+        3.0,
+        11.17
+      ]
+    },
+    {
+      "id": "w16",
+      "position": [
+        6.59,
+        1.5,
+        20.46
+      ],
+      "size": [
+        7.22,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w17",
+      "position": [
+        3.13,
+        1.5,
+        19.97
+      ],
+      "size": [
+        0.3,
+        3.0,
+        1.29
+      ]
+    },
+    {
+      "id": "w18",
+      "position": [
+        -9.22,
+        1.5,
+        19.47
+      ],
+      "size": [
+        25.0,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w19",
+      "position": [
+        -21.57,
+        1.5,
+        16.01
+      ],
+      "size": [
+        0.3,
+        3.0,
+        7.22
+      ]
+    },
+    {
+      "id": "w20",
+      "position": [
+        -21.08,
+        1.5,
+        12.56
+      ],
+      "size": [
+        1.29,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w21",
+      "position": [
+        -20.58,
+        1.5,
+        12.06
+      ],
+      "size": [
+        0.3,
+        3.0,
+        1.29
+      ]
+    },
+    {
+      "id": "w22",
+      "position": [
+        -20.09,
+        1.5,
+        11.57
+      ],
+      "size": [
+        1.29,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w23",
+      "position": [
+        -19.6,
+        1.5,
+        10.58
+      ],
+      "size": [
+        0.3,
+        3.0,
+        2.28
+      ]
+    },
+    {
+      "id": "w24",
+      "position": [
+        -14.16,
+        1.5,
+        9.59
+      ],
+      "size": [
+        11.17,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w25",
+      "position": [
+        -8.73,
+        1.5,
+        8.11
+      ],
+      "size": [
+        0.3,
+        3.0,
+        3.26
+      ]
+    },
+    {
+      "id": "w26",
+      "position": [
+        -10.7,
+        1.5,
+        6.63
+      ],
+      "size": [
+        4.25,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w27",
+      "position": [
+        -12.68,
+        1.5,
+        -1.28
+      ],
+      "size": [
+        0.3,
+        3.0,
+        16.11
+      ]
+    },
+    {
+      "id": "w28",
+      "position": [
+        -8.23,
+        1.5,
+        -9.18
+      ],
+      "size": [
+        9.19,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w29",
+      "position": [
+        -3.79,
+        1.5,
+        -10.66
+      ],
+      "size": [
+        0.3,
+        3.0,
+        3.26
+      ]
+    },
+    {
+      "id": "w30",
+      "position": [
+        -15.64,
+        1.5,
+        -12.14
+      ],
+      "size": [
+        24.01,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w31",
+      "position": [
+        -27.5,
+        1.5,
+        -13.63
+      ],
+      "size": [
+        0.3,
+        3.0,
+        3.26
+      ]
+    },
+    {
+      "id": "w32",
+      "position": [
+        -27.01,
+        1.5,
+        -15.11
+      ],
+      "size": [
+        1.29,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w33",
+      "position": [
+        -26.51,
+        1.5,
+        -17.08
+      ],
+      "size": [
+        0.3,
+        3.0,
+        4.25
+      ]
+    },
+    {
+      "id": "w34",
+      "position": [
+        -11.69,
+        1.5,
+        -19.06
+      ],
+      "size": [
+        29.94,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w35",
+      "position": [
+        3.13,
+        1.5,
+        -14.12
+      ],
+      "size": [
+        0.3,
+        3.0,
+        10.18
+      ]
+    },
+    {
+      "id": "w36",
+      "position": [
+        4.61,
+        1.5,
+        -9.18
+      ],
+      "size": [
+        3.26,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w37",
+      "position": [
+        6.09,
+        1.5,
+        -10.17
+      ],
+      "size": [
+        0.3,
+        3.0,
+        2.28
+      ]
+    },
+    {
+      "id": "w38",
+      "position": [
+        5.1,
+        1.5,
+        -11.16
+      ],
+      "size": [
+        2.28,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w39",
+      "position": [
+        4.12,
+        1.5,
+        -15.6
+      ],
+      "size": [
+        0.3,
+        3.0,
+        9.19
+      ]
+    }
   ],
-  "cover": [
-    { "id": "box_top_right", "position": [3.5, 0.45, -3.5], "size": [4.5, 2.4, 4.5] },
-    { "id": "box_top_left", "position": [-4.75, 0.5, -4.75], "size": [2, 1, 2] }
-  ],
-  "divots": [
-    { "id": "divot_top_right", "center": [2.7, 0, 0.8], "radius": 1.0, "depth": 0.6 }
-  ],
+  "cover": [],
   "regions": [
-    { "id": "room", "name": "Room", "center": [0, 2, -2.5], "size": [11, 5, 12] },
-    { "id": "entry", "name": "Entry", "center": [0, 2, 8], "size": [3, 5, 4] },
-    { "id": "corridor", "name": "Corridor", "center": [0, 2, 11.5], "size": [11, 5, 3] }
+    {
+      "id": "c_link",
+      "name": "C Link",
+      "center": [
+        -12.19,
+        2,
+        -15.6
+      ],
+      "size": [
+        29.73,
+        5,
+        6.02
+      ]
+    },
+    {
+      "id": "b_heaven",
+      "name": "B Heaven",
+      "center": [
+        14.0,
+        2,
+        -15.61
+      ],
+      "size": [
+        18.86,
+        5,
+        7.98
+      ]
+    },
+    {
+      "id": "b_upper",
+      "name": "B Upper",
+      "shape": "box",
+      "center": [
+        7.79,
+        2,
+        -7.22
+      ],
+      "size": [
+        9.55,
+        5,
+        3.0
+      ]
+    },
+    {
+      "id": "b_pit",
+      "name": "B Pit",
+      "shape": "circle",
+      "center": [
+        2.77,
+        2,
+        -1.83
+      ],
+      "radius": 6.0,
+      "size": [
+        12.0,
+        5,
+        12.0
+      ]
+    },
+    {
+      "id": "a_link",
+      "name": "A Link",
+      "center": [
+        21.41,
+        2,
+        0.21
+      ],
+      "size": [
+        11.94,
+        5,
+        11.95
+      ]
+    },
+    {
+      "id": "b_cubby",
+      "name": "B Cubby",
+      "center": [
+        -10.26,
+        2,
+        -1.28
+      ],
+      "size": [
+        3.94,
+        5,
+        14.9
+      ]
+    },
+    {
+      "id": "b_main",
+      "name": "B Main",
+      "center": [
+        -5.77,
+        2,
+        15.03
+      ],
+      "size": [
+        30.71,
+        5,
+        9.96
+      ]
+    }
   ],
   "spawns": [
-    { "id": "spawn_player", "role": "player", "position": [-4, 0, 11.5], "facing_deg": 90 },
-    { "id": "spawn_enemy_1", "role": "enemy", "position": [-2, 0, -4], "facing_deg": 0 }
+    {
+      "id": "spawn_player",
+      "role": "player",
+      "position": [
+        6.13,
+        0.0,
+        18.24
+      ],
+      "facing_deg": 0
+    },
+    {
+      "id": "spawn_enemy_1",
+      "role": "enemy",
+      "position": [
+        11.69,
+        0.0,
+        -1.03
+      ],
+      "facing_deg": 0
+    }
   ],
-  "spike": { "position": [0, 0, 0], "planted": true, "site_region": "room" }
+  "spike": {
+    "position": [
+      21.98,
+      0.0,
+      -12.06
+    ],
+    "planted": true,
+    "site_region": "b_heaven"
+  }
 }

@@ -20,8 +20,8 @@ class_name ActorBase
 @export var jump_velocity: float = 4.5
 
 ## Dash: a short horizontal impulse burst. Respects collision (move_and_slide),
-## so an actor cannot dash through walls. Placeholders tuned by playtest.
-@export var dash_speed: float = 40.0
+## so an actor cannot dash through walls. Distance = dash_speed * dash_time_s = 11.0 m.
+@export var dash_speed: float = 61.11
 @export var dash_time_s: float = 0.18
 @export var dash_cooldown_s: float = 2.5
 

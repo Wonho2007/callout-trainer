@@ -9,7 +9,7 @@ extends ActorBase
 ## Weapons/shooting/damage sources and defuse are later increments.
 
 @export var mouse_sensitivity: float = 0.0025
-@export var stand_height: float = 1.8
+@export var stand_height: float = 1.96
 @export var crouch_height: float = 1.0
 
 @onready var camera: Camera3D = $Camera3D

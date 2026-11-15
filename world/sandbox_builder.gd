@@ -403,9 +403,15 @@ func _build_region(region: Dictionary, parent: Node3D) -> void:
 	parent.add_child(area)
 
 	var collision := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = size
-	collision.shape = shape
+	if String(region.get("shape", "box")) == "circle":
+		var cyl := CylinderShape3D.new()
+		cyl.radius = float(region.get("radius", 1.0))
+		cyl.height = size.y
+		collision.shape = cyl
+	else:
+		var shape := BoxShape3D.new()
+		shape.size = size
+		collision.shape = shape
 	area.add_child(collision)
 
 
@@ -499,6 +505,7 @@ func get_map_overlay() -> Dictionary:
 		var r := {
 			"id": region.get("id", ""),
 			"name": region.get("name", region.get("id", "")),
+			"shape": region.get("shape", "box"),
 		}
 		var c := _to_vec3(region.get("center", [0, 0, 0]))
 		var s := _to_vec3(region.get("size", [1, 1, 1]))
@@ -506,6 +513,7 @@ func get_map_overlay() -> Dictionary:
 		r["z"] = c.z
 		r["w"] = s.x
 		r["d"] = s.z
+		r["radius"] = float(region.get("radius", 0.0))
 		overlay["regions"].append(r)
 	for spawn in map_data.get("spawns", []):
 		var p := _to_vec3(spawn.get("position", [0, 0, 0]))

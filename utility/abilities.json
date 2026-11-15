@@ -1,12 +1,13 @@
 {
   "schema_version": 1,
   "synthetic": true,
-  "note": "Data-driven utility definitions (brief 6.3). Abilities are mapped onto three generic primitives, not hand-coded per agent: los_blocker (smoke), blind (flash), area_damage (molly). All values are DOCUMENTED PLACEHOLDERS tuned by playtest, not game data. Abilities are deliberate approximations of the real tactical effect, not replicas of any specific agent's kit.",
+  "note": "Data-driven utility definitions (brief 6.3). Abilities are mapped onto three generic primitives, not hand-coded per agent: los_blocker (smoke), blind (flash), area_damage (molly). Spatial values (radii, throw range, wave distance) are measured against the b_site platform scale; timing/damage values remain placeholders tuned by playtest. Abilities are deliberate approximations of the real tactical effect, not replicas of any specific agent's kit.",
   "abilities": [
     {
       "id": "smoke",
       "primitive": "los_blocker",
-      "radius": 3.0,
+      "radius": 4.1,
+      "throw_range_m": 20.0,
       "duration_s": 12.0,
       "deploy_delay_s": 0.8
     },
@@ -16,22 +17,24 @@
       "trigger_delay_s": 0.6,
       "max_blind_s": 1.6,
       "min_blind_s": 0.3,
-      "range_m": 20.0
+      "range_m": 20.0,
+      "throw_range_m": 20.0
     },
     {
       "id": "blind_wave",
       "primitive": "blind",
       "wave_speed": 14.0,
-      "travel_m": 18.0,
+      "travel_m": 25.0,
       "max_blind_s": 1.6,
       "min_blind_s": 0.4,
-      "radius_m": 6.0,
+      "radius_m": 4.0,
       "through_walls": true
     },
     {
       "id": "molly",
       "primitive": "area_damage",
-      "radius": 2.5,
+      "radius": 4.5,
+      "throw_range_m": 20.0,
       "duration_s": 6.0,
       "damage_per_second": 35.0,
       "tick_interval_s": 0.5,
