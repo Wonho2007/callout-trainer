@@ -30,6 +30,32 @@ func _requests_direct_flash(transcript: String) -> bool:
 	flash.compile("^(please\\s+)?(can\\s+you\\s+)?(flash|throw\\s+(a\\s+)?flash)\\b")
 	return flash.search(transcript.strip_edges().to_lower()) != null
 
+func _requested_position(transcript: String) -> String:
+	# A narrow imperative guard grounds explicit positioning in the public zone
+	# catalog even if the swing/flash-only interpreter asks for clarification.
+	var words: String = transcript.to_lower().replace("_", " ").strip_edges()
+	var imperative := RegEx.new()
+	imperative.compile("^(please\\s+)?(can\\s+you\\s+)?(let's\\s+|lets\\s+)?(play|hold|stay|come|go|move|rotate|group|join|meet|take|watch)\\b")
+	if imperative.search(words) == null or _requests_direct_flash(words) or _requests_swing_preparation(words):
+		return ""
+	# Do not steal multi-action utility/swing requests or enemy reports.
+	var other := RegEx.new()
+	other.compile("\\b(flash|smoke|molly|swing|peek|enemy|enemies)\\b")
+	if other.search(words) != null:
+		return ""
+	var matches: Array = []
+	for region in scene._scenario.planner.regions:
+		var names: Array = [str(region).replace("_", " ")]
+		if str(region).begins_with("b_"):
+			names.append(str(region).trim_prefix("b_").replace("_", " "))
+		for name in names:
+			var location := RegEx.new()
+			location.compile("\\b" + name + "\\b")
+			if location.search(words) != null:
+				matches.append(region)
+				break
+	return matches[0] if matches.size() == 1 else ""
+
 func attach(bot_runtime: Node) -> void:
 	runtime = bot_runtime
 	session = str(Time.get_ticks_usec())
@@ -126,6 +152,17 @@ func _receive(packet: Dictionary) -> void:
 		return
 	if seen.size() >= 512:
 		_disconnect()
+		return
+	var position: String = _requested_position(str(packet.get("transcript", ""))) if kind == "proposal" else ""
+	var cancel_position: bool = kind == "cancel" and not runtime.snapshot().get("player_goal", {}).is_empty()
+	if not position.is_empty() or cancel_position:
+		var answer: Dictionary = runtime.submit_position_order(position)
+		var reply: Dictionary = {"type": "submitted", "session": session, "id": request_id,
+			"position_order": position, "result": answer}
+		seen[request_id] = reply.duplicate(true)
+		events.append(reply.duplicate(true))
+		_send(reply)
+		scene._comm_status = "Heard: " + str(packet.get("transcript", kind)) + " (delivery pending)"
 		return
 	var tick: int = runtime.current_tick() + 1
 	var preparation_guard: bool = false

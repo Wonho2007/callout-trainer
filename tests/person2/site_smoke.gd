@@ -9,6 +9,11 @@ func expect(ok: bool, label: String) -> void:
 		printerr("FAIL: ", label)
 
 func run(scene: Node) -> void:
+	if OS.get_cmdline_user_args().has("--position-orders-only"):
+		await _test_player_position(scene)
+		print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks, " scope=position_orders")
+		get_tree().quit(1 if failed else 0)
+		return
 	await get_tree().physics_frame
 	await get_tree().process_frame
 	var source: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://world/maps/b_site.json"))
@@ -96,6 +101,69 @@ func run(scene: Node) -> void:
 	await _test_box_jumps(scene)
 	print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)
+
+func _test_player_position(scene: Node) -> void:
+	await _reset(scene)
+	var runtime: Node = scene.runtime
+	var bridge: Node = scene.voice_bridge
+	for phrase in ["play heaven with me", "come to B Heaven", "hold heaven", "let's play heaven together"]:
+		expect(bridge._requested_position(phrase) == "b_heaven", "position call grounds to Heaven: " + phrase)
+	for phrase in ["one enemy heaven", "flash heaven", "get ready to swing heaven", "don't play heaven", "play heaven or pit"]:
+		expect(bridge._requested_position(phrase).is_empty(), "position guard preserves other/ambiguous comms: " + phrase)
+	var packet: Dictionary = {"type": "proposal", "session": bridge.session, "id": "play-heaven",
+		"transcript": "play heaven with me", "result": "clarify", "question": "Which action?"}
+	bridge._receive(packet)
+	var received: int = runtime.current_tick()
+	expect(runtime.snapshot().player_goal.is_empty(), "position is not acted on before radio delivery")
+	for _i in range(17): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.is_empty(), "position respects the existing 18-tick delay")
+	var p: Array = scene._scenario.motion_markers.b_heaven.position
+	var heaven := Vector3(p[0], p[1], p[2])
+	var reached: bool = false
+	for _i in range(500):
+		await get_tree().physics_frame
+		if scene.teammate.global_position.distance_to(heaven) < 0.4:
+			reached = true
+			break
+	expect(reached, "play Heaven with me physically brings the teammate to Heaven")
+	if not reached: print("PLAYER_POSITION_DIAGNOSTIC ", runtime.snapshot())
+	# Enemy testimony can change beliefs/combat, but must not replace our position.
+	runtime.submit_comm({"schema_version": "comms.v1", "message_id": "report-during-position",
+		"speaker_id": "player", "recipient_id": "ally", "issued_tick": runtime.current_tick() + 1,
+		"expires_tick": runtime.current_tick() + 601, "kind": "report",
+		"payload": {"action": "report_enemy", "region_id": "b_pit", "count": 1, "hedge": "sure"}})
+	for _i in range(660): await get_tree().physics_frame
+	expect(runtime.current_tick() - received > 600 and runtime.snapshot().plan.decision.get("target_id") == "b_heaven", "player position outlives short command expiry and unrelated enemy reports")
+	expect(scene.teammate.global_position.distance_to(heaven) < 0.5, "teammate holds Heaven instead of returning to spike")
+	var goal: Dictionary = runtime.snapshot().player_goal
+	expect(goal.evidence_ids.size() == 1 and runtime._executor.inbox.evidence_available(goal.evidence_ids[0], runtime.current_tick()), "persistent goal cites actually delivered own evidence")
+	bridge._receive(packet)
+	expect(runtime.snapshot().player_goal == goal, "transport retry cannot replace/replay a persistent order")
+	expect(not runtime.submit_position_order("unknown").ok and runtime.snapshot().player_goal == goal, "unknown location cannot displace the accepted goal")
+	bridge._receive({"type": "proposal", "session": bridge.session, "id": "prepare-before-position",
+		"transcript": "get ready to swing heaven", "result": "command", "proposal": {"kind": "command",
+		"payload": {"action": "swing_together", "target_id": "b_heaven", "timing": {"mode": "now"}}}})
+	for _i in range(25): await get_tree().physics_frame
+	# This entry's authored staging marker is Pit, not our current Heaven spot.
+	# It should be staging (or ready if reached), never swing before the cue.
+	expect(runtime.snapshot().active_command.get("phase") in ["accepted", "ready"] and runtime.snapshot().plan.decision.goal == "command", "temporary staged action still takes priority without swinging before cue")
+	bridge._receive({"type": "proposal", "session": bridge.session, "id": "play-upper", "transcript": "play upper with me", "result": "clarify"})
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.get("target_id") == "b_upper", "new positioning instruction replaces Heaven")
+	expect(runtime.snapshot().active_command.is_empty(), "new position cancels a prepared swing through normal executor rules")
+	bridge._receive({"type": "cancel", "session": bridge.session, "id": "cancel-position", "transcript": "cancel"})
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.is_empty(), "cancel releases the persistent position even without an active swing")
+	for i in range(12):
+		runtime.submit_position_order("b_upper" if i == 11 else "b_heaven")
+	for _i in range(25): await get_tree().physics_frame
+	expect(runtime.snapshot().player_goal.get("target_id") == "b_upper", "latest same-tick order wins across numeric ID boundaries")
+	runtime.submit_position_order("b_heaven")
+	for _i in range(25): await get_tree().physics_frame
+	await _reset(scene)
+	expect(scene.runtime.snapshot().player_goal.is_empty(), "round restart clears persistent player intent")
+	scene.voice_bridge._receive(packet)
+	expect(scene.runtime.snapshot().player_goal.is_empty(), "old-session positioning packet cannot affect the new round")
 
 func _test_box_jumps(scene: Node) -> void:
 	await _reset(scene)

@@ -24,6 +24,12 @@ PR #4 was already merged before this branch; no current-main merge is claimed.
 
 ## Read next
 
+Teammate positioning now persists: "play Heaven with me" navigates and holds Heaven
+until a new position/cancel or round/death reset. Enemy reports and short action
+expiry no longer restore spike coverage. The implementation stays in the primary
+runtime/voice lane; the combat UI worktree remains separate. Current site guidance
+documents the focused --position-orders-only regression.
+
 - [Parallel combat UI assignment](PARALLEL_COMBAT_UI_HANDOFF.md): separate Codex
   worktree for player kill feedback/count, defeat screen and visible health bar.
   This is a scoped parallel task; the primary bot/navigation lane stays here.

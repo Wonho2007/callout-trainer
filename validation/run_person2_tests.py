@@ -69,6 +69,7 @@ def main():
     mode.add_argument("--site-playtest", action="store_true", help="Plant-hold voice game on Person 3 seven-zone B site map")
     mode.add_argument("--site-smoke", action="store_true", help="Seven-zone B site scenario and source-map integration checks")
     parser.add_argument("--site-capture", type=Path, help="Optional rendered B site capture from --site-smoke")
+    parser.add_argument("--position-orders-only", action="store_true", help="Run dedicated positioning regression with --site-smoke")
     parser.add_argument("--voice-port", type=int, default=8765)
     parser.add_argument("--voice-headless", action="store_true", help="Developer external-host fixture, no window")
     parser.add_argument("--voice-interpret-only", action="store_true", help="External fixture requires LLM interpretation with scripted goals")
@@ -82,6 +83,8 @@ def main():
     person3.add_argument("--person3-ref", help="Optional fetched git ref; read Person 3 belief files without changing a checkout")
     parser.add_argument("--person1-ref", help="Optional fetched git ref; test actual shared actor and baked room (requires Person 3 input)")
     args = parser.parse_args()
+    if args.position_orders_only and not args.site_smoke:
+        parser.error("--position-orders-only requires --site-smoke")
     if args.hud_capture and not args.hud_smoke:
         parser.error("--hud-capture requires --hud-smoke")
     if args.lotus_capture and not args.lotus_smoke:
@@ -259,6 +262,8 @@ def main():
                 smoke_mode = "--site-smoke" if args.site_smoke else "--lotus-smoke" if args.lotus_smoke else "--voice-smoke" if args.voice_smoke else "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
                 marker = "PERSON2_SITE_PASS" if args.site_smoke else "PERSON2_LOTUS_PASS" if args.lotus_smoke else "PERSON2_VOICE_SMOKE_PASS" if args.voice_smoke else "PERSON2_ACTION_PASS" if args.action_smoke else ("PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"))
                 command = [godot, *([] if args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
+                if args.position_orders_only:
+                    command.append("--position-orders-only")
                 if args.hud_capture:
                     command.append("--hud-capture=" + str(args.hud_capture.resolve()))
                 if args.voice_smoke or args.lotus_smoke or args.site_smoke:

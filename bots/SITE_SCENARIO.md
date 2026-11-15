@@ -62,6 +62,40 @@ capability. No enemy positions or nodes enter these physical checks.
 There is **no player-issued molly command**. The baseline Raze grenade uses the
 shared molly primitive, but that does not create a teammate voice command.
 
+## Persistent teammate positioning
+
+"Play Heaven with me", "hold Heaven", "come to B Heaven" and equivalent explicit
+positioning imperatives now create a persistent player positioning goal. The
+teammate physically navigates to the authored Heaven anchor and holds there rather
+than resuming spike coverage when the short action ends. All seven static site
+regions are supported. This holds the requested region; it does not track the
+player's live transform. Calls with multiple locations need clarification.
+
+Positioning follows the same 18-tick delivery delay as other comms. Its delivered
+evidence persists until another positioning order, cancel, death or round end/reset;
+the old ten-second command/model expiry does not revoke the position. Unrelated
+enemy reports update beliefs without replacing it. Combat and temporary swing/flash
+actions still work, with the position resuming afterward. A new positioning order
+cancels an existing cancellable action through normal executor rules. An unreachable
+position stops honestly instead of substituting spike coverage.
+
+This uses a narrow local player_position observation seam, leaving shared comms.v1
+and Person 3 interpreter modules unchanged. The bridge grounds explicit position
+imperatives against public region names even if the swing/flash-only interpreter
+returns clarification. Enemy reports, flash/swing requests and preparation/cue
+phrases retain their existing paths. Old sessions and transport retries cannot
+restore an obsolete goal. No hidden actor state enters policy inputs.
+
+The focused integration regression is separate to preserve the existing 45-second
+per-run timeout. It passes 24 checks, including real travel/holding in Heaven,
+delayed evidence, prepared-action replacement, same-tick ordering and reset.
+Existing site (46), TCP voice (35) and required bot (575) checks also pass in their
+documented source configurations. No new human microphone acceptance is claimed.
+
+```powershell
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --site-smoke --position-orders-only --person3-ref 57f809d
+```
+
 Spawn heights follow the updated map: Pit -2.9m, Heaven/Upper 2.1m, A Link 0.6m.
 Navigation parses synchronized static collision so the CSG pit participates.
 The shared flash fuse is 0.75s and configured blind durations are 3-5s; player and
