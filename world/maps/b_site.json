@@ -680,5 +680,20 @@
     ],
     "planted": true,
     "site_region": "b_heaven"
-  }
+  },
+  "divots": [
+    {
+      "id": "b_pit_stairs",
+      "shape": "stairs",
+      "center": [
+        2.77,
+        0,
+        -1.83
+      ],
+      "top_radius": 6.0,
+      "radius": 2.0,
+      "depth": 3.0,
+      "steps": 6
+    }
+  ]
 }

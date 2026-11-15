@@ -237,10 +237,15 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 	var gaps: Array = []
 	for divot in m.get("divots", []):
 		var c := _to_vec3(divot.get("center", [0, 0, 0]))
-		# Gap half-size = pit TOP radius, so the sloped ramp sits in the open gap
-		# (walkable, floor doesn't block it). Corner voids left by the square gap
-		# vs the round pit are filled afterwards by _fill_divot_corners.
-		var r := float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
+		# Gap half-size = the divot's TOP radius so the recessed shape sits in the open
+		# gap (walkable, floor doesn't block it). For a conical ramp the top extends
+		# depth*RAMP_RUN_FACTOR past the bottom radius; for stairs the caller gives the
+		# outer (rim) radius directly via top_radius.
+		var r: float
+		if String(divot.get("shape", "ramp")) == "stairs":
+			r = float(divot.get("top_radius", divot.get("radius", 2.0) + 4.0))
+		else:
+			r = float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
 		gaps.append({"x": c.x, "z": c.z, "half": r})
 
 	if gaps.is_empty():
@@ -309,6 +314,11 @@ const RAMP_RUN_FACTOR := 2.5
 func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	var id := String(divot.get("id", "divot"))
 	var center := _to_vec3(divot.get("center", [0, 0, 0]))
+
+	if String(divot.get("shape", "ramp")) == "stairs":
+		_build_stair_pit(divot, parent)
+		return
+
 	var bottom_radius := float(divot.get("radius", 2.0))
 	var depth := float(divot.get("depth", 0.9))
 	# Gentle walkable ramp: run is wider than the drop (~22 degrees).
@@ -354,6 +364,85 @@ func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	var collision := CollisionShape3D.new()
 	var shape := mesh.create_trimesh_shape()
 	collision.shape = shape
+	body.add_child(collision)
+
+
+## A walk-in STAIR pit: concentric circular steps descending to a flat bottom disc.
+## `top_radius` = rim radius (where the stairs begin at y=0); `radius` = flat bottom disc
+## radius (the slightly-flattened deep floor so it is not pointy); `depth` = total drop;
+## `steps` = number of equal steps. Each step is a horizontal tread ring + a vertical
+## riser. Built as one procedural mesh + trimesh collision so the player walks in/out.
+func _build_stair_pit(divot: Dictionary, parent: Node3D) -> void:
+	var id := String(divot.get("id", "pit"))
+	var center := _to_vec3(divot.get("center", [0, 0, 0]))
+	var top_radius := float(divot.get("top_radius", 6.0))
+	var bottom_radius := float(divot.get("radius", 2.0))
+	var depth := float(divot.get("depth", 3.0))
+	var steps := int(divot.get("steps", 6))
+	var segments := 48
+
+	var body := StaticBody3D.new()
+	body.name = id
+	body.position = Vector3(center.x, 0.0, center.z)
+	body.collision_layer = LAYER_WORLD
+	body.collision_mask = 0
+	parent.add_child(body)
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var riser := depth / float(steps)                       # vertical drop per step (0.5 m)
+	var run := (top_radius - bottom_radius) / float(steps)   # radial width per tread
+
+	# Build each step: a tread (flat ring) at its depth, then a riser (vertical ring wall)
+	# dropping to the next step. Step k spans radius [top_radius - k*run .. top_radius-(k+1)*run].
+	for k in range(steps):
+		var r_outer := top_radius - run * float(k)
+		var r_inner := top_radius - run * float(k + 1)
+		var y_tread := -riser * float(k)         # tread top surface height
+		var y_next := -riser * float(k + 1)      # next tread height (bottom of this riser)
+		for i in range(segments):
+			var a0 := TAU * float(i) / float(segments)
+			var a1 := TAU * float(i + 1) / float(segments)
+			var co0 := Vector3(cos(a0), 0, sin(a0))
+			var co1 := Vector3(cos(a1), 0, sin(a1))
+			# Flat tread ring at y_tread, from r_inner to r_outer.
+			var to0 := co0 * r_outer + Vector3(0, y_tread, 0)
+			var to1 := co1 * r_outer + Vector3(0, y_tread, 0)
+			var ti0 := co0 * r_inner + Vector3(0, y_tread, 0)
+			var ti1 := co1 * r_inner + Vector3(0, y_tread, 0)
+			st.add_vertex(to0); st.add_vertex(ti0); st.add_vertex(to1)
+			st.add_vertex(to1); st.add_vertex(ti0); st.add_vertex(ti1)
+			# Vertical riser at r_inner, from y_tread down to y_next.
+			var ru0 := co0 * r_inner + Vector3(0, y_tread, 0)
+			var ru1 := co1 * r_inner + Vector3(0, y_tread, 0)
+			var rd0 := co0 * r_inner + Vector3(0, y_next, 0)
+			var rd1 := co1 * r_inner + Vector3(0, y_next, 0)
+			st.add_vertex(ru0); st.add_vertex(rd0); st.add_vertex(ru1)
+			st.add_vertex(ru1); st.add_vertex(rd0); st.add_vertex(rd1)
+
+	# Flat bottom disc (slightly-flattened deep floor, not pointy) at y = -depth.
+	var bottom_center := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var b0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var b1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		st.add_vertex(b0); st.add_vertex(bottom_center); st.add_vertex(b1)
+
+	st.generate_normals()
+	var mesh := st.commit()
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.24, 0.25, 0.29)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh_instance.material_override = mat
+	body.add_child(mesh_instance)
+
+	var collision := CollisionShape3D.new()
+	collision.shape = mesh.create_trimesh_shape()
 	body.add_child(collision)
 
 
