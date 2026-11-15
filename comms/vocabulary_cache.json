@@ -1,0 +1,334 @@
+{
+  "source": "valorant-api.com (free community catalog)",
+  "map": "Lotus",
+  "map_uuid": "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
+  "callouts": [
+    {
+      "region_name": "Top",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Drop",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Site",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Hut",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Tree",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Door",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Main",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Rubble",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Root",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Lobby",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Lobby",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Pillars",
+      "super_region_name": "B"
+    },
+    {
+      "region_name": "Main",
+      "super_region_name": "B"
+    },
+    {
+      "region_name": "Door",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Site",
+      "super_region_name": "B"
+    },
+    {
+      "region_name": "Link",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Upper",
+      "super_region_name": "B"
+    },
+    {
+      "region_name": "Waterfall",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Link",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Stairs",
+      "super_region_name": "A"
+    },
+    {
+      "region_name": "Mound",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Main",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Bend",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Site",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Hall",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Gravel",
+      "super_region_name": "C"
+    },
+    {
+      "region_name": "Spawn",
+      "super_region_name": "Defender Side"
+    },
+    {
+      "region_name": "Spawn",
+      "super_region_name": "Attacker Side"
+    }
+  ],
+  "agents": {
+    "Gekko": [
+      "Wingman",
+      "Dizzy",
+      "Mosh Pit",
+      "Thrash",
+      "Globule"
+    ],
+    "Fade": [
+      "Seize",
+      "Haunt",
+      "Prowler",
+      "Nightfall",
+      "Terror Trails"
+    ],
+    "Breach": [
+      "Flashpoint",
+      "Fault Line",
+      "Aftershock",
+      "Rolling Thunder"
+    ],
+    "Deadlock": [
+      "Sonic Sensor",
+      "Barrier Mesh",
+      "GravNet",
+      "Annihilation"
+    ],
+    "Tejo": [
+      "Guided Salvo",
+      "Special Delivery",
+      "Armageddon",
+      "Stealth Drone"
+    ],
+    "Raze": [
+      "Blast Pack",
+      "Paint Shells",
+      "Boom Bot",
+      "Showstopper"
+    ],
+    "Chamber": [
+      "Rendezvous",
+      "Trademark",
+      "Headhunter",
+      "Tour De Force"
+    ],
+    "KAY/O": [
+      "FRAG/ment",
+      "FLASH/drive",
+      "ZERO/point",
+      "NULL/cmd"
+    ],
+    "Skye": [
+      "Trailblazer",
+      "Guiding Light",
+      "Regrowth",
+      "Seekers"
+    ],
+    "Cypher": [
+      "Cyber Cage",
+      "Spycam",
+      "Trapwire",
+      "Neural Theft"
+    ],
+    "Sova": [
+      "Shock Bolt",
+      "Recon Bolt",
+      "Owl Drone",
+      "Hunter's Fury"
+    ],
+    "Miks": [
+      "M-pulse",
+      "Waveform",
+      "Harmonize",
+      "Bassquake"
+    ],
+    "Killjoy": [
+      "Nanoswarm",
+      "ALARMBOT",
+      "TURRET",
+      "Lockdown"
+    ],
+    "Harbor": [
+      "High Tide",
+      "Storm Surge",
+      "Cove",
+      "Reckoning"
+    ],
+    "Vyse": [
+      "Shear",
+      "Arc Rose",
+      "Razorvine",
+      "Steel Garden"
+    ],
+    "Viper": [
+      "Poison Cloud",
+      "Toxic Screen",
+      "Snake Bite",
+      "Viper's Pit",
+      "Toxin"
+    ],
+    "Hush": [
+      "Flashbulb",
+      "Displacement",
+      "Flow",
+      "Suspension",
+      "Telekinesis"
+    ],
+    "Phoenix": [
+      "Blaze",
+      "Hot Hands",
+      "Curveball",
+      "Run it Back",
+      "Inner Fire"
+    ],
+    "Veto": [
+      "Interceptor",
+      "Crosscut",
+      "Evolution",
+      "Chokehold"
+    ],
+    "Astra": [
+      "Nova Pulse",
+      "Nebula",
+      "Gravity Well",
+      "Cosmic Divide",
+      "Astral Form"
+    ],
+    "Brimstone": [
+      "Stim Beacon",
+      "Incendiary",
+      "Sky Smoke",
+      "Orbital Strike"
+    ],
+    "Iso": [
+      "Undercut",
+      "Kill Contract",
+      "Double Tap",
+      "Contingency",
+      "Focus"
+    ],
+    "Clove": [
+      "Pick-me-up",
+      "Ruse",
+      "Not Dead Yet",
+      "Meddle"
+    ],
+    "Neon": [
+      "High Gear",
+      "Relay Bolt",
+      "Fast Lane",
+      "Overdrive",
+      "Battery"
+    ],
+    "Yoru": [
+      "FAKEOUT",
+      "BLINDSIDE",
+      "GATECRASH",
+      "DIMENSIONAL DRIFT"
+    ],
+    "Waylay": [
+      "Refract",
+      "Saturate",
+      "Lightspeed",
+      "Convergent Paths"
+    ],
+    "Sage": [
+      "Slow Orb",
+      "Healing Orb",
+      "Barrier Orb",
+      "Resurrection"
+    ],
+    "Reyna": [
+      "Devour",
+      "Dismiss",
+      "Leer",
+      "Empress",
+      "Vitality"
+    ],
+    "Omen": [
+      "Paranoia",
+      "Dark Cover",
+      "Shrouded Step",
+      "From the Shadows"
+    ],
+    "Jett": [
+      "Updraft",
+      "Tailwind",
+      "Cloudburst",
+      "Blade Storm",
+      "Drift"
+    ]
+  },
+  "weapons": [
+    "Ares",
+    "Bandit",
+    "Bucky",
+    "Bulldog",
+    "Classic",
+    "Frenzy",
+    "Ghost",
+    "Guardian",
+    "Judge",
+    "Marshal",
+    "Melee",
+    "Odin",
+    "Operator",
+    "Outlaw",
+    "Phantom",
+    "Sheriff",
+    "Shorty",
+    "Spectre",
+    "Stinger",
+    "Vandal",
+    "Warden"
+  ]
+}
