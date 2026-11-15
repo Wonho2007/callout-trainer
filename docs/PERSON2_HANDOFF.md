@@ -1,6 +1,6 @@
 # Person 2 handoff — perception, bot behavior, scenario runtime
 
-**Adoption/integration update:** the user explicitly confirmed this direction as authoritative after reviewing Person 3's `b078210`. The original work list below describes the state when written. Person 2 now has an inherited first-person scene, reusable bot spawning, delayed comm/physical runtime and a proposed model-context/goal seam. See [current implementation and launch steps](../bots/FIRST_PERSON.md) and [actual lane results](../bots/PERSON2_HANDOFF.md). No microphone/STT/local-model service exists on the fetched Person 3 branch yet; full spoken reactions remain a dependency, not an implemented feature.
+**Adoption/integration update:** the user explicitly confirmed this direction as authoritative after reviewing Person 3's `b078210`. The original work list below describes the state when written. Person 2 now has an inherited first-person scene, reusable bot spawning, delayed comm/physical runtime and a proposed model-context/goal seam. See [current implementation and launch steps](../bots/FIRST_PERSON.md) and [actual lane results](../bots/PERSON2_HANDOFF.md). Person 3 has since published local STT scaffolding at `57f809d`; target measurements and the interpreter/model service/game bridge remain dependencies. Full spoken reactions are not implemented by this change.
 
 **Audience: assume zero prior knowledge.** Read this top to bottom before touching code.
 You are **Person 2 (Wonho2007)**. This document tells you what the project now is, what

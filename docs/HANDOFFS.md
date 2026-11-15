@@ -294,3 +294,11 @@ Next/dependencies: Person 3 reviews/connects the proposed comm/goal/log seam and
 - Manual playtest and results: tester confirmed the player spawns in the corridor, walks corridor -> hallway -> arch -> room without falling off, and is rooted in place while defusing. Map is actively being iterated.
 - Remaining work/dependency: the map is an in-progress synthetic layout, not a verified reconstruction; refine against Person 3's VOD annotation for any real-site accuracy. A validator edge case was noted: a spawn resting exactly on a surface top counts as "inside" (boundary `<=` in `_point_in_box`) — worked around by nudging spawns; relax the check later. `lower_regions` (sunken pit) is not yet rendered by the builder.
 - Next integration step: continue map iteration; then the region-graph/sound/actor-command backbone for Persons 2/3.
+
+## Person 2: follow-up teammate update sync
+
+Main advanced during the work: merged `233e092` as `16affb7`, preserving Person 1's box-room/lighting/defuse-lock source and both appended handoff records. The owned FPS fixture now explicitly selects retained `test_room.json` and its launcher uses latest shared main `233e092` / Person 3 `57f809d`; it does not guess how the evolving `b_site.json` maps to old coverage markers.
+
+Person 3 `57f809d` published local STT scaffolding and scenario schema/structural validator/coordinate helper. Inspected those read-only. Its voice results table is unfilled; no target-machine accuracy/latency/offline confirmation is claimed here. The grounded interpreter/local-model host/game bridge are still dependencies, so earlier no-STT notes describe only the prior `b078210` snapshot. Person 2 should consume the structural scenario helper while retaining physical reachability/LOS/baseline validation ownership. No Person 3 source, dependencies or microphone setup was changed.
+
+Final verification after this update: default/cross-lane runner against Person 1 233e092 and Person 3 57f809d passed 465 checks; first-person smoke passed 21, total 486, both exit 0. Docs/whitespace checks pass. The known bake performance warning remains; no manual/voice/model test is claimed.

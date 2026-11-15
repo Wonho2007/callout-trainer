@@ -43,9 +43,9 @@ def main():
     first_person = args.first_person or args.first_person_smoke
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
-        args.person1_ref = args.person1_ref or ("7e5e2b4" if first_person else "0fd1285")
+        args.person1_ref = args.person1_ref or ("233e092" if first_person else "0fd1285")
         if not (args.person3_root or args.person3_ref):
-            args.person3_ref = "b078210" if first_person else "ff2a6d7"
+            args.person3_ref = "57f809d" if first_person else "ff2a6d7"
     if args.person1_ref and not (args.person3_root or args.person3_ref):
         parser.error("--person1-ref requires --person3-root or --person3-ref")
     godot = shutil.which(args.godot) or str(Path(args.godot).resolve())

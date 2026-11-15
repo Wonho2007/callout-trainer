@@ -1,12 +1,12 @@
 # First-person teammate integration
 
-The user confirmed the newer [Person 2 direction](../docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](../docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only comms, grounded local LLM teammate goals, hedge-only beliefs, no trust, deterministic safety fallback, grading/debrief deferred. This scene implements the Person 2 integration slice. **Person 3's microphone/STT/LLM service does not yet exist on its fetched branch `b078210`; live spoken reactions are not implemented by this change.**
+The user confirmed the newer [Person 2 direction](../docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](../docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only comms, grounded local LLM teammate goals, hedge-only beliefs, no trust, deterministic safety fallback, grading/debrief deferred. This scene implements the Person 2 integration slice. **Person 3 has since published local STT scaffolding at `57f809d`; its target-machine results are unfilled, and the interpreter/model service and game bridge remain dependencies. Live spoken reactions are not implemented by this change.**
 
 ## What runs
 
 [first_person.tscn](../scenes/bots/first_person.tscn) inherits Person 1's actual main scene and uses its player, world, navigation, weapon/tracers, utility, spike and minimap unchanged. [first_person.gd](../scenes/bots/first_person.gd) spawns the reusable [bot scene](../scenes/bots/bot.tscn) at the shared teammate marker. The blue capsule is a live `ActorBase` with shared collision/health/movement. Its [runtime](teammate_runtime.gd) validates delayed comms, applies accepted reports to Person 3's hedge-only belief module, executes commands/model goals through the physical controller, and falls back to the deterministic knowledge planner. No communication menu or transcript box is shown. The HUD states that the voice service is not connected.
 
-This uses the synthetic room, two authored coverage markers and one entry route. It is not a Lotus reconstruction, enemy combat AI, scenario validator, fully wired perception or complete model-driven teammate. The existing target remains Person 1's stationary test target. Player-only scan/minimap truth is never passed to bot policy. Sight/hearing/flash/smoke kernels are separately tested; wiring the live registry/acoustic/utility adapters remains Person 2 work. Radio-like comm delivery is an explicit fixture assumption (all addressed player messages, 18-tick delay), not a finalized local hearing/range contract.
+The owned scene explicitly selects the retained synthetic `test_room.json`, two authored coverage markers and one entry route. Person 1's shared main now defaults to its newer `b_site.json`; that evolving map is not silently assigned this fixture's region/marker semantics. It is not a Lotus reconstruction, enemy combat AI, scenario validator, fully wired perception or complete model-driven teammate. The existing target remains Person 1's stationary test target. Player-only scan/minimap truth is never passed to bot policy. Sight/hearing/flash/smoke kernels are separately tested; wiring the live registry/acoustic/utility adapters remains Person 2 work. Radio-like comm delivery is an explicit fixture assumption (all addressed player messages, 18-tick delay), not a finalized local hearing/range contract.
 
 ## Launch
 
@@ -18,7 +18,7 @@ $godotExe = 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_wi
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --first-person
 ~~~
 
-The runner makes a disposable project from read-only Person 1 main `7e5e2b4`, Person 3 belief files at `b078210`, and the current Person 2 source. It copies Person 1's input settings and changes only the **temporary** entry scene. No shared main, player, project settings or teammate checkout is edited. Override `--person1-ref` / `--person3-ref` if needed; refs must exist locally. Use official Godot 4.4.1 stable. The earlier `--visual-demo` remains an overhead developer fixture and does not meet the first-person product direction.
+The runner makes a disposable project from read-only Person 1 main `233e092`, Person 3 belief files at `57f809d`, and the current Person 2 source. It copies Person 1's input settings and changes only the **temporary** entry scene. No shared main, player, project settings or teammate checkout is edited. Override `--person1-ref` / `--person3-ref` if needed; refs must exist locally. Use official Godot 4.4.1 stable. The earlier `--visual-demo` remains an overhead developer fixture and does not meet the first-person product direction.
 
 WASD moves, mouse looks, LMB fires, R reloads, Q/E use smoke/flash, F restarts, Esc releases/recaptures the mouse. Additional utility keys remain Person 1's current inputs. Close the window to exit. There is no player comm shortcut/menu: the voice host must connect to the runtime below before speech can cause movement. Do not interpret a stationary fallback teammate as proof that a microphone/LLM path exists.
 
@@ -51,7 +51,7 @@ This **proposed internal seam does not change comms.v1 or the shared observation
 
 ~~~powershell
 & $pythonExe validation/run_person2_tests.py --godot $godotExe
-& $pythonExe validation/run_person2_tests.py --godot $godotExe --person1-ref 7e5e2b4 --person3-ref b078210
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --person1-ref 233e092 --person3-ref 57f809d
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --first-person-smoke
 ~~~
 
