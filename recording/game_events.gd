@@ -14,7 +14,7 @@ class_name GameEvents
 ## delayed observations, never from this bus.
 ##
 ## RECORD SHAPE IS A PROPOSAL, not a frozen schema. Person 3 owns shared schemas
-## (docs/TEAM.md); this matches the brief's gameplay-event contract shape
+## (docs/CONTRACTS.md); this is a privileged gameplay-event stream
 ## {id, tick, type, actor, position, payload} and must be frozen together.
 
 ## Emitted for every recorded event. Consumers: privileged recorder / grader.

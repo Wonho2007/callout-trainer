@@ -1,23 +1,32 @@
 # Contributing
 
-1. Read [AGENTS.md](AGENTS.md), [project description](docs/PROJECT_DESCRIPTION.md) and
-   [current handoff](docs/PERSON2_HANDOFF.md). Inspect status/branch before changing files.
-2. Continue the current work on `person-2/model-capability-spike` unless assigned another
-   task. Do not resume an obsolete branch merely because an archived guide names it.
-3. Follow [current ownership](docs/TEAM.md). Person 2 inherited world/PC/engine work;
-   coordinate changes to Person 3 code and shared contracts. Preserve teammate edits.
-4. Keep changes small and reviewable. Run `python tools/check_repo.py`, whitespace checks
-   and relevant runtime checks for code changes. Do not label documentation validation
-   as a game/fairness test or headless/rendered evidence as a human playtest.
-5. Update the single [current handoff](docs/PERSON2_HANDOFF.md), relevant component guide
-   and [integration index](docs/HANDOFFS.md) with actual results and unresolved work.
-6. Push the branch and use small PRs for review. PR #4 was already merged; the current
-   branch has not been merged into main. Do not infer merge authorization from old records.
+Read the [README](README.md), [repository instructions](AGENTS.md),
+[architecture](docs/ARCHITECTURE.md), and [contracts](docs/CONTRACTS.md).
+Inspect status and other worktrees; create a feature branch from the intended base
+without disturbing another contributor's checkout. Main represents the hackathon
+demo. The separate combat UI branch has not been integrated into that baseline.
 
-Do not commit credentials, caches, model weights, build outputs, raw audio, private run
-logs, participant data, game assets or source footage. Local runtime logs are ignored.
-Only deliberately sanitized fixtures belong in examples. Retain honest source uncertainty.
+Keep gameplay changes small and use existing shared actor, weapon, utility and
+navigation components. Runtime files must reach the temporary integration project
+through the runner's copy/overlay lists. Coordinate changes to the pinned Python
+source, belief module and shared schemas across all consumers.
 
-No blanket redistribution permission follows from an absent repository license. The
-owner chooses the code license; third-party/model/asset terms must be checked separately.
-The earlier three-person planning state is preserved in [history](docs/ARCHIVE.md).
+For documentation, run `python tools/check_repo.py` and `git diff --check`.
+For code, also run the appropriate suites in [testing](docs/TESTING.md). Report the
+source revisions and exact scope of results; documentation checks are not gameplay
+or fairness tests, and automated checks are not human acceptance.
+
+Update maintained guides when behavior/setup changes. Do not add sprint handoffs
+or resume prompts; earlier notes remain in Git and the [archive index](docs/ARCHIVE.md).
+Use reviewable commits and only push or merge when authorized.
+
+Keep secrets, model weights/caches, raw audio, run logs, participant data, build
+outputs and source footage out of Git. Raw audio stays in memory in the voice
+path; diagnostic transcripts/prompts may still be private. Only sanitized fixtures
+belong in examples/tests.
+
+This independent simulator does not access a game client or use extracted assets.
+An absent repository license does not grant blanket redistribution permission;
+the owner selects the code license. Check third-party package, model and asset
+terms separately. In particular, do not bundle downloaded model weights without
+reviewing their applicable terms; experimental Qwen use is not required by the demo.

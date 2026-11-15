@@ -4,7 +4,7 @@ $repoRoot = Split-Path $PSScriptRoot -Parent
 $pythonExe = Join-Path $env:USERPROFILE '.cache\callout-voice-venv\Scripts\python.exe'
 $godotExe = Join-Path $env:USERPROFILE '.cache\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe'
 $sourceRoot = Join-Path $env:TEMP 'callout-voice-integration-b84cc93\source'
-if (-not (Test-Path -LiteralPath $godotExe)) { throw 'Install pinned Godot 4.4.1; see bots/VOICE_GAME.md.' }
+if (-not (Test-Path -LiteralPath $godotExe)) { throw 'Install pinned Godot 4.4.1; see docs/SETUP.md.' }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'comms\interpreter.py'))) {
     & (Join-Path $PSScriptRoot 'run_live_voice.ps1') -Preflight
     if ($LASTEXITCODE -ne 0) { throw 'Voice preflight failed' }

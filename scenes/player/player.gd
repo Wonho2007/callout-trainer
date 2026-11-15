@@ -45,7 +45,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Mouse look and the mouse/comms channel stay available after death so the
-	# player can still observe and (later) send callouts (COMMUNICATION_COACHING).
+	# player can still observe and send death reports (docs/SCENARIO.md).
 	if event is InputEventMouseMotion and _mouse_captured:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		_pitch = clampf(_pitch - event.relative.y * mouse_sensitivity, -1.4, 1.4)

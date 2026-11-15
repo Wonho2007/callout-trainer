@@ -1,75 +1,142 @@
-# Callout Trainer
+# Comm Bot — Callout Trainer
 
-A first-person communication practice game built in Godot. The player speaks to an
-information-limited teammate: a local speech model transcribes the call, a local LLM
-interprets it, and the teammate responds through delayed observations, beliefs and
-shared game mechanics. The purpose is to practice clear, timely tactical communication.
+A first-person tactical communication game built for our hackathon. Speak to an AI
+teammate, coordinate a push or flash, and defend a planted spike against four enemy
+bots. Your teammate acts on what it has seen, heard, or been told rather than
+knowing every enemy's location.
 
-The current prototype is a **plant-hold adaptation** with seven named regions. The
-player takes the Something/Yoru role and the teammate the f0rsakeN/Omen role from
-Person 3's notes. It starts when the spike is planted. Four enemies whose starting
-locations are unknown remain absent until their first known positions at **+23s**.
-Geometry and within-region coordinates are authored approximations; source metadata
-is pending review. This is not a verified reconstruction or a prediction of pro play.
+Built with Godot 4.4.1, GDScript, Python, local Whisper speech recognition, and
+Llama 3.1 through Ollama. No paid API or model training is required.
 
-## Start here
+## Run the game
 
-- [Project description and requirements](docs/PROJECT_DESCRIPTION.md)
-- [Current Person 2 handoff](docs/PERSON2_HANDOFF.md)
-- [Prompt for a new Kiro window](docs/KIRO_RESUME_PROMPT.md)
-- [Current team/integration status](docs/HANDOFFS.md)
-- [Repository instructions](AGENTS.md)
+The supported demo runs on **Windows with an NVIDIA CUDA GPU and a microphone**.
+Install the dependencies once using [the setup guide](docs/SETUP.md). The launcher
+expects Godot, a Python voice environment, and cached models at the documented paths.
 
-These documents describe current work. [Historical documents](docs/ARCHIVE.md) are
-evidence and background, not instructions to resume old branches or repeat old tasks.
-
-## Run on the configured Windows PC
-
-Open PowerShell. Close any older voice-host console, then paste:
+From the repository in PowerShell:
 
 ```powershell
-cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
 .\validation\run_voice_game.ps1
 ```
 
-Hold **V** to talk, **F** to restart at the plant, **Esc** to release the mouse.
-WASD moves, LMB fires, R reloads and B dashes. V only talks. Enemies arrive at +23s.
-The default uses Person 3's seven-zone map, including circular Pit and the zone
-minimap. `-Lotus` also selects this new default; `-LegacyRoom` / `-LegacyLotus`
-explicitly select the older profiles. Running the root
-Godot project directly still opens the original scaffold, not the voice-enabled scenario.
+Wait for `Game connected` and `Hold V to speak`. The launcher warms the models,
+opens Godot, and connects the microphone host. Close the game when finished.
 
-Use **Godot 4.4.1 stable**. The launcher uses the installed local Python environment,
-cached Whisper weights and Ollama. Setup and limits: [voice setup](bots/LIVE_VOICE.md),
-[voice/game bridge](bots/VOICE_GAME.md), [scenario details](bots/SITE_SCENARIO.md).
+**Use this launcher for the complete demo.** Running `project.godot` directly or
+using `run_game.bat` opens the original authoring sandbox without the voice scenario.
 
-## Current implementation
+## Play a round
 
-- Local Whisper speech recognition and grounded Llama 3.1 8B interpretation; no paid API
-  or training is required. Voice is the player communication path.
-- **Deterministic goal selection is the selected sprint configuration.** Experimental
-  LLM goal generation missed the context budget and is opt-in, not accepted for the demo.
-- Copied delayed perception, evidence IDs, smoke/flash restrictions, shared navigation,
-  rifle/combat, command lifecycle, an authored reactive branch and round/reset handling.
-- Imported seven-zone B site map, circular-region precedence, late enemy registration and first-known spawn checks.
-- Local transcripts, exact model inputs/outputs and delivery/decision telemetry.
+You and your teammate defend a planted spike on a seven-zone B-site greybox map.
+You start in Heaven; the teammate and spike start in Pit. The round begins at plant,
+and four enemies enter at their first annotated positions, 23 seconds later.
 
-## Evidence and remaining work
+Hold **V**, speak, then release to send a call. Try:
 
-Recorded checks include 552 default/cross-lane assertions, 139 live-perception checks,
-31 scenario checks and seven Python authoring/voice-boundary tests. Five standalone
-human microphone calls were interpreted correctly (one cue/queue transcription spelling
-error). A real-model typed engine fixture verifies delayed delivery and physical movement.
-Rendered scenario captures were inspected. These results have distinct scopes; they do
-not establish a full human voice-to-Lotus playtest or full-game fairness.
+| Say | Teammate behavior |
+|---|---|
+| "Two on Heaven" | Updates its working information about that region |
+| "I think someone's B Main" | Receives an enemy report with your stated uncertainty |
+| "Play Heaven with me" | Travels to Heaven and holds it until a new position or cancel |
+| "Let's push A Link together" | Moves toward A Link and retains that position |
+| "Get ready to swing Heaven" | Moves to the authored staging position and waits for your cue |
+| "Swing" or "go" | Releases a prepared, ready action |
+| "Flash C Link" | Turns and checks visibility/range, throwing from here if possible; otherwise seeks a throwing position |
+| "Flash C Link on my cue" | Prepares the flash and waits for "go" |
+| "Cancel" | Cancels a pending action or releases a held positioning goal |
 
-Still open: human scenario acceptance, exact ally/utility baseline reenactment,
-coordinated belief/schema alignment, source review, offline/export acceptance and a
-backup video. Grading, debrief, counterfactuals and evaluation are deferred product work.
-No win-rate, learning-transfer or professional-behavior claim is made.
+Locations are **Main, Cubby, Heaven, Upper, Pit, C Link, and A Link**. Use a clear
+location in each instruction. Ambiguous or unsupported calls may require clarification;
+there is no teammate molly voice command. The teammate has one commanded flash per round.
 
-Current work is on `person-2/model-capability-spike`; last gameplay checkpoint `608cae7`.
-PR #4 was already merged earlier. This branch has not been merged into `main`.
+Hold until the spike detonates, or eliminate all four enemies. Defuse or losing both
+friendly actors ends the round in defeat. If you die while your teammate survives,
+you can still give voice reports. Press **F** for a fresh round.
 
-No game-client access, extracted assets or replay-file scraping. Independent simulator;
-not affiliated with Riot Games. Model weights, raw audio and local logs stay outside Git.
+## Controls
+
+| Input | Action |
+|---|---|
+| WASD / mouse | Move / look |
+| Left mouse / R | Fire / reload |
+| Space / Ctrl / Shift | Jump / crouch / walk |
+| B | Dash |
+| Hold V | Push to talk; release to send |
+| Q / E | Player smoke / flash |
+| X / G / T | Player molly / blind wave / scan orb |
+| F | Restart the round |
+| Esc | Release or recapture the mouse |
+| F1 / F2 | Toggle player HUD / teammate information panel |
+
+HP and ammo appear in the status text. The teammate panel exposes its information
+and current actions. Blinded bots cannot shoot, and dead bots disappear with their
+hitboxes disabled. Completed player movement retains its destination instead of
+automatically returning to the spike.
+
+## How it works
+
+```mermaid
+flowchart LR
+    Mic[Microphone + V] --> STT[Whisper: speech to text]
+    STT --> LLM[Local Llama: interpret the call]
+    LLM --> Bridge[Local TCP bridge]
+    Bridge --> Inbox[Validate + delay delivery]
+    Sense[Vision and hearing] --> Inbox
+    Inbox --> Belief[Bot-local beliefs]
+    Inbox --> Commands[Command executor + player position]
+    Belief --> Planner[Deterministic planner]
+    Planner --> Physics[Movement, aiming and utility]
+    Commands --> Physics
+    Physics --> World[Godot world and actors]
+    World --> Sense
+```
+
+Python handles speech and language work outside the game's physics thread. The LLM
+interprets the call; **deterministic code selects and executes goals** in the demo.
+Godot stamps receipt time and delays communication delivery by 18 physics ticks.
+Preparing an action, being ready, releasing it, and completing it are separate states.
+
+Bots start with authored movement and utility beats, then react to delivered evidence
+and your calls. Physical adapters handle navigation, collision, shots and throws;
+policies receive copied observations and permitted own-state rather than live enemy
+transforms. Smoke, blindness, visibility and reaction delay constrain their knowledge.
+
+The launcher builds a temporary Godot project from pinned shared-source snapshots
+and current local scripts. This keeps the demo's map, belief module, voice integration,
+and gameplay changes together without changing the root authoring scene.
+
+## Repository guide
+
+| Location | Purpose |
+|---|---|
+| `scenes/bots/` | Scenario lifecycle, teammate runtime wiring and voice TCP bridge |
+| `bots/` | Python voice host, planners, command execution, combat and motion |
+| `perception/` | Vision/hearing sensors, copied observations and delayed inbox |
+| `actors/`, `scenes/player/`, `weapons/`, `utility/` | Shared physical gameplay |
+| `world/`, `world/maps/` | JSON map builders, zones and navigation |
+| `scenarios/` | Spawn schedule, authored baseline, positions and command targets |
+| `schemas/`, `examples/` | Communication contracts and sanitized fixtures |
+| `validation/`, `tests/person2/` | Launchers, integration builders and regression tests |
+| `recording/`, ignored `runs/` | Gameplay events and local diagnostic records |
+
+Read [setup and troubleshooting](docs/SETUP.md), [architecture](docs/ARCHITECTURE.md),
+[scenario behavior](docs/SCENARIO.md), [communication contracts](docs/COMMANDS.md),
+or [testing](docs/TESTING.md) for more detail. Contributors should start with
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Hackathon scope
+
+This is the runnable source-based hackathon demo. The map and utility are authored
+approximations; the game does not force a recorded professional match outcome.
+Automatic coaching scores, debriefs, a packaged voice-enabled desktop export, and
+experimental LLM goal selection are outside the supported demo path.
+
+Speech processing and interpretation run locally after initial dependency/model
+downloads. Raw microphone audio stays in memory; transcripts and model/decision
+logs are stored locally under ignored `runs/` directories. Model weights stay outside
+Git. An OS-network-disabled deployment has not been independently verified.
+
+Independent simulator; not affiliated with Riot Games. No game-client access,
+extracted game assets, or replay scraping is required. Third-party model terms apply;
+see [contribution guidance](CONTRIBUTING.md) before redistributing.
