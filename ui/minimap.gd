@@ -109,6 +109,9 @@ func _draw() -> void:
 					var bot_right := _to_map(float(r["x"]) + float(r["w"]) * 0.5,
 						float(r["z"]) + float(r["d"]) * 0.5)
 					var rect := Rect2(top_left, bot_right - top_left)
+					# Erase anything drawn underneath (e.g. the Pit circle) with the opaque
+					# panel background, so the overlap shows ONLY this box, not the circle.
+					draw_rect(rect, Color(0.08, 0.09, 0.11, 1.0), true)
 					draw_rect(rect, fill, true)
 					draw_rect(rect, outline, false, 1.5)
 				# Callout name near the region center.
