@@ -114,8 +114,11 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 
 	var space: PhysicsDirectSpaceState3D = shooter.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(origin, to)
-	# Hit both world bodies AND enemy hitbox areas (head/body/legs). The closest
-	# intersection wins, so a hitbox in front of a wall registers the body part.
+	# Hit world bodies AND enemy hitbox areas, but NOT the enemy's body capsule (layer 4
+	# "bots") nor callout-region/smoke areas. Masking OUT bots means the ray passes through
+	# the capsule and registers the specific HITBOX (head/body/legs) behind it.
+	# Mask = world(1) | hitbox(64) = 65.
+	query.collision_mask = (1 << 0) | (1 << 6)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	if shooter is CollisionObject3D:
