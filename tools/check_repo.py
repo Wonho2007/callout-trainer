@@ -15,7 +15,8 @@ def check():
     for name in required:
         assert (ROOT / name).is_file(), f"Missing {name}"
     for path in ROOT.rglob("*.md"):
-        if ".git" in path.relative_to(ROOT).parts:
+        parts = path.relative_to(ROOT).parts
+        if ".git" in parts or ".venv" in parts:
             continue
         content = path.read_text(encoding="utf-8")
         for target in re.findall(r"\]\(([^)]+)\)", content):
