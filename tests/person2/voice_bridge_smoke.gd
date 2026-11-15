@@ -71,5 +71,34 @@ func run(scene: Node) -> void:
 	bridge._receive({"type": "proposal", "session": bridge.session, "id": "bad", "result": "report", "proposal": {"kind": "report", "payload": {}}})
 	await wait_tick(scene.runtime, 28)
 	expect(scene.runtime.snapshot().observations.is_empty(), "invalid raw report cannot enter copied model context")
+	# Reproduce a wrong model timing interpretation over the actual TCP path.
+	runtime = scene.runtime
+	client = StreamPeerTCP.new()
+	expect(client.connect_to_host("127.0.0.1", bridge.server.get_local_port()) == OK, "reconnect for staged swing regression")
+	for _i in range(8):
+		client.poll()
+		await get_tree().physics_frame
+	var prepare: Dictionary = {"type": "proposal", "session": bridge.session, "id": "prepare-swing", "result": "command",
+		"transcript": "get ready to swing", "proposal": {"kind": "command", "payload": {
+			"action": "swing_together", "target_id": "entry", "timing": {"mode": "now"}}}}
+	send(client, prepare)
+	await wait_tick(runtime, runtime.current_tick() + 4)
+	expect(bridge.events[-1].message.payload.timing.mode == "on_cue", "preparation overrides an incorrect immediate model interpretation")
+	expect(bridge.events[-1].get("timing_guard") == "preparation_waits_for_cue", "actual guarded timing is recorded for audit")
+	for _i in range(120):
+		if runtime.snapshot().active_command.get("phase") == "ready":
+			break
+		await get_tree().physics_frame
+	expect(runtime.snapshot().active_command.get("phase") == "ready", "get ready to swing physically stages the teammate")
+	var staged: Vector3 = scene.teammate.global_position
+	await wait_tick(runtime, runtime.current_tick() + 60)
+	expect(runtime.snapshot().active_command.get("phase") == "ready" and scene.teammate.global_position.distance_to(staged) < 0.1, "ready teammate waits without swinging until a separate cue")
+	send(client, {"type": "cue", "session": bridge.session, "id": "release-swing", "transcript": "swing"})
+	await wait_tick(runtime, runtime.current_tick() + 40)
+	expect(scene.teammate.global_position.distance_to(staged) > 0.5, "separate swing cue releases the staged physical route after delivery")
+	for phrase in ["Please get ready to swing Heaven.", "prepare to peek", "be ready", "swing on my cue"]:
+		expect(bridge._requests_swing_preparation(phrase), "preparatory paraphrase waits for cue: " + phrase)
+	expect(not bridge._requests_swing_preparation("swing now"), "explicit immediate swing keeps its existing timing")
+	client.disconnect_from_host()
 	print("PERSON2_VOICE_SMOKE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)

@@ -27,6 +27,10 @@ the integration runner overlays the shared weapon script onto its pinned source.
 
 ## Evidence to preserve
 
+Preparation commands now enforce `on_cue` at the engine bridge: "get ready to swing"
+waits for a separate "swing"/"go". A real TCP 35-check regression verifies a wrong
+model `now` proposal cannot release early; delivery/readiness/expiry stay intact.
+
 Current imported map: 23 functional / 24 rendered checks pass, capture inspected;
 voice launcher syntax passes. Main was already included at `8712f7d`; new map
 arrived from `person-3/greybox-b-site` at `76b8eaa`. Existing bot/voice/damage changes

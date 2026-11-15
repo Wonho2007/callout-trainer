@@ -15,18 +15,23 @@ disconnect and caps a recording at 15 seconds. Player death does not gate the ho
 
 ## Current scope and vocabulary
 
-This uses the existing synthetic room, not the future seven-region source scenario.
-Allowed reports are **room**, **entry**, **corridor**. Start with “one enemy in room”:
-the teammate should leave its corridor home and navigate toward room coverage.
-“Swing entry on my cue” and “flash entry on my cue” use existing authored commands.
-After the actual ready result, a separate “go” releases the active command. “Cancel”
-cancels it. A completed countdown cannot retrospectively synchronize a swing.
-Final go/cancel interpretation is deterministic; ordinary delivery delay/readiness
-validation still apply. Flash completion means projectile release, not successful blind.
+The default uses the imported seven-zone [B site scenario](SITE_SCENARIO.md).
+Reports use its actual region names; commands map only to authored swing routes.
+The original room/entry/corridor fixture remains an explicit `-LegacyRoom` option.
 
-The interpreter's command region `entry` maps explicitly to the authored swing
-`entry` or flash `flash_entry`. No other region receives an invented physical action.
-“Heaven” is not silently translated to “room.” Seven-region map/scenario work remains.
+**Preparation and release are separate:** ?get ready to swing? (or ?get ready to
+swing Heaven?) prepares an `on_cue` command. The engine bridge enforces that timing
+even if the interpreter mistakenly proposes `now` or `follow_player`. The teammate
+can move to its staging position, reports `ready`, and waits. A separate ?swing?
+or ?go? releases the ready command after the normal delivery delay. ?Cancel? cancels
+it. An unresolved target still requires clarification; preparation never invents a
+route. Explicit ?swing now? retains immediate-command timing when interpreted as such.
+
+Final swing/go/cancel interpretation uses the existing deterministic cue path.
+Early cues, expired commands, invalid targets and stale round sessions retain their
+existing guards. Preparation timing adjustments are recorded in the actual submitted
+event as `timing_guard: preparation_waits_for_cue`; raw model logs remain unchanged.
+Flash routes exist only in the legacy room configuration, not the current B site.
 
 **Selected sprint scope:** local LLM interpretation with the deterministic knowledge
 planner as the primary goal selector. The sprint handoff expressly permits this

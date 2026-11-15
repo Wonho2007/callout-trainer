@@ -46,7 +46,7 @@ Enemy reports go to Person 3's belief layer via delayed told observations. Perso
 
 - follow_player: move to the authored staging position; emit ready; start the route when delayed permitted perception detects the nearby player's entry movement. Use observed player motion, never a global player transform.
 - now: start as soon as the request is available, validated and feasible. It never bypasses reaction delay.
-- on_cue: stage and emit ready, then wait for a cue referencing this command. The bot only acts after that cue becomes available.
+- on_cue: stage and emit ready, then wait for a cue referencing this command. The bot only acts after that cue becomes available. "Get ready to swing" selects this mode; a separate "swing" or "go" releases it. Preparation must never be interpreted as immediate execution.
 - throw_flash accepts now/on_cue; swing_together accepts all three modes.
 
 A countdown and "swing with me" share an action, but not necessarily timing. For reliable countdown coordination, first prepare the swing ("on my count"), wait for ready, then deliver the final go cue through a fast deterministic speech/structured cue path. Keep expensive language-model interpretation outside the final release path.

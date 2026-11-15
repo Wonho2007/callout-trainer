@@ -36,7 +36,10 @@ runner succeeds with approved execution outside that sandbox. Keep strict error 
 -> Person 3 grounded Llama 3.1 8B interpreter -> localhost proposal -> Godot-stamped
 receipt tick -> existing 18-tick delayed inbox -> beliefs/planner -> shared physics.
 V is PTT and B is dash in voice scenes (no overlapping V/dash binding); raw mic audio stays in memory. Logs are local under `runs/`.
-Go/cancel fast path retains readiness/delivery validation. Round sessions reject stale
+Swing/go/cancel fast path retains readiness/delivery validation. Preparation phrases
+such as "get ready to swing" are forced to `on_cue` at the engine bridge, even
+if the model proposes immediate execution; they stage and wait for a separate
+"swing"/"go". Actual normalization is recorded with a `timing_guard` marker. Round sessions reject stale
 speech/model replies; retries deduplicate; disconnect/invalid goals retain safe control.
 
 **Selected AI scope:** LLM interprets, deterministic planner selects goals. This is the
@@ -152,6 +155,13 @@ For real-model bridge regression, use `validation/run_voice_model_smoke.py` with
 unaccepted full-goal experiment, not an ordinary passing regression. Keep its failures honest.
 
 ## Actual evidence and limits
+
+- Preparation/cue fix: real TCP voice regression passes **35 checks** using shared
+  source `8712f7d` / belief `57f809d`. A deliberately incorrect `now` proposal for
+  "get ready to swing" becomes `on_cue`, physically stages, waits 60 ticks, and
+  moves only after a separate swing cue. Preparatory paraphrases and unchanged
+  explicit "swing now" detection are checked. This is a synthetic socket test,
+  not a fresh human/model speech acceptance claim. Same bridge serves current map.
 
 - Imported-map integration: **23 functional checks** pass on `76b8eaa` / belief
   `57f809d`; **24 rendered checks** pass including screenshot save. Capture inspected.

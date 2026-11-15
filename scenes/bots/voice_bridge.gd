@@ -14,6 +14,13 @@ var events: Array = []
 var _outgoing := PackedByteArray()
 var _last_decision: String = ""
 
+func _requests_swing_preparation(transcript: String) -> bool:
+	# Explicit preparation cannot be upgraded to immediate execution by an
+	# interpreter proposal. Target grounding and normal delivery still apply.
+	var preparation := RegEx.new()
+	preparation.compile("\\b(get\\s+ready|be\\s+ready|ready\\s+up|ready\\s+to\\s+(swing|peek)|prepare\\s+to\\s+(swing|peek)|stand\\s+by|on\\s+my\\s+(cue|call|signal)|wait\\s+for\\s+my\\s+(cue|call|signal)|until\\s+i\\s+(say|call))\\b")
+	return preparation.search(transcript.to_lower()) != null
+
 func configure(owner_scene: Node, port: int = 8765) -> bool:
 	scene = owner_scene
 	return server.listen(port, "127.0.0.1") == OK
@@ -116,6 +123,7 @@ func _receive(packet: Dictionary) -> void:
 		_disconnect()
 		return
 	var tick: int = runtime.current_tick() + 1
+	var preparation_guard: bool = false
 	serial += 1
 	var message: Dictionary = {"schema_version": "comms.v1", "message_id": "voice:" + session + ":" + str(serial),
 		"speaker_id": "player", "recipient_id": "ally", "issued_tick": tick, "expires_tick": tick + 600}
@@ -133,6 +141,9 @@ func _receive(packet: Dictionary) -> void:
 		message["kind"] = proposal.kind
 		message["payload"] = proposal.payload.duplicate(true)
 		if proposal.kind == "command":
+			if message.payload.get("action") == "swing_together" and _requests_swing_preparation(str(packet.get("transcript", ""))):
+				message.payload["timing"] = {"mode": "on_cue"}
+				preparation_guard = true
 			var mappings: Dictionary = scene._scenario.get("command_targets", {"swing_together": {"entry": "entry"}, "throw_flash": {"entry": "flash_entry"}})
 			var target: Variant = mappings.get(message.payload.get("action"), {}).get(message.payload.get("target_id"))
 			if target == null:
@@ -141,6 +152,8 @@ func _receive(packet: Dictionary) -> void:
 			message.payload.target_id = target
 	var accepted: Dictionary = runtime.submit_comm(message)
 	var reply: Dictionary = {"type": "submitted", "session": session, "id": request_id, "message": message, "result": accepted}
+	if preparation_guard:
+		reply["timing_guard"] = "preparation_waits_for_cue"
 	seen[request_id] = reply.duplicate(true)
 	events.append(reply.duplicate(true))
 	_send(reply)
