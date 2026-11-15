@@ -547,7 +547,106 @@
     }
   ],
   "cover": [],
-  "regions": [],
+  "regions": [
+    {
+      "id": "c_link",
+      "name": "C Link",
+      "center": [
+        -14,
+        2,
+        -15.5
+      ],
+      "size": [
+        26,
+        5,
+        8
+      ]
+    },
+    {
+      "id": "b_heaven",
+      "name": "B Heaven",
+      "center": [
+        14,
+        2,
+        -15
+      ],
+      "size": [
+        26,
+        5,
+        10
+      ]
+    },
+    {
+      "id": "b_upper",
+      "name": "B Upper",
+      "center": [
+        0,
+        2,
+        -9
+      ],
+      "size": [
+        10,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "b_pit",
+      "name": "B Pit",
+      "center": [
+        0,
+        2,
+        -1
+      ],
+      "size": [
+        12,
+        5,
+        10
+      ]
+    },
+    {
+      "id": "a_link",
+      "name": "A Link",
+      "center": [
+        22,
+        2,
+        0
+      ],
+      "size": [
+        12,
+        5,
+        12
+      ]
+    },
+    {
+      "id": "b_cubby",
+      "name": "B Cubby",
+      "center": [
+        -18,
+        2,
+        2
+      ],
+      "size": [
+        14,
+        5,
+        14
+      ]
+    },
+    {
+      "id": "b_main",
+      "name": "B Main",
+      "center": [
+        -2,
+        2,
+        15
+      ],
+      "size": [
+        30,
+        5,
+        12
+      ]
+    }
+  ],
   "spawns": [
     {
       "id": "spawn_player",
@@ -577,6 +676,6 @@
       -12.06
     ],
     "planted": true,
-    "site_region": ""
+    "site_region": "b_heaven"
   }
 }
