@@ -141,3 +141,13 @@ User-assigned: Person 3 watches and annotates videos; Person 2 converts verified
 - Manual playtest and results: NOT separately verified in-engine this pass (the one-shot overlay dump was removed before commit). The function is a pure transformation of the already-validated map JSON (4 walls, 3 cover, 3 regions, 3 spawns, 1 spike) with no runtime dependencies; Person 3 should confirm the rendered minimap when integrating.
 - Remaining work/dependency: overlay reflects the synthetic test room; it will update automatically when the source-site blockout replaces it. Region IDs/coordinate convention still pending team freeze with Persons 2/3.
 - Next integration step: coordinate the frozen event/record and region-ID schema with Persons 2/3; optionally add JSONL run logging once schemas are agreed.
+
+### 2026-11-14 — Person 1: bullet tracers and reload/restart key swap
+
+- Branch/PR and owning lane: `person-1/weapon-tracers`; Person 1 (weapons/ + input).
+- Changed files: `weapons/tracer.gd` (new), `weapons/weapon.gd`, `project.godot`, `scenes/main.gd`, `scenes/main.tscn`.
+- Interface/schema changes and consumers: purely cosmetic + input. `Tracer` draws a short-lived streak from a muzzle offset to the shot's impact, spawned on the weapon's existing `fired` signal (works for any shooter). The shot stays HITSCAN — no travel time, no gameplay/fairness change. Input swap: reload is now R, restart is now F (HUD hints and round-end messages updated to match).
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally. Project loads/runs clean in Godot 4.4.1.
+- Manual playtest and results: tester confirmed the tracer is visible from a barrel-offset position (not screen-center), short-lived, and ends at the impact; R reloads and F restarts as swapped.
+- Remaining work/dependency: tracer uses an opaque unshaded material (reliable under the Compatibility renderer); no muzzle flash/impact decal. Offsets/lifetime are tunable placeholders.
+- Next integration step: unchanged — region graph/travel-times, sound events and the actor-command adapter remain the higher-value Person 1 coherence work.

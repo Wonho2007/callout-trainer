@@ -48,10 +48,34 @@ var _is_reloading: bool = false
 var _recent_fire_heat: float = 0.0  # 0..1, grows with sustained fire
 
 
+const TracerScript := preload("res://weapons/tracer.gd")
+
+## Show a visual tracer on each shot. Purely cosmetic; hit stays hitscan.
+@export var show_tracer: bool = true
+
+
 func _ready() -> void:
 	in_mag = magazine_size
 	reserve = reserve_ammo
 	ammo_changed.emit(in_mag, reserve)
+	if show_tracer:
+		fired.connect(_spawn_tracer)
+
+
+## Spawn a world-space tracer from a muzzle offset to the impact. Added under
+## the current scene (not the weapon) so it stays put while the camera moves.
+func _spawn_tracer(from_pos: Vector3, to_pos: Vector3, _hit: bool) -> void:
+	# Offset the visible start down-right from the camera so the streak reads as
+	# coming from a gun barrel instead of the center of the screen. The hit is
+	# unchanged (still resolved from the true origin); this is cosmetic only.
+	var basis := global_transform.basis
+	var muzzle := from_pos - basis.y * 0.18 + basis.x * 0.22 - basis.z * 0.4
+	var tracer: Tracer = TracerScript.new()
+	var host := get_tree().current_scene
+	if host == null:
+		host = self
+	host.add_child(tracer)
+	tracer.setup(muzzle, to_pos)
 
 
 func _process(delta: float) -> void:
