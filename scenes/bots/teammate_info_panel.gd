@@ -22,7 +22,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 5)
 	add_child(column)
-	for id in ["Title", "Action", "Vision", "Sight", "Sound", "Comm", "Memory"]:
+	for id in ["Title", "Action", "Vision", "Smoke", "Sight", "Sound", "Comm", "Memory"]:
 		var label := Label.new()
 		label.name = id
 		label.add_theme_font_size_override("font_size", 14 if id != "Title" else 18)
@@ -79,6 +79,20 @@ func update_information(state: Dictionary) -> void:
 	var remaining: float = maxf(0.0, (int(state.get("own_perception", {}).get("blind_until_tick", 0)) - maxi(0, tick)) / rate)
 	_labels.Vision.text = "Vision: BLINDED — %.1fs remaining" % remaining if remaining > 0 else "Vision: ready"
 	_labels.Vision.add_theme_color_override("font_color", Color(1, 0.45, 0.3) if remaining > 0 else Color(0.55, 0.95, 0.75))
+	var perception: Dictionary = state.get("own_perception", {})
+	var inside: bool = perception.get("inside_smoke", false)
+	var smoked_off: bool = perception.get("view_smoked_off", false)
+	_labels.Smoke.text = "Smoke: clear on watched angle"
+	if inside:
+		_labels.Smoke.text = "Smoke: IN SMOKE — sight blocked"
+	elif not perception.get("smoke_view_known", true):
+		_labels.Smoke.text = "Smoke: forward view unknown while blinded/down"
+	elif smoked_off:
+		_labels.Smoke.text = "Smoke: SMOKED OFF — watched angle blocked"
+	_labels.Smoke.add_theme_color_override("font_color", Color(1, 0.75, 0.35) if inside or smoked_off else Color(0.65, 0.75, 0.85))
+	if remaining <= 0 and (inside or smoked_off):
+		_labels.Vision.text = "Vision: blocked by smoke" if inside else "Vision: restricted by smoke"
+		_labels.Vision.add_theme_color_override("font_color", Color(1, 0.75, 0.35))
 	var seen: Dictionary = {}
 	var heard: Dictionary = {}
 	var told: Dictionary = {}

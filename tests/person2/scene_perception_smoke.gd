@@ -62,6 +62,90 @@ func count_since(source: String, cutoff: int, kind: String = "") -> int:
 func next_tick() -> int:
 	return runtime.current_tick() + 1
 
+func verify_natural_smoke() -> void:
+	# Exercise actual shared ground deployment/activation/expiry, without writing
+	# is_active. Shorten only this disposable fixture's ability definition.
+	var definitions: Dictionary = scene.utility.get("_defs")
+	var original_duration: float = float(definitions.smoke.duration_s)
+	var original_player_position: Vector3 = player.global_position
+	# Keep the real player capsule out of the baseline LOS; actor occlusion is
+	# intentional and must not make a smoke test pass for the wrong reason.
+	player.global_position = Vector3(-4, 0, 12.3)
+	definitions.smoke.duration_s = 1.5
+	for placement in ["between", "observer_inside", "enemy_inside"]:
+		bot.global_position = Vector3(-4.5, 0, 11.5)
+		enemy.global_position = Vector3(4.5, 0, 11.5)
+		yaw = -PI / 2.0
+		fresh()
+		# Initial recognition is delivered; the refresh at tick 35 is still
+		# legitimately pending when the smoke activates immediately afterward.
+		await advance(36)
+		expect(count_since("seen", 0) > 0, placement + ": enemy is actually visible before smoke")
+		var at := Vector3(0, 0, 11.5)
+		if placement == "observer_inside":
+			at.x = bot.global_position.x
+		elif placement == "enemy_inside":
+			at.x = enemy.global_position.x
+		var smoke: Node3D = scene.utility.throw_smoke(at)
+		while not smoke.is_active:
+			await advance(1)
+		var cutoff: int = next_tick()
+		var eye: Vector3 = bot.global_position + Vector3.UP * 1.6
+		var all_blocked: bool = true
+		for height in [1.6, 0.9, 0.2]:
+			all_blocked = all_blocked and scene.utility.segment_blocked_by_smoke(eye, enemy.global_position + Vector3.UP * height)
+		expect(all_blocked, placement + ": naturally active shared smoke intersects every target sight sample")
+		if placement == "between":
+			expect(not smoke.contains_point(eye) and not smoke.contains_point(enemy.global_position + Vector3.UP * 1.6), "both actors outside smoke still cannot see through its volume")
+		else:
+			var endpoint: Vector3 = eye if placement == "observer_inside" else enemy.global_position + Vector3.UP * 1.6
+			expect(smoke.contains_point(endpoint), placement + ": tested endpoint is genuinely inside active smoke")
+		await advance(32)
+		expect(count_since("seen", cutoff) == 0, placement + ": smoke prevents all newly sampled/delivered sightings")
+		var own_smoke: Dictionary = runtime.snapshot().own_perception
+		expect(own_smoke.inside_smoke if placement == "observer_inside" else (own_smoke.view_smoked_off and not own_smoke.inside_smoke), placement + ": own smoke status distinguishes inside from obstructed forward view")
+		var smoke_panel: PanelContainer = scene.get("_info_panel")
+		smoke_panel.update_information(runtime.snapshot())
+		expect(smoke_panel.text_for("Smoke").contains("IN SMOKE" if placement == "observer_inside" else "SMOKED OFF"), placement + ": HUD explicitly reflects smoke blocking the teammate")
+		enemy.global_position.x -= 0.2
+		await advance(1)
+		expect(runtime.snapshot().own_perception == own_smoke, placement + ": smoke knowledge is independent of unseen opponent position")
+		var pending_arrived: bool = false
+		for item in deliveries:
+			var observation: Dictionary = item.observation
+			pending_arrived = pending_arrived or (observation.source == "seen" and observation.event_tick < cutoff and item.tick >= cutoff)
+		expect(pending_arrived, placement + ": legitimate sight sampled before smoke may finish its reaction delay")
+		var newest: int = -1
+		for observation in runtime.snapshot().observations:
+			if observation.source == "seen":
+				newest = maxi(newest, observation.event_tick)
+		await advance(20)
+		var unchanged: bool = true
+		for observation in runtime.snapshot().observations:
+			if observation.source == "seen":
+				unchanged = unchanged and observation.event_tick <= newest and observation.event_tick < cutoff
+		expect(unchanged, placement + ": last-seen memory cannot refresh through smoke")
+		var panel: PanelContainer = scene.get("_info_panel")
+		panel.update_information(runtime.snapshot())
+		expect(panel.text_for("Sight").contains("enemy in corridor") and panel.text_for("Sight").contains("ago"), placement + ": HUD preserves explicitly aged last-seen memory")
+		while is_instance_valid(smoke):
+			await advance(1)
+		var cleared: int = next_tick()
+		await advance(25)
+		expect(count_since("seen", cleared) > 0, placement + ": real smoke expiry permits recognition again after exposure/reaction delay")
+		smoke_panel.update_information(runtime.snapshot())
+		expect(not runtime.snapshot().own_perception.inside_smoke and not runtime.snapshot().own_perception.view_smoked_off and smoke_panel.text_for("Smoke") == "Smoke: clear on watched angle", placement + ": smoke status clears automatically on actual expiry")
+	# A new smoke on the far side of the actual corridor end wall is not known
+	# simply because the privileged utility registry contains it.
+	fresh()
+	var hidden_smoke: Node3D = scene.utility.throw_smoke(Vector3(10, 0, 11.5))
+	await advance(5)
+	expect(hidden_smoke.is_active and not runtime.snapshot().own_perception.view_smoked_off, "own forward smoke knowledge cannot see through the first solid wall")
+	while is_instance_valid(hidden_smoke):
+		await advance(1)
+	definitions.smoke.duration_s = original_duration
+	player.global_position = original_player_position
+
 func run(host: Node3D) -> void:
 	scene = host
 	bot = scene.teammate
@@ -131,6 +215,7 @@ func run(host: Node3D) -> void:
 	cutoff = next_tick()
 	await advance(24)
 	expect(count_since("seen", cutoff) > 0, "inactive falling smoke collider does not block recognition")
+	expect(not runtime.snapshot().own_perception.inside_smoke and not runtime.snapshot().own_perception.view_smoked_off, "inactive falling smoke is not reported as own smoke obstruction")
 	smoke.is_active = true
 	cutoff = next_tick()
 	await advance(40)
@@ -237,6 +322,7 @@ func run(host: Node3D) -> void:
 	runtime.get("_sensing").sample(next_tick())
 	await advance(1)
 	expect("non_monotonic_scene_sample" in decisions[-1].errors, "failed sensor sample retains its exact error in decision telemetry")
+	await verify_natural_smoke()
 	# Fresh equal-seed trials perturb genuinely hidden live truth and compare
 	# newly generated contexts AND fallback decisions, not one frozen dictionary.
 	bot.global_position = Vector3(-2, 0, 11.5)

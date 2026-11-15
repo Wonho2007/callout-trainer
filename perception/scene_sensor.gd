@@ -17,6 +17,10 @@ var _last_steps: Dictionary = {}
 var _pending_audio: Array = []
 var _connections: Array = []
 var _snap_distance: float
+var _vision_range: float
+var _inside_smoke: bool = false
+var _view_smoked_off: bool = false
+var _smoke_view_known: bool = true
 
 func _init(bot_id: String, actor: CharacterBody3D, navigation: Node3D,
 		utility: Node3D, opponents: Dictionary, settings: Dictionary, seed_value: int,
@@ -27,6 +31,7 @@ func _init(bot_id: String, actor: CharacterBody3D, navigation: Node3D,
 	_opponents = opponents.duplicate()
 	_round_prefix = bot_id + ":round:" + str(round_id) + ":"
 	_snap_distance = float(settings.navigation_snap_distance)
+	_vision_range = float(settings.vision_range)
 	var tuning: Dictionary = settings.duplicate(true)
 	# Shared Smoke creates its collider while falling but only blocks when
 	# active. Use shared active-smoke geometry instead of hitting its raw body.
@@ -134,6 +139,22 @@ func _sounds(tick: int) -> Array:
 	_pending_audio.clear()
 	return output
 
+func _update_own_smoke(tick: int, eye: Vector3, forward: Vector3) -> void:
+	_inside_smoke = _utility != null and _utility.point_in_smoke(eye)
+	_smoke_view_known = _actor.is_alive and tick >= _blind_until
+	_view_smoked_off = false
+	if _utility == null or _inside_smoke or not _smoke_view_known:
+		return
+	# Own forward view only, clipped by the first world wall. Do not use any
+	# opponent position/collider or infer smoke on the far side of solid cover.
+	var end: Vector3 = eye + forward.normalized() * _vision_range
+	var query := PhysicsRayQueryParameters3D.create(eye, end, 1)
+	query.hit_from_inside = true
+	var hit: Dictionary = _actor.get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		end = hit.position
+	_view_smoked_off = _utility.segment_blocked_by_smoke(eye, end)
+
 func sample(tick: int) -> Dictionary:
 	if tick <= _clock:
 		return {"ok": false, "errors": ["non_monotonic_scene_sample"], "observations": []}
@@ -141,6 +162,7 @@ func sample(tick: int) -> Dictionary:
 	var eye: Vector3 = _actor.global_position + Vector3.UP * 1.6
 	var forward: Vector3 = -_actor.global_transform.basis.z
 	_update_blind(tick, eye, forward)
+	_update_own_smoke(tick, eye, forward)
 	var targets: Array = []
 	for id in _opponents:
 		var target: CharacterBody3D = _opponents[id]
@@ -172,4 +194,5 @@ func sample(tick: int) -> Dictionary:
 	return output
 
 func own_status() -> Dictionary:
-	return {"blind_until_tick": _blind_until}
+	return {"blind_until_tick": _blind_until, "inside_smoke": _inside_smoke,
+		"view_smoked_off": _view_smoked_off, "smoke_view_known": _smoke_view_known}

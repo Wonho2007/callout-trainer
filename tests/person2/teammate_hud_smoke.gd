@@ -16,6 +16,14 @@ func key(code: int, down: bool) -> InputEventKey:
 	event.physical_keycode = code
 	event.pressed = down
 	return event
+func capture_if_requested(camera: Camera3D, scene: Node3D, suffix: String) -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--hud-capture="):
+			camera.look_at(scene.teammate.global_position + Vector3.UP, Vector3.UP)
+			await RenderingServer.frame_post_draw
+			var path: String = argument.trim_prefix("--hud-capture=")
+			path = path.get_basename() + suffix + ".png"
+			expect(get_viewport().get_texture().get_image().save_png(path) == OK, "rendered smoke HUD preview saved: " + suffix)
 func run(scene: Node3D) -> void:
 	var panel: PanelContainer = scene.get("_info_panel")
 	var runtime: Node = scene.runtime
@@ -63,13 +71,7 @@ func run(scene: Node3D) -> void:
 	expect(not scene.utility.active_flashes().is_empty(), "F8 creates an actual shared flash effect")
 	await wait_ticks(runtime, 40)
 	expect(panel.text_for("Vision").contains("BLINDED"), "actual shared flash updates own blind countdown on HUD")
-	# Optional actual-renderer preview, never inferred to be a human playtest.
-	for argument in OS.get_cmdline_user_args():
-		if argument.begins_with("--hud-capture="):
-			camera.look_at(scene.teammate.global_position + Vector3.UP, Vector3.UP)
-			await RenderingServer.frame_post_draw
-			var path: String = argument.trim_prefix("--hud-capture=")
-			expect(get_viewport().get_texture().get_image().save_png(path) == OK, "rendered HUD preview saved")
+	expect(panel.text_for("Smoke").contains("unknown while blinded"), "HUD does not claim a new smoke view assessment while flashed")
 	await wait_ticks(runtime, 110)
 	expect(panel.text_for("Vision") == "Vision: ready", "HUD blind countdown recovers with actual sensor status")
 	# Buttons are wired to the same scene controls after releasing the mouse.
@@ -79,6 +81,23 @@ func run(scene: Node3D) -> void:
 		if button.text.begins_with("Enemy to entry"):
 			button.pressed.emit()
 	expect(button_count == 4 and enemy.global_position.distance_to(Vector3(0, 0, 9)) < 0.1, "mouse button callbacks place the same real enemy")
+	# Actual unattended FPS runtime + shared natural smoke, not synthetic HUD
+	# flags. Shorten only this disposable project's ability duration.
+	var definitions: Dictionary = scene.utility.get("_defs")
+	var original_duration: float = float(definitions.smoke.duration_s)
+	definitions.smoke.duration_s = 1.0
+	scene.utility.throw_smoke(Vector3(0, 0, 8))
+	await wait_ticks(runtime, 3)
+	expect(panel.text_for("Smoke").contains("SMOKED OFF") and panel.text_for("Vision") == "Vision: restricted by smoke", "HUD marks the actual authored entry watch angle smoked off")
+	await capture_if_requested(camera, scene, "-smoked-off")
+	await wait_ticks(runtime, 70)
+	scene.utility.throw_smoke(scene.teammate.global_position)
+	await wait_ticks(runtime, 3)
+	expect(panel.text_for("Smoke").contains("IN SMOKE") and panel.text_for("Vision") == "Vision: blocked by smoke", "HUD distinguishes teammate eyes physically inside shared smoke")
+	await capture_if_requested(camera, scene, "")
+	await wait_ticks(runtime, 70)
+	expect(panel.text_for("Smoke") == "Smoke: clear on watched angle" and panel.text_for("Vision") == "Vision: ready", "normal FPS HUD clears smoke restriction after natural expiry")
+	definitions.smoke.duration_s = original_duration
 	scene._restart()
 	while scene.get("_restart_pending"):
 		await get_tree().physics_frame
