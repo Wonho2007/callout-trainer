@@ -101,7 +101,7 @@ func _spawn_teammate() -> void:
 	runtime.configure("ally", teammate, builder, belief, _scenario.planner,
 		_scenario.motion_markers, _scenario.entries, _round_serial, utility, _scenario.flash_targets, int(_scenario.flash_charges))
 	runtime.attach_perception(SceneSensor.new("ally", teammate, builder, utility,
-		{"enemy": _target}, _scenario.perception, int(_scenario.perception_seed), _round_serial, _player))
+		{"enemy": _target}, _scenario.perception, int(_scenario.perception_seed), _round_serial, _player, _scenario.player_entry_sensing))
 	runtime.comm_result.connect(_comm_result)
 	teammate_ready.emit(runtime)
 

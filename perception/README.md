@@ -131,3 +131,40 @@ This mode loads the actual inherited FPS scene/current map and tests delayed rec
 Expanded natural-smoke regressions use the actual shared deploy/activation/expiry path (only disposable test duration is shortened), with smoke between both outside actors, around the listener and around the enemy. Each case first proves real visibility, verifies all three sight samples are blocked, forbids new smoke-period sightings/memory refresh, allows genuinely pre-smoke delayed evidence, and checks recovery after real expiry plus normal exposure/reaction. HUD smoke flags and independence from unseen target positions are also checked. The unattended FPS HUD fixture exercises both actual smoke labels and can render PNG previews.
 
 Remaining: human sight/hearing/utility playtest, PVS/complete-region coverage if required, agreed delayed combat aim payload, defuse audio, and Person 3 hearing beliefs/actual model prompt audit. Person 3 still owns aligning its imported hedge-weighted belief implementation with full player-comm acceptance. Pro annotations remain Person 3's responsibility.
+
+## Information recovery and action consumer additions
+
+Named-region sight content is unchanged. A visible registered enemy in a map gap/ambiguous overlap now delivers `{type: "enemy_seen_unknown_region", enemy_id: "enemy"}` after normal exposure/reaction delay. A private kernel sentinel is stripped before output; no invented region or aim coordinate leaves the adapter. The existing runtime promotes this evidence into copied contexts/HUD but does not send it to Person 3's region-only belief handler. Both consumers must handle location unknown explicitly rather than treating this as a located enemy or a combat aim payload. Shared schemas and named `enemy_seen` payloads are unchanged; this new internal content type requires consumer review.
+
+The agreed live follow-player producer emits only `seen` envelopes:
+
+~~~json
+{
+  "id": "ally:round:1:entry:ally:sense:1",
+  "bot_id": "ally",
+  "event_tick": 100,
+  "available_tick": 114,
+  "source": "seen",
+  "speaker_id": "sensor",
+  "content": {"type": "player_entry", "actor_id": "player", "entry_id": "entry"}
+}
+~~~
+
+`SceneSensor.new` accepts optional final `entry_regions`, copied from own scenario `player_entry_sensing`, currently `{entry: {region_id: "entry", direction: [0,0,-1]}}`. It validates known unique regions and finite nonzero horizontal directions. Actual forward displacement plus velocity in the authored region must remain visible through the same FOV/physics/smoke/blind/exposure kernel, using independently seeded recognition so opponent changes do not affect its delay RNG. Quiet walking/crouching can be seen. A stationary player, teleport or anonymous heard sound cannot create the cue. The existing delayed inbox/executor validates whether movement occurred at/after readiness and releases only on actual delivery. The producer does not change command logic or consult the active command. Live fixture tests clear/smoked/blinded/out-of-view movement and actual evidenced release. Entry IDs/region/direction come from authored data, never model coordinates. The action session owns staging and facing behavior.
+
+User-confirmed wave semantics now blind actors during travel. Shared `BlindWave.passing_blind_duration_for` retains radius/facing/through-wall/duration rules and excludes viewers behind the launch plane; teammate and shared player receivers apply each source only once. Ordinary flashes remain detonation/LOS-based. The adapter identifies waves by instance-ID membership in the explicit registry, avoiding invalid cross-type TypedArray searches when flashes and waves coexist. The runner explicitly overlays the two approved local shared scripts for FPS tests/launch; Person 1 should review/adopt that behavior. No wave truth or target handle enters policy.
+
+## Agreed delayed combat evidence
+
+The action session requested and this session accepted two new internal **seen** contents, separate from unchanged regional enemy_seen:
+
+~~~json
+{"type":"enemy_aim","enemy_id":"enemy","aim_position":[2.0,0.9,11.5]}
+{"type":"enemy_lost","enemy_id":"enemy"}
+~~~
+
+`enemy_aim` copies only a torso point that itself passed collider LOS, FOV/range, smoke, blindness and recognition. Head-only/foot-only regional sightings cannot grant a torso coordinate behind cover. It refreshes at six ticks while visible, with independently seeded ordinary 12–18-tick delay in the current scenario. Unknown-region visibility may supply a legitimately visible torso point without guessing its callout. Arrays are copied, never live target references or future transforms.
+
+`enemy_lost` invalidates usable torso sight after those checks break. It is emitted once per previously recognized lock, with no hidden cause or new location. Per-enemy availability is causally ordered so old aim cannot arrive after its invalidating loss, nor an older loss after subsequent reacquisition. The existing inbox still enforces actual availability. `sampled_visible_ids()` is a privileged kernel diagnostic for generating delayed loss only; its immediate output must never reach policy/model.
+
+The consumer agreement is a maximum aim age of **30 ticks**, selecting evidence by event time and actual delivery, rejecting newer delivered losses, and immediately guarding fire with copied own blindness/smoke status. This is synthetic tuning, not measured game behavior. Firing is opt-in during integration so ordinary information fixtures remain independent. No hidden target state may be consulted for aim, fire eligibility or pursuit. Shared weapon physics may resolve a shot without returning hidden hit/collider truth to policy. The action session owns combat execution/telemetry and lateral peek routes; existing spawn/home/cover/flash/entry-sensing fields are preserved. These are proposed internal consumer seams, not silent changes to shared schemas or Person 3 beliefs.

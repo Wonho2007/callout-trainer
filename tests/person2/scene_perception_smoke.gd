@@ -33,7 +33,7 @@ func fresh() -> void:
 	runtime.configure("ally", bot, scene.builder, Belief.new("ally", settings.planner.regions, ["enemy"]),
 		settings.planner, settings.motion_markers, settings.entries, 900)
 	runtime.attach_perception(SceneSensor.new("ally", bot, scene.builder, scene.utility,
-		{"enemy": enemy}, settings.perception, int(settings.perception_seed), 900, player))
+		{"enemy": enemy}, settings.perception, int(settings.perception_seed), 900, player, settings.player_entry_sensing))
 	runtime.set_physics_process(false)
 	runtime.observation_delivered.connect(func(o: Dictionary, tick: int): deliveries.append({"observation": o, "tick": tick}))
 	runtime.policy_context_ready.connect(func(c: Dictionary): contexts.append(c))
@@ -42,10 +42,12 @@ func fresh() -> void:
 	contexts.clear()
 	decisions.clear()
 
-func advance(count: int, move_enemy: bool = false) -> void:
+func advance(count: int, move_enemy: bool = false, move_player: bool = false) -> void:
 	for i in count:
 		if move_enemy:
 			enemy._physics_process(1.0 / 60.0)
+		if move_player:
+			player._physics_process(1.0 / 60.0)
 		await get_tree().physics_frame
 		await get_tree().process_frame
 		bot.rotation.y = yaw
@@ -55,9 +57,18 @@ func count_since(source: String, cutoff: int, kind: String = "") -> int:
 	var total: int = 0
 	for item in deliveries:
 		var o: Dictionary = item.observation
+		if source == "seen" and o.content.get("type") not in ["enemy_seen", "enemy_seen_unknown_region"]:
+			continue
 		if o.source == source and o.event_tick >= cutoff and (kind.is_empty() or o.content.get("sound_kind") == kind):
 			total += 1
 	return total
+
+func typed_since(kind: String, cutoff: int = 0) -> Array:
+	var output: Array = []
+	for item in deliveries:
+		if item.observation.content.get("type") == kind and item.observation.event_tick >= cutoff:
+			output.append(item)
+	return output
 
 func next_tick() -> int:
 	return runtime.current_tick() + 1
@@ -102,6 +113,7 @@ func verify_natural_smoke() -> void:
 			expect(smoke.contains_point(endpoint), placement + ": tested endpoint is genuinely inside active smoke")
 		await advance(32)
 		expect(count_since("seen", cutoff) == 0, placement + ": smoke prevents all newly sampled/delivered sightings")
+		expect(typed_since("enemy_aim", cutoff).is_empty() and typed_since("enemy_lost", cutoff).size() == 1, placement + ": smoke produces one delayed aim loss and no fresh torso coordinates")
 		var own_smoke: Dictionary = runtime.snapshot().own_perception
 		expect(own_smoke.inside_smoke if placement == "observer_inside" else (own_smoke.view_smoked_off and not own_smoke.inside_smoke), placement + ": own smoke status distinguishes inside from obstructed forward view")
 		var smoke_panel: PanelContainer = scene.get("_info_panel")
@@ -117,12 +129,12 @@ func verify_natural_smoke() -> void:
 		expect(pending_arrived, placement + ": legitimate sight sampled before smoke may finish its reaction delay")
 		var newest: int = -1
 		for observation in runtime.snapshot().observations:
-			if observation.source == "seen":
+			if observation.content.get("type") in ["enemy_seen", "enemy_seen_unknown_region"]:
 				newest = maxi(newest, observation.event_tick)
 		await advance(20)
 		var unchanged: bool = true
 		for observation in runtime.snapshot().observations:
-			if observation.source == "seen":
+			if observation.content.get("type") in ["enemy_seen", "enemy_seen_unknown_region"]:
 				unchanged = unchanged and observation.event_tick <= newest and observation.event_tick < cutoff
 		expect(unchanged, placement + ": last-seen memory cannot refresh through smoke")
 		var panel: PanelContainer = scene.get("_info_panel")
@@ -133,6 +145,7 @@ func verify_natural_smoke() -> void:
 		var cleared: int = next_tick()
 		await advance(25)
 		expect(count_since("seen", cleared) > 0, placement + ": real smoke expiry permits recognition again after exposure/reaction delay")
+		expect(not typed_since("enemy_aim", cleared).is_empty(), placement + ": real smoke expiry restores delayed visible torso evidence")
 		smoke_panel.update_information(runtime.snapshot())
 		expect(not runtime.snapshot().own_perception.inside_smoke and not runtime.snapshot().own_perception.view_smoked_off and smoke_panel.text_for("Smoke") == "Smoke: clear on watched angle", placement + ": smoke status clears automatically on actual expiry")
 	# A new smoke on the far side of the actual corridor end wall is not known
@@ -145,6 +158,146 @@ func verify_natural_smoke() -> void:
 		await advance(1)
 	definitions.smoke.duration_s = original_duration
 	player.global_position = original_player_position
+
+func verify_aim_delivery() -> void:
+	bot.global_position = Vector3(-2, 0, 11.5)
+	enemy.global_position = Vector3(2, 0, 11.5)
+	player.global_position = Vector3(-4, 0, 11.5)
+	yaw = -PI / 2.0
+	fresh()
+	await advance(4)
+	expect(typed_since("enemy_aim").is_empty(), "torso recognition cannot bypass reaction delay")
+	var observed_torso: Vector3 = enemy.global_position + Vector3.UP * 0.9
+	var old_point: Array = [observed_torso.x, observed_torso.y, observed_torso.z]
+	var cutoff: int = next_tick()
+	enemy.global_position = Vector3(-4, 0, 3)
+	await advance(27)
+	var aims: Array = typed_since("enemy_aim")
+	var losses: Array = typed_since("enemy_lost")
+	expect(not aims.is_empty() and aims[0].observation.content == {"type": "enemy_aim", "enemy_id": "enemy", "aim_position": old_point}, "delivered aim contains only the actual last-observed torso point")
+	expect(typed_since("enemy_aim", cutoff).is_empty() and losses.size() == 1, "unseen move cannot update aim and produces only one delayed loss")
+	if not aims.is_empty() and not losses.is_empty():
+		expect(aims[0].tick <= losses[0].tick and losses[0].observation.content == {"type": "enemy_lost", "enemy_id": "enemy"}, "loss is causally delivered after its observed aim without revealing hidden cause/location")
+		expect(aims[0].observation.available_tick <= aims[0].tick and losses[0].observation.available_tick <= losses[0].tick, "aim/loss signals honor actual availability")
+		var id: String = aims[0].observation.id
+		aims[0].observation.content.aim_position[0] = 99999
+		var copied: bool = false
+		for observation in runtime.snapshot().observations:
+			copied = copied or (observation.id == id and observation.content.get("aim_position") == old_point)
+		expect(copied, "delivered aim arrays cannot mutate the private inbox")
+	expect(Data.valid(contexts) and Data.valid(runtime.snapshot().observations), "aim/loss context content is recursively plain copied data")
+	# A low world blocker hides the torso/feet but leaves the head genuinely
+	# visible: region recognition must not grant an unseen torso coordinate.
+	enemy.global_position = Vector3(2, 0, 11.5)
+	var cover := StaticBody3D.new()
+	cover.collision_layer = 1
+	cover.collision_mask = 0
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(0.5, 1.4, 1)
+	collision.shape = shape
+	cover.add_child(collision)
+	scene.add_child(cover)
+	cover.global_position = Vector3(0, 0.7, 11.5)
+	fresh()
+	await advance(26)
+	expect(count_since("seen", 0) > 0, "exposed head still produces a legitimate regional sighting")
+	expect(typed_since("enemy_aim").is_empty() and typed_since("enemy_lost").is_empty(), "head-only visibility never invents a hidden torso point or unseen target loss")
+	cover.free()
+	await advance(2)
+	fresh()
+	await advance(32)
+	aims = typed_since("enemy_aim")
+	var refresh: bool = aims.size() >= 2
+	for i in range(1, aims.size()):
+		refresh = refresh and aims[i].observation.event_tick - aims[i - 1].observation.event_tick >= 6
+	expect(refresh, "visible torso updates respect the six-tick sampling cadence")
+	cutoff = next_tick()
+	yaw = PI / 2.0
+	await advance(25)
+	expect(typed_since("enemy_aim", cutoff).is_empty() and typed_since("enemy_lost", cutoff).size() == 1, "looking away invalidates aim through one delayed loss")
+	yaw = -PI / 2.0
+	await advance(26)
+	var flash: Node3D = scene.utility.throw_flash(Vector3(0, 1.6, 11.5), Vector3.ZERO)
+	flash.freeze = true
+	while not flash.is_active:
+		await advance(1)
+	cutoff = runtime.current_tick()
+	var blind_until: int = runtime.snapshot().own_perception.blind_until_tick
+	await advance(24)
+	expect(typed_since("enemy_aim", cutoff).is_empty() and typed_since("enemy_lost", cutoff).size() == 1, "actual flash stops fresh aim and queues aim loss")
+	await advance(maxi(1, blind_until - runtime.current_tick() + 25))
+	expect(not typed_since("enemy_aim", blind_until).is_empty(), "torso aim reacquires only after blindness, exposure and delayed availability")
+
+func verify_player_entry() -> void:
+	var definitions: Dictionary = scene.utility.get("_defs")
+	var original_duration: float = float(definitions.smoke.duration_s)
+	definitions.smoke.duration_s = 1.5
+	for obstruction in ["clear", "smoke", "blind", "behind"]:
+		bot.global_position = Vector3(-2, 0, 11.5)
+		enemy.global_position = Vector3(-4, 0, 3)
+		player.global_position = Vector3(0, 0, 10.3)
+		player.velocity = Vector3.ZERO
+		player.rotation.y = 0
+		yaw = atan2(-2.0, 3.5) if obstruction != "behind" else PI
+		fresh()
+		var issued: int = next_tick()
+		runtime.submit_comm({"schema_version": "comms.v1", "message_id": "live-follow", "speaker_id": "player", "recipient_id": "ally",
+			"issued_tick": issued, "expires_tick": issued + 500, "kind": "command",
+			"payload": {"action": "swing_together", "target_id": "entry", "timing": {"mode": "follow_player"}}})
+		await advance(24)
+		expect(runtime.snapshot().active_command.get("phase") == "ready", obstruction + ": actual delayed follow-player command stages first")
+		var smoke: Node3D
+		if obstruction == "smoke":
+			smoke = scene.utility.throw_smoke(Vector3(0, 0, 9))
+		if obstruction == "blind":
+			var forward: Vector3 = Vector3(2, 0, -3.5).normalized()
+			var flash: Node3D = scene.utility.throw_flash(bot.global_position + Vector3.UP * 1.6 + forward * 2, Vector3.ZERO)
+			flash.freeze = true
+			while not flash.is_active:
+				await advance(1)
+			await advance(1)
+		var start: int = next_tick()
+		Input.action_press("walk")
+		Input.action_press("move_forward")
+		for i in 120:
+			if player.global_position.z < 9.99:
+				break
+			await advance(1, false, true)
+		await advance(3, false, true)
+		Input.action_release("move_forward")
+		Input.action_release("walk")
+		player.set_move_dir(Vector3.ZERO)
+		player.velocity = Vector3.ZERO
+		expect(player.global_position.z < 10, obstruction + ": real player controller actually crosses into entry")
+		if obstruction == "smoke":
+			var covered: bool = is_instance_valid(smoke) and smoke.is_active
+			for height in [1.6, 0.9, 0.2]:
+				covered = covered and scene.utility.segment_blocked_by_smoke(bot.global_position + Vector3.UP * 1.6, player.global_position + Vector3.UP * height)
+			expect(covered, "entry smoke covers head, torso and feet rather than exposing an edge sample")
+		expect(runtime.snapshot().active_command.get("phase") == "ready", obstruction + ": actual entry movement cannot release before sensory delay")
+		await advance(25)
+		var entries: Array = []
+		for item in deliveries:
+			if item.observation.content.get("type") == "player_entry" and item.observation.event_tick >= start:
+				entries.append(item)
+		if obstruction == "clear":
+			expect(not entries.is_empty() and runtime.snapshot().active_command.get("phase") == "executing", "actual quiet visible player entry releases the staged command after delivery")
+			if not entries.is_empty():
+				var entry: Dictionary = entries[0].observation
+				expect(entry.source == "seen" and entry.content == {"type": "player_entry", "actor_id": "player", "entry_id": "entry"} and entry.available_tick <= entries[0].tick, "live entry producer emits exact agreed plain payload with actual availability")
+				expect(entry.id in runtime.snapshot().active_command.evidence_ids, "live follow-player release cites its delivered entry evidence")
+				scene.get("_info_panel").update_information(runtime.snapshot())
+				expect(scene.get("_info_panel").text_for("Entry").contains("Player entry: entry"), "HUD shows only actually delivered player-entry movement")
+		else:
+			expect(entries.is_empty() and runtime.snapshot().active_command.get("phase") == "ready", obstruction + ": obscured/unseen movement cannot trigger follow-player release")
+		if obstruction == "smoke":
+			while is_instance_valid(smoke):
+				await advance(1)
+			expect(runtime.snapshot().active_command.get("phase") == "ready", "smoke clearing does not invent entry motion from a stationary player")
+		if obstruction == "blind":
+			await advance(maxi(1, int(runtime.snapshot().own_perception.blind_until_tick) - runtime.current_tick() + 1))
+	definitions.smoke.duration_s = original_duration
 
 func run(host: Node3D) -> void:
 	scene = host
@@ -164,9 +317,10 @@ func run(host: Node3D) -> void:
 	expect(deliveries.is_empty(), "visible target cannot reach policy before reaction delay")
 	await advance(22)
 	expect(count_since("seen", 0) == 1, "real corridor target produces one delayed sighting")
-	var first: Dictionary = deliveries[0].observation
+	var first_item: Dictionary = typed_since("enemy_seen")[0]
+	var first: Dictionary = first_item.observation
 	expect(first.content == {"type": "enemy_seen", "enemy_id": "enemy", "region_id": "corridor"}, "sighting contains agreed region content only")
-	expect(deliveries[0].tick == first.available_tick and first.available_tick - first.event_tick >= 12 and first.available_tick - first.event_tick <= 18, "seeded sight delivery honors actual availability tick")
+	expect(first_item.tick == first.available_tick and first.available_tick - first.event_tick >= 12 and first.available_tick - first.event_tick <= 18, "seeded sight delivery honors actual availability tick")
 	await advance(5)
 	var visible_context: Dictionary = contexts[-1].duplicate(true)
 	expect(first.id in visible_context.belief.evidence_ids, "due live sighting reaches actual Person 3 belief evidence")
@@ -176,8 +330,13 @@ func run(host: Node3D) -> void:
 	candidate.decision_id = "invented-evidence"
 	candidate.evidence_ids = ["not-delivered"]
 	expect(not runtime.submit_intent(candidate).ok, "model intent cannot cite missing sensory evidence")
-	contexts[-1].observations[0].content.region_id = "tampered"
-	expect(runtime.snapshot().observations[0].content.region_id == "corridor", "mutating emitted context cannot change private sensory inbox")
+	for observation in contexts[-1].observations:
+		if observation.id == first.id:
+			observation.content.region_id = "tampered"
+	var isolated: bool = false
+	for observation in runtime.snapshot().observations:
+		isolated = isolated or (observation.id == first.id and observation.content.get("region_id") == "corridor")
+	expect(isolated, "mutating emitted context cannot change private sensory inbox")
 	var evidence_legal: bool = true
 	for record in decisions:
 		for id in record.plan.get("decision", {}).get("evidence_ids", []):
@@ -251,18 +410,17 @@ func run(host: Node3D) -> void:
 		await advance(1)
 	await advance(1)
 	expect(runtime.snapshot().own_perception.blind_until_tick <= runtime.current_tick(), "flash behind real map wall cannot blind")
-	var wave: Node3D = scene.utility.throw_blind_wave(blocked_at, Vector3.FORWARD)
-	# Drive this actual shared effect to its detonation position, avoiding a
-	# travel-distance assumption. Its directional/range/duration method is real.
-	wave.set_physics_process(false)
-	wave.global_position = blocked_at
-	wave.is_active = true
+	var wave: Node3D = scene.utility.throw_blind_wave(blocked_at, Vector3.BACK)
+	# Actual travel through the wall, not a fixture-written is_active flag.
 	bot.rotation.y = yaw
-	var expected_duration: float = wave.blind_duration_for(bot.global_position + Vector3.UP * 1.6, Vector3.FORWARD, false) + 1.0
 	var wave_tick: int = next_tick()
 	await advance(1)
+	var expected_duration: float = wave.passing_blind_duration_for(bot.global_position + Vector3.UP * 1.6, Vector3.FORWARD, false) + 1.0
 	expect(runtime.snapshot().own_perception.blind_until_tick == wave_tick + int(ceil(expected_duration * 60.0)), "explicit blind-wave registry applies through-wall duration plus shared extra second")
-	wave.is_active = false
+	expect(not wave.is_active and runtime.snapshot().own_perception.blind_until_tick > runtime.current_tick(), "actual traveling wave blinds before endpoint detonation")
+	var wave_blind_until: int = runtime.snapshot().own_perception.blind_until_tick
+	await advance(5)
+	expect(runtime.snapshot().own_perception.blind_until_tick == wave_blind_until, "one passing wave cannot refresh blindness every frame")
 	# New runtime clears blindness/recognition; actual fire generates narrow audio.
 	yaw = -PI / 2.0
 	fresh()
@@ -323,6 +481,8 @@ func run(host: Node3D) -> void:
 	await advance(1)
 	expect("non_monotonic_scene_sample" in decisions[-1].errors, "failed sensor sample retains its exact error in decision telemetry")
 	await verify_natural_smoke()
+	await verify_aim_delivery()
+	await verify_player_entry()
 	# Fresh equal-seed trials perturb genuinely hidden live truth and compare
 	# newly generated contexts AND fallback decisions, not one frozen dictionary.
 	bot.global_position = Vector3(-2, 0, 11.5)

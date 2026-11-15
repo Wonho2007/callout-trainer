@@ -22,7 +22,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 5)
 	add_child(column)
-	for id in ["Title", "Action", "Vision", "Smoke", "Sight", "Sound", "Comm", "Memory"]:
+	for id in ["Title", "Action", "Vision", "Smoke", "Sight", "Sound", "Comm", "Entry", "Memory"]:
 		var label := Label.new()
 		label.name = id
 		label.add_theme_font_size_override("font_size", 14 if id != "Title" else 18)
@@ -96,6 +96,7 @@ func update_information(state: Dictionary) -> void:
 	var seen: Dictionary = {}
 	var heard: Dictionary = {}
 	var told: Dictionary = {}
+	var entry_motion: Dictionary = {}
 	var delivered: Array = state.get("observations", [])
 	var received_count: int = 0
 	for observation in delivered:
@@ -105,8 +106,10 @@ func update_information(state: Dictionary) -> void:
 		received_count += 1
 		match observation.source:
 			"seen":
-				if observation.content.get("type") == "enemy_seen" and (seen.is_empty() or observation.event_tick >= seen.event_tick):
+				if observation.content.get("type") in ["enemy_seen", "enemy_seen_unknown_region"] and (seen.is_empty() or observation.event_tick >= seen.event_tick):
 					seen = observation
+				if observation.content.get("type") == "player_entry" and (entry_motion.is_empty() or observation.event_tick >= entry_motion.event_tick):
+					entry_motion = observation
 			"heard":
 				if heard.is_empty() or observation.event_tick >= heard.event_tick:
 					heard = observation
@@ -115,7 +118,8 @@ func update_information(state: Dictionary) -> void:
 					told = observation
 	_labels.Sight.text = "Last seen: no enemy sighting received"
 	if not seen.is_empty():
-		_labels.Sight.text = "Last seen: %s in %s (%.1fs ago)" % [seen.content.enemy_id, seen.content.region_id, (tick - seen.event_tick) / rate]
+		var region: String = seen.content.get("region_id", "unknown region")
+		_labels.Sight.text = "Last seen: %s in %s (%.1fs ago)" % [seen.content.enemy_id, region, (tick - seen.event_tick) / rate]
 	_labels.Sound.text = "Last heard: nothing received"
 	if not heard.is_empty():
 		_labels.Sound.text = "Last heard: %s, %s (%.1fs ago)" % [heard.content.get("sound_kind", "sound").replace("_", " "), heard.content.get("distance_class", "unknown distance"), (tick - heard.event_tick) / rate]
@@ -125,3 +129,14 @@ func update_information(state: Dictionary) -> void:
 		var payload: Dictionary = message.get("payload", {})
 		_labels.Comm.text = "Player comms: %s %s" % [payload.get("action", message.get("kind", "message")).replace("_", " "), payload.get("region_id", payload.get("target_id", ""))]
 	_labels.Memory.text = "Received updates: %d" % received_count
+	_labels.Entry.text = "Player entry: no movement seen"
+	if not entry_motion.is_empty():
+		_labels.Entry.text = "Player entry: %s (%.1fs ago)" % [entry_motion.content.entry_id, (tick - entry_motion.event_tick) / rate]
+	# Round completion intentionally stops the runtime clock/sensing. Do not
+	# present frozen last-known status as live readiness or a still-active plan.
+	var physical: Dictionary = state.get("physical", {})
+	if physical.get("reason") in ["detonated", "defused", "team_eliminated"]:
+		_labels.Action.text = "Action: round ended — press F to reset"
+		_labels.Vision.text = "Vision: inactive — round ended"
+		_labels.Vision.add_theme_color_override("font_color", Color(1, 0.75, 0.35))
+		_labels.Smoke.text = "Smoke: no live updates — round ended"

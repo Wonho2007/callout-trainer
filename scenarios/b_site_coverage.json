@@ -22,6 +22,7 @@
   },
   "teammate_spawn": {"position": [-2, 0, 11.5], "facing_deg": 0},
   "test_enemy_positions": {"entry": [0, 0, 9], "room": [-4, 0, 3]},
+  "player_entry_sensing": {"entry": {"region_id": "entry", "direction": [0, 0, -1]}},
   "flash_charges": 1,
   "flash_targets": {"flash_entry": {"stage_marker_id": "home", "velocity": [4, 2, -8]}},
   "planner": {

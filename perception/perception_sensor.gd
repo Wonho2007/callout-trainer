@@ -11,6 +11,12 @@ var _rng := RandomNumberGenerator.new()
 var _tracking: Dictionary = {}
 var _sound_records: Dictionary = {}
 
+# PRIVILEGED adapter-only diagnostic for the last successful sample. These IDs
+# precede reaction delay and must never be exposed directly to policy/model.
+# SceneSensor uses it only to enqueue delayed loss of a previously observed aim.
+func sampled_visible_ids() -> Array:
+	return _tracking.keys().duplicate()
+
 func _init(bot_id: String, configuration: Dictionary, seed_value: int) -> void:
 	_bot_id = bot_id
 	_rng.seed = seed_value

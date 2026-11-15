@@ -97,12 +97,56 @@ func run(scene: Node3D) -> void:
 	await capture_if_requested(camera, scene, "")
 	await wait_ticks(runtime, 70)
 	expect(panel.text_for("Smoke") == "Smoke: clear on watched angle" and panel.text_for("Vision") == "Vision: ready", "normal FPS HUD clears smoke restriction after natural expiry")
+	# The arch apron is physically visible but has no named region in this map.
+	# A missing callout must not make an otherwise visible actor disappear.
+	expect(scene._place_test_enemy(Vector3(1.5, 0, 5)), "can place enemy on the walkable unnamed arch apron")
+	var sight_query := PhysicsRayQueryParameters3D.create(scene.teammate.global_position + Vector3.UP * 1.6, enemy.global_position + Vector3.UP * 1.6, 1)
+	expect(scene.get_world_3d().direct_space_state.intersect_ray(sight_query).is_empty(), "unnamed-region regression has actual clear world LOS")
+	await wait_ticks(runtime, 30)
+	expect(panel.text_for("Sight").contains("unknown region"), "visible enemy in unnamed map space still reaches HUD after delay")
+	var smoke_cutoff: int = runtime.current_tick() + 1
+	scene.utility.throw_smoke(Vector3(0, 0, 8))
+	await wait_ticks(runtime, 30)
+	var blocked: bool = true
+	for observation in runtime.snapshot().observations:
+		if observation.content.get("type") == "enemy_seen_unknown_region":
+			blocked = blocked and observation.event_tick < smoke_cutoff
+	expect(blocked, "unknown-region sightings also stop updating through active smoke")
+	await wait_ticks(runtime, 60)
+	var refreshed: bool = false
+	for observation in runtime.snapshot().observations:
+		refreshed = refreshed or (observation.content.get("type") == "enemy_seen_unknown_region" and observation.event_tick >= smoke_cutoff)
+	expect(refreshed and panel.text_for("Smoke") == "Smoke: clear on watched angle" and panel.text_for("Sight").contains("unknown region"), "unnamed-region sighting is freshly reacquired after real smoke expiry")
 	definitions.smoke.duration_s = original_duration
+	# Exercise the actual player's G controller path and real traveling wave.
+	var shared_player: Node3D = scene.get("_player")
+	camera.look_at(scene.teammate.global_position + Vector3.UP * 1.6, Vector3.UP)
+	shared_player._unhandled_input(key(KEY_G, true))
+	await wait_ticks(runtime, 15)
+	var traveling_wave: Node3D = scene.utility.active_blind_waves()[-1]
+	expect(not traveling_wave.is_active and panel.text_for("Vision").contains("BLINDED"), "actual G-cast traveling wave blinds teammate before endpoint detonation")
+	var once_until: int = runtime.snapshot().own_perception.blind_until_tick
+	await wait_ticks(runtime, 10)
+	expect(runtime.snapshot().own_perception.blind_until_tick == once_until, "a passing wave does not continuously renew teammate blindness")
+	shared_player._sample_passing_waves()
+	expect(shared_player.get("_wave_blind_remaining") == 0.0, "caster behind the wave launch plane is not self-blinded at release")
+	# The shared player's receiver obeys the same passing-wave primitive.
+	var forward: Vector3 = -camera.global_basis.z
+	var player_wave: Node3D = scene.utility.throw_blind_wave(camera.global_position + forward * 2, -forward)
+	shared_player._sample_passing_waves()
+	expect(not player_wave.is_active and shared_player.get("_wave_blind_remaining") > 0, "shared player is also blinded by a traveling incoming wave")
+	var player_once: float = shared_player.get("_wave_blind_remaining")
+	shared_player._sample_passing_waves()
+	expect(shared_player.get("_wave_blind_remaining") == player_once, "shared player applies each passing wave only once")
+	await wait_ticks(runtime, 160)
 	scene._restart()
 	while scene.get("_restart_pending"):
 		await get_tree().physics_frame
 	await get_tree().process_frame
 	panel.update_information(scene.runtime.snapshot())
 	expect(panel.text_for("Sight").contains("no enemy sighting") and panel.text_for("Vision") == "Vision: ready", "restart clears displayed old knowledge and blind status")
+	scene._on_spike_detonated()
+	panel.update_information(scene.runtime.snapshot())
+	expect(panel.text_for("Vision").contains("round ended") and panel.text_for("Action").contains("reset"), "ended round cannot misleadingly advertise live ready perception")
 	print("PERSON2_HUD_" + ("FAIL" if failed else "PASS"), " checks=", checks)
 	get_tree().quit(1 if failed else 0)
