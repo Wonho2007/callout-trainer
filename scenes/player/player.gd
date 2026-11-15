@@ -21,6 +21,8 @@ var utility: UtilitySystem
 var flash_overlay: ColorRect
 var blind_overlay: ColorRect
 var smoke_overlay: ColorRect
+## Enemy actors the scan orb tests against (set by main; read-only use).
+var scan_targets: Array = []
 
 var _pitch: float = 0.0
 var _mouse_captured: bool = false
@@ -73,6 +75,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var w := utility.throw_blind_wave(from, dir)
 			if w:
 				w.detonated.connect(_on_wave_detonated)
+		elif event.is_action_pressed("scan_orb"):
+			var from := camera.global_position - camera.global_transform.basis.z * 0.5
+			var toss := -camera.global_transform.basis.z * 12.0 + Vector3.UP * 3.0
+			utility.throw_scan_orb(from, toss, scan_targets)
 
 
 ## Where the player is aiming lands on the first world surface, else a point

@@ -18,6 +18,7 @@ class_name Minimap
 var builder: Node          # SandboxBuilder (has get_map_overlay)
 var player: Node3D         # the player actor
 var enemies: Array = []    # enemy ActorBase nodes to test against the cone
+var utility: Node = null   # UtilitySystem, for decaying recon marks (optional)
 
 var _overlay: Dictionary = {}
 var _world_min := Vector2(-10, -10)
@@ -97,6 +98,14 @@ func _draw() -> void:
 		if _player_can_see(ppos, forward, e.global_position):
 			draw_circle(_to_map(e.global_position.x, e.global_position.z), 4.0,
 				Color(1.0, 0.3, 0.3))
+
+	# Decaying recon marks from a scan orb (last-known, not live tracking).
+	if utility and utility.has_method("recon_marks"):
+		for m in utility.recon_marks():
+			var mp: Vector3 = m["position"]
+			var at := _to_map(mp.x, mp.z)
+			draw_circle(at, 5.0, Color(0.9, 0.85, 0.2, 0.5))
+			draw_arc(at, 6.0, 0.0, TAU, 16, Color(0.9, 0.85, 0.2, 0.9), 1.0)
 
 
 func _draw_world_rect(rect: Dictionary, color: Color) -> void:
