@@ -5,9 +5,11 @@ const Executor = preload("res://bots/command_executor.gd")
 const Planner = preload("res://bots/knowledge_planner.gd")
 const Motion = preload("res://bots/motion_controller.gd")
 const Gate = preload("res://bots/intent_gate.gd")
+const FlashController = preload("res://bots/flash_controller.gd")
 signal policy_context_ready(context: Dictionary)
 signal decision_recorded(record: Dictionary)
 signal comm_result(result: Dictionary)
+signal observation_delivered(observation: Dictionary, delivery_tick: int)
 var _actor: Node3D
 var _nav: Node3D
 var _belief: RefCounted
@@ -27,9 +29,14 @@ var _delivery_serial: int = 0
 var _status: Dictionary = {}
 var _last_plan: Dictionary = {}
 var _configured: bool = false
+var _sensing: RefCounted
+var _sensory_ids: Dictionary = {}
+var _applied_senses: Dictionary = {}
+var _flash: RefCounted
 
 func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCounted,
-		configuration: Dictionary, markers: Dictionary, entries: Dictionary, round_id: int) -> void:
+		configuration: Dictionary, markers: Dictionary, entries: Dictionary, round_id: int,
+		utility: Node3D = null, flash_targets: Dictionary = {}, flash_charges: int = 0) -> void:
 	_bot_id = bot_id
 	_actor = actor
 	_nav = navigation
@@ -39,14 +46,25 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 	_markers = markers.duplicate(true)
 	_entries = entries.duplicate(true)
 	var schema: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://schemas/comms_v1.schema.json"))
-	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": [], "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
+	_flash = FlashController.new(actor, utility, flash_targets, markers, flash_charges)
+	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": _flash.targets().keys(), "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
 	_planner = Planner.new(bot_id, configuration)
 	_motion = Motion.new(bot_id, actor, navigation, markers, entries)
+	_motion.attach_flash(_flash)
 	var affordances: Dictionary = {}
 	for marker in markers:
 		affordances[marker] = markers[marker].watch_points.keys()
 	_gate = Gate.new(bot_id, affordances)
 	_configured = true
+
+func attach_perception(adapter: RefCounted) -> void:
+	if _sensing != null:
+		_sensing.dispose()
+	_sensing = adapter
+
+func _exit_tree() -> void:
+	if _sensing != null:
+		_sensing.dispose()
 
 # Person 3's trusted voice/interpreter host passes normalized comms.v1 here.
 # Fixed radio delivery is an explicit synthetic fixture assumption, not local
@@ -76,7 +94,9 @@ func finish_round(reason: String) -> void:
 
 func snapshot() -> Dictionary:
 	return {"tick": _tick, "bot_id": _bot_id, "physical": _status.duplicate(true),
-		"plan": _last_plan.duplicate(true), "active_command": _executor.active_command_snapshot()}
+		"plan": _last_plan.duplicate(true), "active_command": _executor.active_command_snapshot(),
+		"observations": _policy_observations(), "flash_count": _flash.remaining(),
+		"own_perception": _sensing.own_status() if _sensing != null else {}}
 
 func _own_state() -> Dictionary:
 	var marker_id: String = ""
@@ -99,6 +119,16 @@ func _physics_process(_delta: float) -> void:
 		_status = {"ok": true, "state": "stopped", "reason": "navigation_not_ready"}
 		return
 	_tick += 1
+	var sensing_errors: Array = []
+	if _sensing != null:
+		var sensed: Dictionary = _sensing.sample(_tick)
+		sensing_errors = sensed.errors.duplicate()
+		if sensed.ok:
+			for observation in sensed.observations:
+				if _executor.enqueue(observation).ok:
+					_sensory_ids[observation.id] = true
+				else:
+					sensing_errors.append("invalid_sensor_envelope")
 	var own: Dictionary = _own_state()
 	var reachable_entries: Array = []
 	for id in _entries:
@@ -108,8 +138,12 @@ func _physics_process(_delta: float) -> void:
 			reachable = reachable and waypoint in own.reachable_marker_ids
 		if reachable:
 			reachable_entries.append(id)
+	for id in _flash.targets():
+		if _flash.targets()[id].stage_marker_id in own.reachable_marker_ids:
+			reachable_entries.append(id)
 	var output: Dictionary = _executor.step(_tick, {"alive": _actor.is_alive,
-		"flash_count": 0, "reachable_target_ids": reachable_entries}, _motion.take_feedback())
+		"flash_count": _flash.remaining(), "reachable_target_ids": reachable_entries}, _motion.take_feedback())
+	output.errors.append_array(sensing_errors)
 	for report in output.reports:
 		for observation in _executor.inbox.available():
 			if observation.id in report.evidence_ids:
@@ -119,8 +153,20 @@ func _physics_process(_delta: float) -> void:
 	for result in output.results:
 		if result.status != "rejected":
 			for id in result.evidence_ids:
-				_usable_ids[id] = true
+				_promote(id)
 		comm_result.emit(result.duplicate(true))
+	# Only due envelopes created by our registered privileged sensor adapter
+	# enter this path. Hearing is delivered/logged, but Person 3's current belief
+	# handler does not consume it. No fabricated sound likelihood is applied.
+	for observation in _executor.inbox.available():
+		if not _sensory_ids.has(observation.id) or _applied_senses.has(observation.id):
+			continue
+		_applied_senses[observation.id] = true
+		if observation.source == "seen" and observation.content.get("type") == "enemy_seen":
+			if not _belief.apply(observation, _tick).ok:
+				output.errors.append("belief_rejected_sighting")
+				continue
+		_promote(observation.id)
 	var active: Dictionary = _executor.active_command_snapshot()
 	var plan: Dictionary = _planner.decide(_tick, _belief.snapshot(), own, _executor.inbox, active)
 	var model: Dictionary = _gate.decision(_tick, _executor.inbox)
@@ -133,7 +179,8 @@ func _physics_process(_delta: float) -> void:
 	_last_plan = plan.duplicate(true)
 	_status = _motion.step(_tick, plan, output, active, _executor.inbox)
 	decision_recorded.emit({"tick": _tick, "bot_id": _bot_id, "policy": policy,
-		"plan": plan.duplicate(true), "physical": _status.duplicate(true), "model_record": _gate.active_record()})
+		"plan": plan.duplicate(true), "physical": _status.duplicate(true), "model_record": _gate.active_record(),
+		"errors": output.errors.duplicate(true)})
 	# A slow, bounded copied context is available for Person 3's local model.
 	# Person 3 must also log its real prompt/raw response; this record cannot
 	# establish what an external model actually received on its own.
@@ -152,3 +199,12 @@ func _policy_observations() -> Array:
 		if _usable_ids.has(observation.id):
 			usable.append(observation)
 	return usable
+
+func _promote(id: String) -> void:
+	if _usable_ids.has(id):
+		return
+	for observation in _executor.inbox.available():
+		if observation.id == id:
+			_usable_ids[id] = true
+			observation_delivered.emit(observation.duplicate(true), _tick)
+			return

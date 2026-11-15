@@ -19,6 +19,10 @@ var _configured: bool = false
 var _fault: String = ""
 var _arrival: float
 var _stuck_ticks: int
+var _flash: RefCounted
+
+func attach_flash(adapter: RefCounted) -> void:
+	_flash = adapter
 
 func _init(bot_id: String, actor: Node3D, navigation: Node3D,
 		markers: Dictionary, entries: Dictionary, arrival_m: float = 0.25,
@@ -97,11 +101,13 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 			# A later cancel/supersession in this executor batch wins.
 			continue
 		if intent.op == "throw_flash":
-			# No shared launch/inventory contract yet. Fail honestly, never simulate
-			# a throw or claim utility completion from issuing an intent.
 			_halt()
-			_feedback.append({"command_id": command_id, "phase": "failed"})
-			return _status("failed", "utility_adapter_unavailable")
+			var released: Dictionary = {"ok": false, "reason": "utility_adapter_unavailable"} if _flash == null else _flash.launch(command_id, intent.target_id)
+			_feedback.append({"command_id": command_id, "phase": "completed" if released.ok else "failed"})
+			return _status("released" if released.ok else "failed", released.reason)
+		if intent.op == "stage" and _flash != null and _flash.targets().has(intent.target_id):
+			_start(command_id, "stage", intent.target_id, [_flash.targets()[intent.target_id].stage_marker_id], null)
+			continue
 		if not _entries.has(intent.target_id):
 			_halt()
 			_feedback.append({"command_id": command_id, "phase": "failed"})

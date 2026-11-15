@@ -3,6 +3,7 @@ extends "res://scenes/main.gd"
 const BotScene = preload("res://scenes/bots/bot.tscn")
 const Runtime = preload("res://bots/teammate_runtime.gd")
 const RegionBelief = preload("res://belief/region_belief.gd")
+const SceneSensor = preload("res://perception/scene_sensor.gd")
 var teammate: ActorBase
 var runtime: Node
 var _bot_status: Label
@@ -42,6 +43,11 @@ func _ready() -> void:
 		add_child(smoke)
 		_smoke_silence_player_input()
 		smoke.run(self)
+	if OS.get_cmdline_user_args().has("--perception-smoke"):
+		var smoke = load("res://tests/person2/scene_perception_smoke.gd").new()
+		add_child(smoke)
+		_smoke_silence_player_input()
+		smoke.run(self)
 	print("PERSON2_FIRST_PERSON_READY map=", builder.map_path, " voice_backend=not_connected")
 
 func _spawn_teammate() -> void:
@@ -63,7 +69,9 @@ func _spawn_teammate() -> void:
 	runtime.name = "TeammateRuntime"
 	add_child(runtime)
 	runtime.configure("ally", teammate, builder, belief, _scenario.planner,
-		_scenario.motion_markers, _scenario.entries, _round_serial)
+		_scenario.motion_markers, _scenario.entries, _round_serial, utility, _scenario.flash_targets, int(_scenario.flash_charges))
+	runtime.attach_perception(SceneSensor.new("ally", teammate, builder, utility,
+		{"enemy": _target}, _scenario.perception, int(_scenario.perception_seed), _round_serial, _player))
 	runtime.comm_result.connect(_comm_result)
 	teammate_ready.emit(runtime)
 

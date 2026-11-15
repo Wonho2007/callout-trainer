@@ -3,7 +3,26 @@
   "synthetic": true,
   "note": "Person 2-authored teammate spawn and coverage affordances for Person 1's synthetic b_site_box map. Not pro annotations or a reconstructed round. Coordinates are static authored destinations, never hidden opponent positions.",
   "map_id": "b_site_box",
+  "perception_seed": 73,
+  "perception": {
+    "region_ids": ["room", "entry", "corridor"],
+    "vision_mask": 23,
+    "vision_range": 30.0,
+    "fov_degrees": 100.0,
+    "near_range": 8.0,
+    "near_exposure_ticks": 2,
+    "far_exposure_ticks": 5,
+    "refresh_ticks": 30,
+    "delay_min_ticks": 12,
+    "delay_max_ticks": 18,
+    "sound_radii": {"footstep_run": 11.0, "footstep_walk": 0.0, "footstep_crouch": 0.0, "gunshot": 40.0, "utility": 15.0, "defuse": 12.0},
+    "hearing_near_distance": 3.0,
+    "navigation_layers": 1,
+    "navigation_snap_distance": 0.75
+  },
   "teammate_spawn": {"position": [-2, 0, 11.5], "facing_deg": 0},
+  "flash_charges": 1,
+  "flash_targets": {"flash_entry": {"stage_marker_id": "home", "velocity": [4, 2, -8]}},
   "planner": {
     "regions": ["room", "entry", "corridor"],
     "markers": [
@@ -19,7 +38,7 @@
   },
   "motion_markers": {
     "home": {"position": [-2, 0, 11.5], "watch_points": {"entry": [0, 1.6, 8]}},
-    "cover": {"position": [0, 0, 3], "watch_points": {"room": [0, 1.6, -2.5]}}
+    "cover": {"position": [-1, 0, 3], "watch_points": {"room": [0, 1.6, -2.5]}}
   },
   "entries": {"entry": {"stage_marker_id": "home", "route_marker_ids": ["cover"]}}
 }

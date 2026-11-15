@@ -1,6 +1,6 @@
 # Person 2 perception sensor
 
-The [sensor](perception_sensor.gd) is the privileged boundary between live physics/navigation and copied bot-local observations. It is implemented and tested in isolated Godot 4.4.1 scenes. It is not yet attached to the shared game's actor registry or utility/audio systems.
+The [sensor](perception_sensor.gd) is the privileged boundary between live physics/navigation and copied bot-local observations. The [scene adapter](scene_sensor.gd) now attaches it to Person 2's inherited first-person scene using Person 1's current map, real actors, utility and narrow weapon/audio callbacks. Automated kernel and inherited-scene checks use Godot 4.4.1; human perception playtests remain pending.
 
 ## What it does
 
@@ -13,7 +13,7 @@ The [sensor](perception_sensor.gd) is the privileged boundary between live physi
 - Emits coarse near/far sound observations without the source position, source actor identity or exact region.
 - Adds seeded positive reaction delays and stable IDs to ordinary inbox-compatible observations.
 
-This is a sensor kernel, not a utility implementation. Person 1's shared flash mechanics determine blind duration; the sensor honors blind_until_tick. A smoke must have an active blocker collider/Area3D, not only a visual material.
+Person 1's shared flash mechanics determine blind duration; the kernel honors blind_until_tick. In the live adapter, smoke bit 16 is excluded from raw rays because the shared collider exists before activation. Shared active-smoke segment geometry supplies occlusion instead. Blind waves are identified through the explicit shared registry, including its extra blackout second; ordinary flashes require LOS.
 
 ## Configuration
 
@@ -47,7 +47,7 @@ Supply all fields explicitly. Example production-starting placeholders (not meas
 
 Tune against the configured physics rate: 12-18 ticks is 0.2-0.3 seconds only at 60 Hz. Tests deliberately use shorter delays/exposure values and synthetic distances. No claim of exact Valorant tuning is made.
 
-Person 1's existing physics layers are world=1, player=2, bots=4, regions=8. The test mask 23 includes world/player/bots and a PROPOSED smoke bit 16; it excludes region triggers. Coordinate that additional smoke layer with Person 1 before wiring it into the game. No root project settings were changed.
+Person 1's current physics layers are world=1, player=2, bots=4, regions=8, smoke=16. The kernel fixture uses mask 23; the live adapter removes bit 16 and separately queries active-smoke geometry. No root project settings were changed.
 
 The view is a 3D cone, not separate horizontal/vertical camera FOVs. This first hearing model is a walkable-path approximation, not a full acoustic simulation through materials/doors.
 
@@ -112,4 +112,18 @@ Optional Person 3 integration also runs actual raycast -> private delayed inbox 
 
 **Manual playtests: none.** Headless physics tests verify specific mechanics, not visual quality, game feel, actual shared-scene wiring, full-game fairness or training effectiveness.
 
-Next: build the Person 2 scene adapter for the actual enemy registry, own-state/utility effects and sound event bus; connect autonomous goals to Person 1's actor/navigation mechanics. Verify those in the shared synthetic room and run a human playtest. Pro annotations remain Person 3's responsibility.
+## Live scene boundary and automated acceptance
+
+`scene_sensor.gd` privately holds the registered opponent, own actor, map/utility and physics handles. Three real target samples map to unambiguous room/entry/corridor bounds. Neither live aim points nor a full-region-clear claim leave it. Only copied delayed envelopes reach the runtime inbox. Due sightings update the imported Person 3 belief module; heard sounds are delivered/logged without invented belief likelihoods. IDs include the round; reset disposes subscriptions and creates a fresh adapter/inbox.
+
+The adapter subscribes only to registered actors' Weapon.fired and shared UtilitySystem.deployed. It ignores hit data and utility's hard-coded thrower identity, and never reads the archive, scan marks or minimap. Sound event time is the next sensing tick with that tick's listener pose. Run steps require displacement, grounded RUN mode and horizontal velocity above walk speed; walk/crouch and zero-velocity teleports remain quiet. Eighteen-tick cadence is a sampling approximation. Defuse audio is not connected.
+
+Sound sources may map to a local floor anchor only within 0.75 horizontal / 3 vertical meters. A listener farther than configured navigation_snap_distance from the navigation surface receives no hearing; its exact suppression diagnostic remains in decision telemetry. No distant listener snap or straight-line hearing fallback is used. All sensor errors, including rejected samples, survive the decision record's new `errors` array.
+
+~~~sh
+python validation/run_person2_tests.py --godot "/path/to/godot" --perception-smoke
+~~~
+
+This mode loads the actual inherited FPS scene/current map and tests delayed recognition/delivery, actual wall collision, active versus falling smoke, flash LOS/blind recovery, explicit through-wall waves, real weapon/utility sounds, shared actor run/walk/crouch, path-distance hearing, off-nav suppression, exact error telemetry, copied contexts, belief/evidence availability, model evidence rejection, newly generated inputs/decisions under unseen-opponent perturbation, callback disposal and pending-evidence reset. It manually clocks the real runtime to control cutoffs; it is not a human input/rendering test. Pending pre-occlusion observations may arrive; assertions use their event_tick.
+
+Remaining: human sight/hearing/utility playtest, PVS/complete-region coverage if required, agreed delayed combat aim payload, defuse audio, and Person 3 hearing beliefs/actual model prompt audit. Person 3 still owns aligning its imported hedge-weighted belief implementation with full player-comm acceptance. Pro annotations remain Person 3's responsibility.

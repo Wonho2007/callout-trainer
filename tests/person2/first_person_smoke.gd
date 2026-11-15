@@ -35,7 +35,7 @@ func run(scene: Node3D) -> void:
 	expect(get_viewport().get_camera_3d() == player.camera, "active camera belongs to shared first-person player")
 	var start: Vector3 = scene.teammate.global_position
 	var home: Vector3 = Vector3(-2, 0, 11.5)
-	var cover: Vector3 = Vector3(0, 0, 3)
+	var cover: Vector3 = Vector3(-1, 0, 3)
 	expect(scene.teammate.is_alive and start.distance_to(home) < 0.3, "real teammate spawns at the new authored corridor position")
 	expect(builder.get_spawn("teammate") == null, "owned scenario adds teammate placement without mutating Person 1's map registry")
 	expect(builder.query_path(start, cover).size() > 2, "new bot route uses the corridor/hallway navigation path")
@@ -66,7 +66,9 @@ func run(scene: Node3D) -> void:
 	var clean: bool = not contexts.is_empty()
 	for frame in contexts:
 		for observation in frame.observations:
-			clean = clean and observation.available_tick <= frame.tick and observation.content.message.message_id not in ["foreign", "old_map"]
+			clean = clean and observation.available_tick <= frame.tick
+			if observation.content.get("type") == "comms":
+				clean = clean and observation.content.message.message_id not in ["foreign", "old_map"]
 	expect(clean, "model contexts omit future and rejected raw testimony")
 	var frame: Dictionary = contexts[-1]
 	var intent: Dictionary = {"context_id": frame.context_id, "decision_id": "model:1", "bot_id": "ally",
@@ -112,6 +114,70 @@ func run(scene: Node3D) -> void:
 	expect(not scene.runtime.submit_intent(intent).ok, "old-round model response cannot control new actor")
 	expect(not records.is_empty(), "physical decisions publish plain records for Person 3 logging")
 	expect(Data.valid(records) and Data.valid(contexts), "recorded contexts and decisions contain only copied plain values")
+	# Following the perception gate: actual shared flash release, inventory and
+	# command lifecycle. Completion means physical projectile release, not a hit.
+	runtime = scene.runtime
+	results.clear()
+	runtime.comm_result.connect(func(result: Dictionary): results.append(result))
+	await wait_tick(runtime, 2)
+	var cancelled_prepare: Dictionary = message(runtime, "cancel-flash-prep", "command", {"action": "throw_flash", "target_id": "flash_entry", "timing": {"mode": "on_cue"}})
+	runtime.submit_comm(cancelled_prepare)
+	await wait_tick(runtime, int(cancelled_prepare.issued_tick) + 22)
+	var cancel_flash: Dictionary = message(runtime, "cancel-flash", "cancel", {"command_id": "cancel-flash-prep"})
+	runtime.submit_comm(cancel_flash)
+	await wait_tick(runtime, int(cancel_flash.issued_tick) + 22)
+	expect(runtime.snapshot().active_command.is_empty() and runtime.snapshot().flash_count == 1 and scene.utility.active_flashes().is_empty(), "cancelled prepared flash leaves inventory and shared world untouched")
+	var expiring_flash: Dictionary = message(runtime, "expiring-flash", "command", {"action": "throw_flash", "target_id": "flash_entry", "timing": {"mode": "on_cue"}})
+	expiring_flash.expires_tick = expiring_flash.issued_tick + 21
+	runtime.submit_comm(expiring_flash)
+	await wait_tick(runtime, int(expiring_flash.issued_tick) + 24)
+	var expired_flash: bool = false
+	for result in results:
+		expired_flash = expired_flash or (result.message_id == "expiring-flash" and result.status == "expired")
+	expect(expired_flash and runtime.snapshot().flash_count == 1 and scene.utility.active_flashes().is_empty(), "expired prepared flash releases nothing and preserves charge")
+	var prepare: Dictionary = message(runtime, "flash-prep", "command", {"action": "throw_flash", "target_id": "flash_entry", "timing": {"mode": "on_cue"}})
+	runtime.submit_comm(prepare)
+	await wait_tick(runtime, int(prepare.issued_tick) + 22)
+	expect(runtime.snapshot().active_command.get("phase") == "ready" and runtime.snapshot().flash_count == 1, "flash stages and reports ready without consuming inventory")
+	var cue: Dictionary = message(runtime, "flash-go", "cue", {"command_id": "flash-prep"})
+	var release_positions: Array = []
+	var on_deploy: Callable = func(kind: String, _speaker: String, position: Vector3):
+		if kind == "flash":
+			release_positions.append(position)
+	scene.utility.deployed.connect(on_deploy)
+	runtime.submit_comm(cue)
+	await wait_tick(runtime, int(cue.issued_tick) + 17)
+	expect(release_positions.is_empty(), "flash cue cannot release projectile before delivery delay")
+	await wait_tick(runtime, int(cue.issued_tick) + 21)
+	expect(release_positions.size() == 1 and runtime.snapshot().flash_count == 0, "cue atomically releases one real shared projectile and consumes one charge")
+	expect(not scene.utility.active_flashes().is_empty(), "physical flash exists in shared utility registry after release")
+	var completed_flash: bool = false
+	for result in results:
+		completed_flash = completed_flash or (result.message_id == "flash-prep" and result.status == "completed")
+	expect(completed_flash, "flash completes from physical release feedback")
+	runtime.submit_comm(prepare)
+	runtime.submit_comm(cue)
+	await wait_tick(runtime, runtime.current_tick() + 22)
+	expect(release_positions.size() == 1 and runtime.snapshot().flash_count == 0, "duplicate command and cue cannot repeat a throw")
+	var empty: Dictionary = message(runtime, "empty-flash", "command", {"action": "throw_flash", "target_id": "flash_entry", "timing": {"mode": "now"}})
+	runtime.submit_comm(empty)
+	await wait_tick(runtime, int(empty.issued_tick) + 21)
+	var rejected_empty: bool = false
+	for result in results:
+		rejected_empty = rejected_empty or (result.message_id == "empty-flash" and result.reason_code == "no_utility")
+	expect(rejected_empty and release_positions.size() == 1, "depleted inventory rejects subsequent throw without a side effect")
+	scene.utility.deployed.disconnect(on_deploy)
+	scene._restart()
+	while scene.get("_restart_pending"):
+		await get_tree().physics_frame
+	expect(scene.runtime.snapshot().flash_count == 1, "inherited round reset replenishes the scenario flash charge")
+	runtime = scene.runtime
+	await wait_tick(runtime, 2)
+	var immediate: Dictionary = message(runtime, "flash-now", "command", {"action": "throw_flash", "target_id": "flash_entry", "timing": {"mode": "now"}})
+	runtime.submit_comm(immediate)
+	await wait_tick(runtime, int(immediate.issued_tick) + 22)
+	expect(runtime.snapshot().flash_count == 0 and not scene.utility.active_flashes().is_empty(), "now command releases real flash from the authored position after message delay")
+	await wait_tick(runtime, int(immediate.issued_tick) + 70)
 	scene._on_spike_defused()
 	expect(scene.teammate.move_dir.is_zero_approx() and not scene.runtime.submit_comm(report).ok, "public round completion freezes movement and rejects new round actions")
 	print("PERSON2_FIRST_PERSON_" + ("FAIL" if failed else "PASS"), " checks=", checks)

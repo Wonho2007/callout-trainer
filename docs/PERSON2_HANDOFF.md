@@ -2,6 +2,30 @@
 
 This is the current Person 2 work plan, refreshed after the user confirmed the correct map and visible teammate. Use it with [the project brief](../callout_trainer_brief.md), [decisions](DECISIONS.md), [ownership](TEAM.md) and [actual implementation records](../bots/PERSON2_HANDOFF.md). Older appended handoff records describe their original implementation snapshots.
 
+## Current continuation result - live sensing and physical flash
+
+The unfinished November 14 checkpoint below is preserved as history. Its dirty work was retained and completed on `person-2/bot-perception`, above merge `28950f4` of main `487ad73`; publication stays on draft PR #4. No shared actor, map, main/player scene, utility, project setting, schema, or Person 3 source was edited.
+
+- Live `perception/scene_sensor.gd` is now compiled and tested against the actual inherited FPS scene/current map. All four checkpoint review fixes are implemented: velocity plus displacement for running, conservative off-nav listener suppression, explicit blind-wave identity, and sensor diagnostics in decision telemetry. Callbacks disconnect on disposal/replacement/reset.
+- Due sensory envelopes feed the real inbox and supported sightings feed Person 3 beliefs. Plain contexts contain only promoted observations; delayed evidence is never reinterpreted as a live position. Hearing remains coarse/logged, with no fabricated belief likelihood. See [the sensor guide](../perception/README.md).
+- After the sensor gate, added `bots/flash_controller.gd` and motion/runtime wiring for one authored `flash_entry` charge per synthetic round. Actual shared flash release is atomic and deduplicated; cancellation/expiry before release preserve inventory, failed spawn refunds, and reset replenishes the charge. See [command semantics and consumer seam](../bots/FIRST_PERSON.md). Completion means physical release, not a successful blind.
+- Proposed consumer additions: `observation_delivered(observation, delivery_tick)`, `decision_recorded.errors`, and copied snapshot `observations`, `own_perception`, `flash_count`. Context keys and comms.v1/observation/belief schemas are unchanged. Persons 1/3 should review the adapter/consumer details in the PR before shared adoption.
+
+Actual automated commands use the exact Python/Godot paths in the checkpoint. Official Godot `4.4.1.stable.official.49a5bc7b6`, read-only Person 1 `487ad73` and Person 3 `57f809d`:
+
+- Before fixes, `--first-person-smoke`: 29 assertions pass after approved outside-sandbox execution. The initial sandbox import failed on Windows certificate-store access and was not counted as a pass.
+- `--person1-ref 487ad73 --person3-ref 57f809d`: 477 pass (430 default: 174 command + 72 planner + 92 sensor + 57 motion + 23 intent + 12 atomic flash; 47 optional integrations: 10 belief + 9 sensor/belief + 28 shared motion).
+- `--perception-smoke`: 45 pass, including actual wall/utility/audio/nav mechanics, event-time occlusion cutoffs, delivered sight evidence in beliefs/model goals, copied-context mutation isolation, newly generated context/decision equality under unseen live-node perturbation, exact sensor errors and pending-evidence/callback reset.
+- `--first-person-smoke`: 40 pass (the prior 29 plus physical flash staging/cancel/expiry, delayed cue/now release, actual projectile, completion, duplicate/depletion handling and replenishment on inherited reset). Total across these commands: **562 assertions**, exit 0. The older 29-check checkpoint result is not the result of the new fixture.
+
+The known shared navigation-bake mesh-readback performance warning remains. Fixture timer cleanup was corrected; no cleanup warning remains in the live-sensing pass. Default CI runs owned suites and the synthetic demo; inherited-scene/cross-lane checks are local, not claimed CI results.
+
+**Manual results:** no new human playtest, voice/model run or export test. The user's earlier correct-map/visible-teammate report remains startup evidence only.
+
+**Concrete Person 3 dependency:** an exploratory conflicting-report check showed the imported multiplicative belief model can keep a new valid player report outweighed by earlier sight evidence. This is in addition to its documented numeric hedge weights. The owned sensor fixture tests an uncorroborated wrong report from a fresh belief; it does not claim full-acceptance/correction alignment. Person 3 knows/owns that requirement. Do not fix it by consulting truth, rewriting that lane, removing the assertion's meaning, or building another voice/model system.
+
+Next ordered work: coordinate Person 3's voice/model/log consumer and full-acceptance fix; add permitted delayed player-entry sensing for follow-player release; implement shared defuse and combat only after agreeing a delayed last-observed aim payload. Then physical scenario feasibility/dry runs and observation-driven branches, using Person 3's structural helpers/verified notes. PVS/full-region clear, defuse audio and full safety diagnostics remain unfinished. Person 1 still owns shared bootstrap/nav production alignment and mechanics; verified pro notes remain unavailable. Run the human sight/hearing/smoke/flash/navigation/reset checklist before claiming gameplay acceptance.
+
 ## Current product rules
 
 - The player controls a character in first person and communicates by voice. No player comm menu; existing menu helpers remain test/fallback code.
@@ -12,6 +36,54 @@ This is the current Person 2 work plan, refreshed after the user confirmed the c
 - Continue with synthetic data until Person 3 supplies verified VOD/year/round/timestamps and actor notes. Do not invent pro positions or actions.
 
 **Implementation gap:** Person 3's currently imported belief module at `57f809d` still uses numeric hedge strengths. Person 3 must align its belief/interpreter/model behavior with full acceptance. This requirement/documentation update does not edit that lane's source or claim the behavior has already changed. Keep explicit uncertainty as content, not a player-credibility penalty.
+
+## Continuation checkpoint - 2026-11-14 (unfinished live sensing)
+
+The user requested this checkpoint for a new Codex window. **Resume the existing dirty worktree; do not reset, clean, discard, or overwrite these changes.** The immediate task is to finish and verify live scene perception, not to start another scene or voice interpreter. Person 3 has been informed that trust/credibility weighting is no longer wanted; keep the full-acceptance rule above and leave that lane's implementation to Person 3.
+
+### Branch, source revisions and actual results
+
+- Branch: `person-2/bot-perception`; existing draft PR #4. Local HEAD `28950f4` merges main `487ad73` (Person 1's walk-in circular divot). Both lanes' appended handoff entries were preserved in the documentation conflict. At this checkpoint the branch is two commits ahead of its remote; the merge and current source edits have not been pushed.
+- Read-only Person 3 dependency remains `57f809d`. No Person 1 or Person 3 source was edited to implement sensing.
+- The new main caused two FPS navigation assertions to fail at the old coverage marker. Moving only the Person 2 marker from `[0,0,3]` to `[-1,0,3]` restored **29/29 first-person smoke assertions**, exit 0, on official Godot `4.4.1.stable.official.49a5bc7b6`. This pass was **before** the live-sensing changes below. Do not report it as validation of those changes.
+- **Current live-sensing source has not been compiled or tested.** Historical 494-check results apply to the earlier map/source snapshot. The known runtime mesh-readback bake performance warning remains.
+- Human evidence remains: user confirms the correct map and visible teammate. No new sight/hearing/utility/voice/model or exported-build playtest was performed.
+
+### Existing uncommitted implementation to inspect and continue
+
+- New **untracked** `perception/scene_sensor.gd`: privileged real actor/opponent registry, region mapping, shared active-smoke segment checks, shared flash/blind-wave duration checks, narrow weapon/utility signal subscriptions, run-footstep sampling and navigation-path hearing through the existing sensor kernel. Live Nodes/RIDs/positions remain private; emitted observations use round-prefixed IDs. It disconnects its callbacks on disposal. Ensure this new file is included in any eventual commit; it must not be lost when switching windows.
+- `bots/teammate_runtime.gd`: attaches the sensor, enqueues delayed sensory envelopes, applies due sightings to Person 3 beliefs, exposes only promoted/due copied observations, adds `observation_delivered(observation, delivery_tick)` and own-blind snapshot status, and disposes the adapter on reset. Hearing is available/logged but is not fed into the current unsupported Person 3 belief handler. Model-context keys and comms.v1 remain unchanged; the new signal/snapshot additions are a proposed consumer seam to document/review.
+- `scenes/bots/first_person.gd`: attaches the adapter to the existing inherited Person 1 scene's real teammate, target, utility and player. No replacement map/main/player scene was created.
+- `scenarios/b_site_coverage.json`: corrected coverage marker plus explicit seeded sensing configuration. `tests/person2/first_person_smoke.gd`: corresponding marker expectation and context checks that distinguish sensory records from comms. `validation/run_person2_tests.py`: copies the new adapter into disposable FPS projects.
+
+### Immediate next work (before further bot intelligence)
+
+1. Inspect the source and run the existing FPS smoke to catch GDScript/import/runtime errors. Do not suppress engine errors merely because assertions print a pass marker.
+2. Review unfinished adapter details: require real horizontal running velocity as well as displacement so fixture teleports do not become footsteps; conservatively handle an off-navigation listener instead of snapping arbitrarily far; identify blind waves explicitly rather than relying on a generic Node3D-vs-RigidBody distinction; preserve sensor errors in decision telemetry. These are review items, not implemented fixes.
+3. Write a real inherited-scene perception smoke fixture and runner mode (suggested `--perception-smoke`; **neither exists yet**). Verify visible target -> delayed sighting; wall/active smoke/blind -> no new sightings; inactive/falling smoke collider does not falsely occlude; flash LOS and through-wall blind-wave semantics; actual weapon/run sounds, quiet walk/crouch, path-distance hearing, round reset/disconnection, plain copied contexts and evidence availability. Perturb an unseen opponent and verify allowed policy inputs do not gain hidden information. Existing kernel tests alone do not establish live-adapter fairness.
+4. When testing loss of LOS, allow pending observations sampled before occlusion to arrive legitimately; assert on each observation's `event_tick` relative to the occlusion cutoff. Never reinterpret delayed evidence as a current live position.
+5. Run meaningful default/cross-lane and FPS/new-sensing checks after fixes. Update this handoff, `bots/PERSON2_HANDOFF.md`, `docs/HANDOFFS.md`, the perception README and FPS guide with actual results. Then commit explicit owned paths and push the existing lane branch/PR; do not merge main or claim unfinished acceptance complete.
+
+### Important adapter limitations and following dependencies
+
+- Shared smoke creates a raw collision body before becoming active. The adapter excludes smoke bit 16 from kernel raycasts and uses the shared active-smoke geometry; test this deliberately.
+- Current `enemy_seen` belief content must remain exactly `{type, enemy_id, region_id}`. Do not add live aim positions to it or silently change the shared schema. Combat needs an agreed delayed last-observed aim payload.
+- Audio uses narrow actual Weapon.fired/Utility.deployed callbacks, never an unrestricted truth/event archive. Ignore utility's hard-coded thrower identity. Footstep cadence is a Person 2 sampling approximation; shared defuse audio is not connected. Sound timestamps are the actual next sensing tick, not reconstructed historical listener poses.
+- No complete-region-clear/PVS evidence, live voice/model bridge, bot flash execution, follow-player release, combat/reload, defuse or verified scenario branches are completed by this checkpoint. Those remain the ordered work below after the sensor gate. Person 3 owns voice/interpreter/model/logging and full acceptance; Person 1 owns shared mechanics/bootstrap/navigation; verified annotations are still required for real pro scenarios.
+
+### Exact local commands
+
+~~~powershell
+$pythonExe = 'C:\Users\Isoto\AppData\Local\Python\pythoncore-3.14-64\python.exe'
+$godotExe = 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_win64_console.exe'
+& $pythonExe tools/check_repo.py
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --first-person-smoke
+& $pythonExe validation/run_person2_tests.py --godot $godotExe
+# Human launch (close old temporary game first):
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --first-person
+~~~
+
+The launcher reads latest locally fetched `origin/main`, freezes and prints its revision, and does not fetch itself. Godot may require elevated sandbox execution to read the Windows certificate store. The runner already uses a process-only exact-checkout safe.directory exception for Git reads; do not add a global exception. Consult git status before any staging/checkout and preserve all teammate changes.
 
 ## Ownership
 
@@ -26,16 +98,16 @@ Stay on `person-2/bot-perception`. Preserve teammate edits; do not edit another 
 - Person 1's current synthetic `b_site.json`: corridor, entry hallway/arch, deeper room and divot. It is not a verified real-site reconstruction. Current region IDs: `room`, `entry`, `corridor`.
 - Person 2's [inherited first-person scene](../scenes/bots/first_person.tscn), reusable [bot actor](../scenes/bots/bot.tscn) and [owned coverage/spawn data](../scenarios/b_site_coverage.json). The launcher follows latest locally fetched main and prints immutable source revisions.
 - Actual shared actor movement/health, coverage navigation and watched angles; delayed comm inbox/executor, command stage/swing/cancel/expiry, copied model-context/intent gate and deterministic fallback.
-- A separately tested physics/navigation [perception kernel](../perception/README.md). It is **not yet connected to the live first-person opponent/utility/audio registry**.
+- A tested physics/navigation [perception kernel and live inherited-scene adapter](../perception/README.md); the checkpoint above records its original unfinished state. Current results are at the top of this guide.
 - Person 3's fetched branch `57f809d` contains STT scaffolding, belief helpers and a structural scenario schema/validator/coordinate helper. STT target-machine results are unfilled; the grounded interpreter/model host and game bridge remain dependencies.
-- The latest prior automated run passed 494 assertions (465 default/cross-lane + 29 FPS). These are historical results for that implementation, not a fresh voice/manual test.
+- Older 494-assertion runs are historical. Current continuation commands/results are above and in the appended lane handoff; automated results never establish voice/manual acceptance.
 - **Manual evidence:** the user confirms the current map is correct and a teammate is visible. Movement feel, all bot interactions, utilities, real speech/model latency and exported-build behavior are not established by that report.
 
 ## Your next steps, in order
 
 ### 1. Wire live perception into the current FPS runtime
 
-This is the next independent Person 2 coding task while Person 3 finishes voice/model work. Reuse `perception/perception_sensor.gd`; extend `bots/teammate_runtime.gd` and the owned scene adapters.
+Automated live-adapter acceptance is now implemented and passing as described above. Human acceptance and the listed remaining sensing dependencies are still open. Keep these requirements when extending the adapter:
 
 - Register the real opponent(s) only inside the privileged sensing adapter. Query live positions/collision/utility there, never in the planner/model context.
 - Feed copied, delayed sight/hearing observations into the existing inbox. Forward supported due observations to the working-belief module, preserving IDs and actual delivery ticks.
@@ -60,7 +132,7 @@ Review full-acceptance behavior with Person 3 along with the region vocabulary a
 
 ### 3. Complete physical actions through Person 1's shared mechanics
 
-The current actor supports hold/coverage movement and authored swing staging/routes. Next add bot flash execution with atomic inventory/launch/completion, permitted follow-player swing release, defuse, and shared rifle/aim/reload behavior based on delayed last-observed data. Keep one movement owner. Report actual completion/failure; do not convert a report into a forced push or claim a throw from merely issuing an intent.
+The current actor supports hold/coverage movement, authored swing staging/routes and tested physical flash release with atomic inventory/launch/completion. Next add permitted follow-player swing release, defuse, and shared rifle/aim/reload behavior based on delayed last-observed data. Keep one movement owner. Report actual completion/failure; do not convert a report into a forced push or claim a throw from merely issuing an intent.
 
 **Acceptance:** supported commands complete once; duplicate IDs cannot repeat an action. Death, expiry, cancellation, unavailable utility and unreachable/stuck paths stop or recover with a recorded reason. Bot combat uses the same physical rules as the player and does not track hidden live targets. Full acceptance does not make impossible commands executable.
 

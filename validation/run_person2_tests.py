@@ -23,6 +23,8 @@ FILES = [
     "bots/motion_controller.gd", "tests/person2/motion_tests.gd",
     "tests/person2/motion_actor.gd", "tests/person2/motion_navigation.gd",
     "bots/intent_gate.gd", "tests/person2/intent_gate_tests.gd",
+    "bots/flash_controller.gd",
+    "tests/person2/flash_tests.gd",
 ]
 
 
@@ -53,12 +55,13 @@ def main():
     mode.add_argument("--visual-smoke", action="store_true", help="Headless automated check of the visual demo's action callbacks")
     mode.add_argument("--first-person", action="store_true", help="Open the shared first-person sandbox with a teammate (voice/model host seam, no menu)")
     mode.add_argument("--first-person-smoke", action="store_true", help="Headless first-person scene/comm/intent integration assertions")
+    mode.add_argument("--perception-smoke", action="store_true", help="Inherited FPS live perception and fairness assertions")
     person3 = parser.add_mutually_exclusive_group()
     person3.add_argument("--person3-root", type=Path, help="Optional Person 3 checkout; copy belief files read-only to the temporary project")
     person3.add_argument("--person3-ref", help="Optional fetched git ref; read Person 3 belief files without changing a checkout")
     parser.add_argument("--person1-ref", help="Optional fetched git ref; test actual shared actor and baked room (requires Person 3 input)")
     args = parser.parse_args()
-    first_person = args.first_person or args.first_person_smoke
+    first_person = args.first_person or args.first_person_smoke or args.perception_smoke
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
         args.person1_ref = args.person1_ref or ("origin/main" if first_person else "0fd1285")
@@ -118,12 +121,14 @@ def main():
                 for relative in listing.splitlines():
                     copy_ref(args.person1_ref, relative)
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
+                                 "perception/scene_sensor.gd",
                                  "scenes/bots/first_person.gd", "scenes/bots/first_person.tscn",
                                  "scenarios/b_site_coverage.json",
                                  "tests/person2/first_person_smoke.gd"]:
                     target = project / relative
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(ROOT / relative, target)
+                shutil.copy2(ROOT / "tests/person2/scene_perception_smoke.gd", project / "tests/person2/scene_perception_smoke.gd")
             if visual:
                 for relative in ["scenes/bots/motion_visual_demo.gd", "scenes/bots/motion_visual_demo.tscn"]:
                     target = project / relative
@@ -150,6 +155,7 @@ def main():
                 ("perception_tests.gd", "PERSON2_PERCEPTION_PASS"),
                 ("motion_tests.gd", "PERSON2_MOTION_PASS"),
                 ("intent_gate_tests.gd", "PERSON2_INTENT_GATE_PASS"),
+                ("flash_tests.gd", "PERSON2_FLASH_PASS"),
             ]
             if args.person3_root or args.person3_ref:
                 scripts.append(("planner_belief_integration.gd", "PERSON2_BELIEF_INTEGRATION_PASS"))
@@ -173,14 +179,16 @@ def main():
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
                 return subprocess.run([godot, "--path", str(project)], check=False).returncode
-            if args.first_person_smoke:
+            if args.first_person_smoke or args.perception_smoke:
+                smoke_mode = "--perception-smoke" if args.perception_smoke else "--first-person-smoke"
+                marker = "PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"
                 result = subprocess.run(
-                    [godot, "--headless", "--path", str(project), "--", "--first-person-smoke"],
+                    [godot, "--headless", "--path", str(project), "--", smoke_mode],
                     capture_output=True, text=True, timeout=45,
                 )
                 output = result.stdout + result.stderr
                 print(output, end="")
-                return int(bool(result.returncode or "PERSON2_FIRST_PERSON_PASS" not in output
+                return int(bool(result.returncode or marker not in output
                                 or "SCRIPT ERROR" in output or "ERROR:" in output))
             if args.visual_smoke:
                 result = subprocess.run(

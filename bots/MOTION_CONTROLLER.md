@@ -4,6 +4,8 @@
 
 The adapter follows authored coverage markers, stages and follows authored swing routes through Person 1's existing actor/navigation methods, and turns the actor toward a static watch point. It does not aim at an opponent, fire, grant visibility, clear regions or model a combat aim/reaction curve. A watched region is an authored angle, not evidence that its whole volume is visible. Turning is immediate placeholder movement presentation, not the eventual combat aim model.
 
+Current FPS extension: trusted bootstrap may call `attach_flash(adapter)` with the privileged [flash controller](flash_controller.gd). Flash stage intents use its authored stage marker through this same movement dispatcher; release intents halt movement and atomically launch through shared utility. Physical success queues completed feedback for the next executor tick; failure queues failed feedback and preserves the detailed reason in physical telemetry. Without the attachment, flash still fails honestly. No planner/executor dependency on live mechanics is introduced. See [FPS command semantics and tests](FIRST_PERSON.md).
+
 ## Inputs and ordering
 
 Create one instance per bot per round, from trusted bootstrap code:
