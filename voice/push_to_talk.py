@@ -40,6 +40,10 @@ def main() -> None:
         help="Transcribe an existing audio file instead of recording from mic.",
     )
     parser.add_argument(
+        "--timed", type=float, default=None,
+        help="Record from mic for N seconds after a 3-second countdown (no keyboard hook needed).",
+    )
+    parser.add_argument(
         "--loops", type=int, default=1,
         help="How many push-to-talk rounds to run (default: 1). "
              "Run 10 for the done-test.",
@@ -57,9 +61,29 @@ def main() -> None:
 
         if args.file:
             text, latency_s = transcribe(audio_path=args.file)
+        elif args.timed:
+            import time
+            try:
+                import winsound
+            except ImportError:
+                winsound = None
+
+            for count in [3, 2, 1]:
+                print(f"Starting in {count}…", flush=True)
+                if winsound:
+                    winsound.Beep(700, 100)
+                time.sleep(0.9)
+
+            if winsound:
+                winsound.Beep(1200, 300)
+            print(f">>> [LISTENING NOW - SPEAK!] Recording {args.timed}s… <<<", flush=True)
+            text, latency_s = transcribe(duration_s=args.timed)
+            if winsound:
+                winsound.Beep(600, 200)
+            print("[STOPPED LISTENING]", flush=True)
         else:
-            wav_path = record_until_keyup(key=args.key)
-            text, latency_s = transcribe(audio_path=wav_path)
+            audio_data = record_until_keyup(key=args.key)
+            text, latency_s = transcribe(audio=audio_data)
 
         ts = datetime.datetime.now().isoformat(timespec="seconds")
         print(f"\nTranscript : {text!r}")
