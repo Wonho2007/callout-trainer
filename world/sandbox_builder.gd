@@ -230,30 +230,89 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 	var fx := float(size2[0])
 	var fz := float(size2[1])
 	var fy := float(floor_data.get("y", 0))
-	# Solid thin box floor (collision matches the mesh). Divots cut their own
-	# hole via _build_divot, which also carves the floor collision locally.
-	var floor_box := {
-		"id": "floor",
-		"position": [0, fy - 0.05, 0],
-		"size": [fx, 0.1, fz],
+
+	# Divots carve a square gap out of the floor so their recessed ramp/bottom
+	# (built by _build_divot) is exposed and walkable. Use plain box floor
+	# segments around each gap — box collision is reliable (no fragile trimesh).
+	var gaps: Array = []
+	for divot in m.get("divots", []):
+		var c := _to_vec3(divot.get("center", [0, 0, 0]))
+		# Gap half-size = pit TOP radius, so the sloped ramp sits in the open gap
+		# (walkable, floor doesn't block it). Corner voids left by the square gap
+		# vs the round pit are filled afterwards by _fill_divot_corners.
+		var r := float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
+		gaps.append({"x": c.x, "z": c.z, "half": r})
+
+	if gaps.is_empty():
+		var floor_box := {
+			"id": "floor",
+			"position": [0, fy - 0.05, 0],
+			"size": [fx, 0.1, fz],
+		}
+		_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
+		return
+
+	# Single divot: split the floor into four boxes around the square gap.
+	# (Handles the one-divot case the map uses; extend later if needed.)
+	var g: Dictionary = gaps[0]
+	var gx := float(g["x"])
+	var gz := float(g["z"])
+	var gh := float(g["half"])
+	var xmin := -fx * 0.5
+	var xmax := fx * 0.5
+	var zmin := -fz * 0.5
+	var zmax := fz * 0.5
+	var gx0 := gx - gh
+	var gx1 := gx + gh
+	var gz0 := gz - gh
+	var gz1 := gz + gh
+	var col := Color(0.30, 0.31, 0.34)
+	# North strip (z < gz0), full width.
+	_floor_slab("floor_n", xmin, xmax, zmin, gz0, fy, parent, col)
+	# South strip (z > gz1), full width.
+	_floor_slab("floor_s", xmin, xmax, gz1, zmax, fy, parent, col)
+	# West strip beside the gap.
+	_floor_slab("floor_w", xmin, gx0, gz0, gz1, fy, parent, col)
+	# East strip beside the gap.
+	_floor_slab("floor_e", gx1, xmax, gz0, gz1, fy, parent, col)
+	# Solid cap across the whole gap at the pit's bottom depth, so a player can
+	# never fall through a corner where the square gap exceeds the round pit —
+	# they land on pit floor instead of the void.
+	var pit_depth := 0.9
+	for divot in m.get("divots", []):
+		pit_depth = float(divot.get("depth", 0.9))
+	_floor_slab("floor_pit_cap", gx0, gx1, gz0, gz1, fy - pit_depth, parent, Color(0.24, 0.25, 0.29))
+
+
+## Build one rectangular floor slab spanning [x0..x1] x [z0..z1] at height y.
+func _floor_slab(id: String, x0: float, x1: float, z0: float, z1: float, y: float, parent: Node3D, color: Color) -> void:
+	var w := x1 - x0
+	var d := z1 - z0
+	if w <= 0.01 or d <= 0.01:
+		return
+	var box := {
+		"id": id,
+		"position": [(x0 + x1) * 0.5, y - 0.05, (z0 + z1) * 0.5],
+		"size": [w, 0.1, d],
 	}
-	_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
+	_build_solid_box(box, parent, color)
 
 
-## A shallow circular divot (recessed disc) in the floor. Rendered as a darker
-## sunken cylinder with a thin rim so it reads as a depression. For the greybox
-## A walk-in circular divot: a recessed floor disc with a sloped conical rim so
-## the player can walk down into it and back out without sliding or jumping. The
-## slope is kept at/under the floor angle limit. Built as a procedural mesh with
-## matching trimesh collision. `radius` is the flat bottom radius; `depth` is how
-## deep; the sloped rim extends `depth` further out (45-degree walkable ramp).
+## A walk-in circular divot: a recessed flat bottom with a gentle sloped conical
+## ramp so the player can walk down into it and back OUT without sliding or
+## jumping. The ramp run is wider than the depth (shallow ~22-degree slope).
+## `radius` = flat bottom radius; `depth` = how deep; the top rim extends
+## depth*RAMP_RUN_FACTOR further out. Built as a procedural mesh + trimesh
+## collision. The top rim overlaps the floor gap so there are no seams.
+const RAMP_RUN_FACTOR := 2.5
+
 func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	var id := String(divot.get("id", "divot"))
 	var center := _to_vec3(divot.get("center", [0, 0, 0]))
 	var bottom_radius := float(divot.get("radius", 2.0))
 	var depth := float(divot.get("depth", 0.9))
-	# A 45-degree ramp: horizontal run equals the vertical depth.
-	var top_radius := bottom_radius + depth
+	# Gentle walkable ramp: run is wider than the drop (~22 degrees).
+	var top_radius := bottom_radius + depth * RAMP_RUN_FACTOR
 	var segments := 48
 
 	var body := StaticBody3D.new()
