@@ -36,6 +36,34 @@ var _loss_rng := RandomNumberGenerator.new()
 var _loss_serial: int = 0
 var _delay_min: int
 var _delay_max: int
+var _recon_serial: int = 0
+var _pending_recon: Array = []
+
+func scan_recon(origin: Vector3) -> void:
+	# Privileged independent sensor at the actual orb detonation. Emits only
+	# delayed region testimony; no live aim, target nodes or player HUD marks.
+	if not _actor.is_alive:
+		return
+	for id in _opponents:
+		var target: CharacterBody3D = _opponents[id]
+		if not is_instance_valid(target) or not target.is_alive:
+			continue
+		var point: Vector3 = target.global_position + Vector3.UP
+		if origin.distance_to(point) > 14.0:
+			continue
+		if _utility != null and _utility.segment_blocked_by_smoke(origin, point):
+			continue
+		var query := PhysicsRayQueryParameters3D.create(origin, point, 1)
+		if not _actor.get_world_3d().direct_space_state.intersect_ray(query).is_empty():
+			continue
+		var region: String = _region(point)
+		if region.is_empty():
+			continue
+		_recon_serial += 1
+		var event: int = _clock + 1
+		_pending_recon.append({"id": _round_prefix + "recon:" + str(_recon_serial), "bot_id": _bot_id,
+			"event_tick": event, "available_tick": event + _delay_max, "source": "seen", "speaker_id": "sensor",
+			"content": {"type": "enemy_seen", "enemy_id": id, "region_id": region}})
 
 func _init(bot_id: String, actor: CharacterBody3D, navigation: Node3D,
 		utility: Node3D, opponents: Dictionary, settings: Dictionary, seed_value: int,
@@ -107,6 +135,8 @@ func _register_audio_actor(actor: CharacterBody3D) -> void:
 	# Only a shared actor's own weapon events are subscribed, never the archive
 	# or an unrestricted global bus. Hit/collider data is ignored.
 	var weapon: Node = actor.get_node_or_null("Camera3D/Weapon")
+	if weapon == null:
+		weapon = actor.get_node_or_null("TeammateRifle")
 	if weapon != null:
 		_connect(weapon, "fired", _on_shot.bind(actor))
 
@@ -118,7 +148,17 @@ func dispose() -> void:
 	_audio_actors.clear()
 	_opponents.clear()
 	_pending_audio.clear()
+	_pending_recon.clear()
 	_player = null
+
+func register_opponent(id: String, actor: CharacterBody3D) -> bool:
+	# Trusted scene may materialize an actor at its first annotated position.
+	# Registration itself emits no observation and preserves pending evidence.
+	if not Data.nonempty(id) or not is_instance_valid(actor) or _opponents.has(id):
+		return false
+	_opponents[id] = actor
+	_register_audio_actor(actor)
+	return true
 
 func _on_shot(_from: Vector3, _to: Vector3, _hit: bool, shooter: Node3D) -> void:
 	if is_instance_valid(shooter):
@@ -136,6 +176,12 @@ func _region(point: Vector3) -> String:
 		var half := Vector3(s[0], s[1], s[2]) * 0.5
 		var offset: Vector3 = (point - center).abs()
 		if offset.x <= half.x and offset.y <= half.y and offset.z <= half.z:
+			if region.get("shape", "box") == "circle" and Vector2(point.x - center.x, point.z - center.z).length() > float(region.get("radius", 0)):
+				continue
+			# The imported map deliberately gives Upper precedence over its
+			# overlap with circular Pit, matching its HUD/minimap authoring.
+			if _navigation.map_data.get("region_precedence") == "list_order":
+				return region.id
 			# Ambiguous overlapping regions are unknown, not guessed identities.
 			if not found.is_empty():
 				return ""
@@ -175,6 +221,8 @@ func _update_blind(tick: int, eye: Vector3, forward: Vector3) -> void:
 			duration += 1.0
 		if duration > 0.0:
 			_blind_until = maxi(_blind_until, tick + int(ceil(duration * Engine.physics_ticks_per_second)))
+			if is_instance_valid(_actor) and _actor.has_method("apply_blind"):
+				_actor.apply_blind(duration, "blinded" if is_wave else "flashed")
 
 func _sounds(tick: int) -> Array:
 	for actor in _audio_actors:
@@ -332,6 +380,8 @@ func sample(tick: int) -> Dictionary:
 	output.errors.append_array(aim_output.errors)
 	if aim_output.ok:
 		output.observations.append_array(aim_output.observations)
+	output.observations.append_array(_pending_recon)
+	_pending_recon.clear()
 	return output
 
 func own_status() -> Dictionary:

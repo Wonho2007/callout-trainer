@@ -1,65 +1,47 @@
-# Build, run and export (Person 1)
+# Current run and delivery status
 
-Reproducible commands for the Godot project. Editor pinned to **Godot 4.4.1
-stable, Windows 64-bit standard (GDScript) build** (see docs/DECISIONS.md). All
-developers must use this exact editor and matching export templates.
+Use **Godot 4.4.1 stable**, standard GDScript/Compatibility build. Current executable
+paths, dependencies and acceptance results are in [the handoff](PERSON2_HANDOFF.md).
 
-Replace `GODOT` below with the path to your extracted editor executable, e.g.
-`C:\Godot\Godot_v4.4.1-stable_win64.exe`. On Windows PowerShell, use the
-`_console` variant if you want to see stdout, or prefix with `&`.
+## Run the voice-enabled scenario on the configured PC
 
-## Run in the editor
-
-Open `project.godot` in Godot and press F5, or from the command line:
+Close older voice-host consoles, then use PowerShell:
 
 ```powershell
-& "GODOT" --path . 
+cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
+.\validation\run_voice_game.ps1
 ```
 
-Main scene is `scenes/main.tscn`. Controls: WASD move, mouse look, Shift walk,
-Ctrl crouch, Space jump, R restart, Esc free/recapture mouse.
+V talks, B dashes, F restarts at plant, Esc releases the mouse. The default is
+Person 3's seven-zone B site map; `-Lotus` remains a compatibility alias. Use
+`-LegacyRoom` or `-LegacyLotus` only for the older profiles. [Scenario guide](../bots/SITE_SCENARIO.md),
+[voice setup](../bots/LIVE_VOICE.md) and [bridge guide](../bots/VOICE_GAME.md) explain
+the installed environment and measured limits.
 
-## One-time: install export templates
+The root `project.godot` still selects the original scaffold. The current launcher
+prepares a disposable integrated project, including pinned Person 3 dependencies,
+and keeps it alive while the game runs. Do not assume root export commands package
+the new scenario, Python host, model runtime or weights correctly.
 
-The exported build needs the export templates that match the editor version.
-In the editor: **Editor -> Manage Export Templates -> Download and Install**.
-This downloads the 4.4.1-stable templates. Do this once per machine.
+## Export is remaining work
 
-## Export a Windows desktop build
+No successful integrated voice-to-scenario desktop export or human exported-build
+acceptance is recorded. Before claiming one:
 
-The preset `export_presets.cfg` ("Windows Desktop", x86_64) writes to
-`build/windows/callout-trainer.exe`. `build/` is gitignored, so the binary is
-not committed.
+1. Prepare a durable integrated project with the intended main scene and actual pinned
+   dependencies, preserving the original map/profile.
+2. Install matching **4.4.1-stable export templates** and verify the actual export preset.
+3. Package/launch the local Python voice host and Ollama dependencies with clear setup.
+   Keep model licensing/redistribution explicit; cached weights on this PC do not prove
+   a new machine can run the product offline.
+4. Export and test the exact target build. If the preset uses a separate `.pck`, ship it
+   with the executable. Keep generated artifacts out of Git.
+5. Test rendering, movement/collision, voice-to-reaction, death/reset, utility, fallback
+   and first-known enemy spawning on that build. Record actual results separately from
+   headless checks. Verify offline behavior without assuming localhost means no setup.
+6. Record a backup video and rehearse bot -> scenario -> trace. Never claim measured
+   benefit or pro fidelity from a successful export.
 
-GUI: **Project -> Export -> Windows Desktop -> Export Project**, save as
-`build/windows/callout-trainer.exe`.
-
-Headless / command line (release build):
-
-```powershell
-New-Item -ItemType Directory -Force -Path build\windows | Out-Null
-& "GODOT" --headless --path . --export-release "Windows Desktop" "build/windows/callout-trainer.exe"
-```
-
-For a debug build (shows the console window), use `--export-debug` instead of
-`--export-release`.
-
-## Run the exported build
-
-```powershell
-& "build\windows\callout-trainer.exe"
-```
-
-The build is offline-capable: no network, no paid services. A headless export
-succeeding does NOT prove the build renders or plays — launch the `.exe` and
-confirm the room renders, movement/collision work and the HUD/disclaimer show.
-
-## Notes
-
-- The export is a standalone `.exe` plus a `.pck` data file in the same folder
-  (the preset does not embed the pck). Ship both together, or set
-  `binary_format/embed_pck=true` for a single file.
-- Re-baking navigation happens automatically at runtime when the room builds;
-  no editor nav-bake step is needed before export.
-- Record automated export results separately from manual playtest of the
-  exported build (see docs/AGENT_WORKFLOW.md).
+The old scaffold-only export guide is preserved at
+[608cae7](https://github.com/Wonho2007/callout-trainer/blob/608cae7/docs/BUILD.md).
+Its existence is not an exported-build acceptance result.

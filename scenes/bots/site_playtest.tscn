@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/bots/voice_playtest.tscn" id="1"]
+[ext_resource type="Script" path="res://scenes/bots/site_playtest.gd" id="2"]
+[ext_resource type="Script" path="res://world/site_builder.gd" id="3"]
+
+[node name="BSitePlantHold" instance=ExtResource("1")]
+script = ExtResource("2")
+coverage_path = "res://scenarios/site_coverage.json"
+
+[node name="SandboxBuilder" parent="." index="0"]
+script = ExtResource("3")
+map_path = "res://world/maps/b_site.json"

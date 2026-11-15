@@ -24,6 +24,21 @@ var _overlay: Dictionary = {}
 var _world_min := Vector2(-10, -10)
 var _world_max := Vector2(10, 10)
 
+## Callout-region colors, matching the annotator's overlay guide
+## (annotations/fnc_prx_lotus_toronto2024_gf.md §2). Keyed by region id.
+const REGION_COLORS := {
+	"b_main":   Color(0.95, 0.95, 0.95),  # white
+	"b_cubby":  Color(0.95, 0.45, 0.80),  # pink
+	"b_heaven": Color(0.35, 0.90, 0.40),  # green
+	"b_upper":  Color(0.95, 0.88, 0.25),  # yellow
+	"b_pit":    Color(0.92, 0.28, 0.25),  # red
+	"c_link":   Color(0.62, 0.48, 0.92),  # purple
+	"a_link":   Color(0.25, 0.45, 0.90),  # blue
+}
+
+## Toggle the static callout-region overlay on the minimap.
+@export var show_regions: bool = true
+
 
 func _ready() -> void:
 	pass  # Overlay is refreshed by the owner (main) once builder/player are set.
@@ -66,7 +81,49 @@ func _draw() -> void:
 	if _overlay.is_empty():
 		return
 
-	# Cover, then walls (callout regions are not drawn on the live minimap).
+	# Static callout regions (annotation colors), drawn first so walls/cover sit on top.
+	# Circles are drawn BEFORE boxes so an overlapping box (B Upper) paints over the
+	# circle (B Pit) — i.e. Pit reads as the circle with Upper's chunk removed.
+	if show_regions:
+		var regs: Array = _overlay.get("regions", [])
+		for pass_shape in ["circle", "box"]:
+			for r in regs:
+				if String(r.get("shape", "box")) != pass_shape:
+					continue
+				var rid := String(r.get("id", ""))
+				var col: Color = REGION_COLORS.get(rid, Color(0.6, 0.6, 0.6))
+				var fill := col
+				fill.a = 0.18
+				var outline := Color(col.r, col.g, col.b, 0.9)
+				if pass_shape == "circle":
+					var ctr := _to_map(float(r["x"]), float(r["z"]))
+					# radius in pixels: scale world radius by the map's px-per-meter (x axis)
+					var span := _world_max - _world_min
+					var px_per_m := size.x / maxf(0.001, span.x)
+					var rad := float(r.get("radius", 1.0)) * px_per_m
+					draw_circle(ctr, rad, fill)
+					draw_arc(ctr, rad, 0.0, TAU, 48, outline, 1.5)
+				else:
+					var top_left := _to_map(float(r["x"]) - float(r["w"]) * 0.5,
+						float(r["z"]) - float(r["d"]) * 0.5)
+					var bot_right := _to_map(float(r["x"]) + float(r["w"]) * 0.5,
+						float(r["z"]) + float(r["d"]) * 0.5)
+					var rect := Rect2(top_left, bot_right - top_left)
+					# Erase anything drawn underneath (e.g. the Pit circle) with the opaque
+					# panel background, so the overlap shows ONLY this box, not the circle.
+					draw_rect(rect, Color(0.08, 0.09, 0.11, 1.0), true)
+					draw_rect(rect, fill, true)
+					draw_rect(rect, outline, false, 1.5)
+				# Callout name near the region center.
+				var label := String(r.get("name", rid))
+				var center := _to_map(float(r["x"]), float(r["z"]))
+				var font := ThemeDB.fallback_font
+				var fsize := 10
+				var tw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
+				draw_string(font, center - Vector2(tw * 0.5, -3.0), label,
+					HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(col.r, col.g, col.b, 0.95))
+
+	# Cover, then walls (drawn over the region overlay).
 	for c in _overlay.get("cover", []):
 		_draw_world_rect(c, Color(0.9, 0.55, 0.3, 0.6))
 	for w in _overlay.get("walls", []):
@@ -96,8 +153,10 @@ func _draw() -> void:
 		if e == null or not is_instance_valid(e):
 			continue
 		if _player_can_see(ppos, forward, e.global_position):
-			draw_circle(_to_map(e.global_position.x, e.global_position.z), 4.0,
-				Color(1.0, 0.3, 0.3))
+			var at := _to_map(e.global_position.x, e.global_position.z)
+			draw_circle(at, 4.0, Color(1.0, 0.3, 0.3))
+			if e.has_method("is_blinded") and e.is_blinded():
+				draw_arc(at, 6.5, 0.0, TAU, 16, Color(1.0, 0.9, 0.2), 1.5)
 
 	# Decaying recon marks from a scan orb (last-known, not live tracking).
 	if utility and utility.has_method("recon_marks"):
@@ -157,6 +216,12 @@ func _player_can_see(eye: Vector3, forward: Vector3, target: Vector3) -> bool:
 		return false
 	var eye_pos := eye + Vector3(0, 1.6, 0)
 	var torso := Vector3(target.x, target.y + 1.0, target.z)
+	if utility and utility.has_method("point_in_smoke"):
+		if utility.point_in_smoke(eye_pos) and not utility.point_in_smoke(torso):
+			return false
+	if utility and utility.has_method("segment_blocked_by_smoke"):
+		if utility.segment_blocked_by_smoke(eye_pos, torso):
+			return false
 	var space := player.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(eye_pos, torso)
 	query.collision_mask = 1 << 0  # world geometry only

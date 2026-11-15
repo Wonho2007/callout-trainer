@@ -116,6 +116,13 @@ func run() -> void:
 	actor.rotation.y = PI
 	expect(combat.step(17, policy.decide(17, [aim], own())).reason == "aiming_last_observed_point", "large angle turns before shooting")
 	expect(not combat.step(48, before).ok, "stale/foreign-tick physical decision rejected")
+	actor.rotation.y = 0
+	actor.set_meta("bot_blinded", true)
+	var shot_count: int = weapon.shots
+	var stale_engage: Dictionary = policy.decide(49, [observation("fresh", 40, 48)], own())
+	expect(combat.step(49, stale_engage).reason == "blinded" and weapon.shots == shot_count, "physical blind gate blocks even a stale engage decision")
+	actor.set_meta("bot_blinded", false)
+	expect(combat.step(50, policy.decide(50, [observation("fresh", 40, 48)], own())).reason == "rifle_fired", "physical firing resumes after blindness clears")
 	combat.dispose()
 	# Real motion dispatcher owns lateral facing and the combat stop/resume.
 	actor.position = Vector3.ZERO

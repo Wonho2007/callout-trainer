@@ -181,6 +181,10 @@ func _build(m: Dictionary) -> void:
 	for box in m["cover"]:
 		_build_solid_box(box, nav_region, Color(0.90, 0.45, 0.15))
 	for divot in m.get("divots", []):
+		# Stair/circular divots are built as part of the CSG floor-pit (collision + surface);
+		# skip the legacy per-divot mesh so there is no competing collision.
+		if String(divot.get("shape", "ramp")) == "stairs":
+			continue
 		_build_divot(divot, nav_region)
 
 	var regions := Node3D.new()
@@ -237,10 +241,15 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 	var gaps: Array = []
 	for divot in m.get("divots", []):
 		var c := _to_vec3(divot.get("center", [0, 0, 0]))
-		# Gap half-size = pit TOP radius, so the sloped ramp sits in the open gap
-		# (walkable, floor doesn't block it). Corner voids left by the square gap
-		# vs the round pit are filled afterwards by _fill_divot_corners.
-		var r := float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
+		# Gap half-size = the divot's TOP radius so the recessed shape sits in the open
+		# gap (walkable, floor doesn't block it). For a conical ramp the top extends
+		# depth*RAMP_RUN_FACTOR past the bottom radius; for stairs the caller gives the
+		# outer (rim) radius directly via top_radius.
+		var r: float
+		if String(divot.get("shape", "ramp")) == "stairs":
+			r = float(divot.get("top_radius", divot.get("radius", 2.0) + 4.0))
+		else:
+			r = float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
 		gaps.append({"x": c.x, "z": c.z, "half": r})
 
 	if gaps.is_empty():
@@ -252,8 +261,24 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 		_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
 		return
 
-	# Single divot: split the floor into four boxes around the square gap.
-	# (Handles the one-divot case the map uses; extend later if needed.)
+	# Circular (stair/cone) divot: build the floor AND the pit void as ONE CSG solid so Godot
+	# generates the hole and its collision (no hand-built trimesh seam at the rim, which was
+	# where the capsule clipped in). The CSG combiner carries use_collision = true.
+	var circular: Dictionary = {}
+	for divot in m.get("divots", []):
+		var c := _to_vec3(divot.get("center", [0, 0, 0]))
+		circular = {
+			"x": c.x, "z": c.z,
+			"top_radius": float(divot.get("top_radius", 5.5)),
+			"bottom_radius": float(divot.get("radius", 1.0)),
+			"depth": float(divot.get("depth", 3.0)),
+		}
+		break  # one divot supported here
+	if not circular.is_empty():
+		_build_csg_floor_pit(fx, fz, fy, circular, parent, Color(0.30, 0.31, 0.34))
+		return
+
+	# (Legacy square-gap path kept for any non-circular future divot shapes.)
 	var g: Dictionary = gaps[0]
 	var gx := float(g["x"])
 	var gz := float(g["z"])
@@ -298,6 +323,78 @@ func _floor_slab(id: String, x0: float, x1: float, z0: float, z1: float, y: floa
 	_build_solid_box(box, parent, color)
 
 
+## Continuous floor covering the whole rectangle EXCEPT a circular hole of radius `hole_r`
+## centered at (cx,cz). Built in two parts: (1) plain box slabs filling the rectangle outside
+## a square that bounds the circle, and (2) a procedural "square-with-round-hole" ring mesh
+## (+ trimesh collision) for the band between the circle and that square. No gaps at the
+## corners, and nothing is placed inside the circle (the divot mesh fills it) -> no z-fighting.
+func _build_floor_with_hole(fx: float, fz: float, fy: float, cx: float, cz: float,
+		hole_r: float, parent: Node3D, color: Color) -> void:
+	var xmin := -fx * 0.5
+	var xmax := fx * 0.5
+	var zmin := -fz * 0.5
+	var zmax := fz * 0.5
+	# Square that bounds the circle (side = 2*hole_r), centered on the hole.
+	var sx0 := cx - hole_r
+	var sx1 := cx + hole_r
+	var sz0 := cz - hole_r
+	var sz1 := cz + hole_r
+	# (1) Four plain slabs filling the rectangle outside that bounding square.
+	_floor_slab("floor_n", xmin, xmax, zmin, sz0, fy, parent, color)   # north of the square
+	_floor_slab("floor_s", xmin, xmax, sz1, zmax, fy, parent, color)   # south of the square
+	_floor_slab("floor_w", xmin, sx0, sz0, sz1, fy, parent, color)     # west band
+	_floor_slab("floor_e", sx1, xmax, sz0, sz1, fy, parent, color)     # east band
+
+	# (2) Square-with-round-hole ring between the circle (radius hole_r) and the bounding
+	# square edge. For each angular segment, connect a point on the circle to the matching
+	# point on the square perimeter, triangulated so the band is solid.
+	var body := StaticBody3D.new()
+	body.name = "floor_hole_ring"
+	body.position = Vector3(cx, fy - 0.05, cz)
+	body.collision_layer = LAYER_WORLD
+	body.collision_mask = 0
+	parent.add_child(body)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segs := 64
+	for i in range(segs):
+		var a0 := TAU * float(i) / float(segs)
+		var a1 := TAU * float(i + 1) / float(segs)
+		# inner points on the circle
+		var inr0 := Vector3(cos(a0) * hole_r, 0, sin(a0) * hole_r)
+		var inr1 := Vector3(cos(a1) * hole_r, 0, sin(a1) * hole_r)
+		# outer points on the square perimeter (ray from center to square edge)
+		var out0 := _square_edge_point(cos(a0), sin(a0), hole_r)
+		var out1 := _square_edge_point(cos(a1), sin(a1), hole_r)
+		# two triangles forming the quad (inr0, out0, out1, inr1); wind to face up (+Y)
+		st.add_vertex(inr0); st.add_vertex(out0); st.add_vertex(out1)
+		st.add_vertex(inr0); st.add_vertex(out1); st.add_vertex(inr1)
+	st.generate_normals()
+	var mesh := st.commit()
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = mat
+	body.add_child(mi)
+	var collision := CollisionShape3D.new()
+	collision.shape = mesh.create_trimesh_shape()
+	body.add_child(collision)
+
+
+## Point where a ray (dirx,dirz) from the center hits the edge of a square of half-size `half`.
+func _square_edge_point(dirx: float, dirz: float, half: float) -> Vector3:
+	var ax := absf(dirx)
+	var az := absf(dirz)
+	var t: float
+	if ax >= az:
+		t = half / maxf(ax, 0.0001)
+	else:
+		t = half / maxf(az, 0.0001)
+	return Vector3(dirx * t, 0, dirz * t)
+
+
 ## A walk-in circular divot: a recessed flat bottom with a gentle sloped conical
 ## ramp so the player can walk down into it and back OUT without sliding or
 ## jumping. The ramp run is wider than the depth (shallow ~22-degree slope).
@@ -306,9 +403,63 @@ func _floor_slab(id: String, x0: float, x1: float, z0: float, z1: float, y: floa
 ## collision. The top rim overlaps the floor gap so there are no seams.
 const RAMP_RUN_FACTOR := 2.5
 
+func _build_csg_floor_pit(fx: float, fz: float, fy: float, pit: Dictionary,
+		parent: Node3D, color: Color) -> void:
+	var cx := float(pit["x"])
+	var cz := float(pit["z"])
+	var top_r := float(pit["top_radius"])
+	var bot_r := float(pit["bottom_radius"])
+	var depth := float(pit["depth"])
+	var slab_thick := depth + 2.0            # floor block thick enough to contain the pit
+
+	var combiner := CSGCombiner3D.new()
+	combiner.name = "floor_pit_csg"
+	combiner.use_collision = true
+	combiner.collision_layer = LAYER_WORLD
+	combiner.collision_mask = 0
+	# Place so the slab TOP is at y = fy (floor surface at 0).
+	combiner.position = Vector3(0, fy - slab_thick * 0.5, 0)
+	parent.add_child(combiner)
+
+	# Floor slab (union).
+	var slab := CSGBox3D.new()
+	slab.name = "slab"
+	slab.size = Vector3(fx, slab_thick, fz)
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = color
+	slab.material = smat
+	combiner.add_child(slab)
+
+	# Pit void: a lathed cone profile, subtracted. The slab center is at local y=0, so the
+	# slab TOP is at +slab_thick/2. Carve from the top surface down `depth`.
+	var top_y := slab_thick * 0.5
+	var cut := CSGPolygon3D.new()
+	cut.name = "pit_void"
+	cut.operation = CSGShape3D.OPERATION_SUBTRACTION
+	cut.mode = CSGPolygon3D.MODE_SPIN
+	cut.spin_degrees = 360.0
+	cut.spin_sides = 64
+	cut.position = Vector3(cx, 0, cz)             # center the lathe on the pit
+	# 2D profile revolved around the local Y axis (x = radius). Enclosed area = the void:
+	# rim (top) -> cone wall down to the flat-bottom edge -> flat bottom to the axis -> up.
+	var prof := PackedVector2Array([
+		Vector2(top_r, top_y + 0.1),
+		Vector2(bot_r, top_y - depth),
+		Vector2(0.0,   top_y - depth),
+		Vector2(0.0,   top_y + 0.1),
+	])
+	cut.polygon = prof
+	combiner.add_child(cut)
+
+
 func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	var id := String(divot.get("id", "divot"))
 	var center := _to_vec3(divot.get("center", [0, 0, 0]))
+
+	if String(divot.get("shape", "ramp")) == "stairs":
+		_build_stair_pit(divot, parent)
+		return
+
 	var bottom_radius := float(divot.get("radius", 2.0))
 	var depth := float(divot.get("depth", 0.9))
 	# Gentle walkable ramp: run is wider than the drop (~22 degrees).
@@ -357,6 +508,105 @@ func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	body.add_child(collision)
 
 
+## A walk-in STAIR pit: concentric circular steps descending to a flat bottom disc.
+## `top_radius` = rim radius (where the stairs begin at y=0); `radius` = flat bottom disc
+## radius (the slightly-flattened deep floor so it is not pointy); `depth` = total drop;
+## `steps` = number of equal steps. Each step is a horizontal tread ring + a vertical
+## riser. Built as one procedural mesh + trimesh collision so the player walks in/out.
+func _build_stair_pit(divot: Dictionary, parent: Node3D) -> void:
+	var id := String(divot.get("id", "pit"))
+	var center := _to_vec3(divot.get("center", [0, 0, 0]))
+	var top_radius := float(divot.get("top_radius", 6.0))
+	var bottom_radius := float(divot.get("radius", 2.0))
+	var depth := float(divot.get("depth", 3.0))
+	var steps := int(divot.get("steps", 6))
+	var segments := 48
+
+	var body := StaticBody3D.new()
+	body.name = id
+	body.position = Vector3(center.x, 0.0, center.z)
+	body.collision_layer = LAYER_WORLD
+	body.collision_mask = 0
+	parent.add_child(body)
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var riser := depth / float(steps)                       # vertical drop per step (0.5 m)
+	var run := (top_radius - bottom_radius) / float(steps)   # radial width per tread
+
+	# Build each step: a tread (flat ring) at its depth, then a riser (vertical ring wall)
+	# dropping to the next step. Step k spans radius [top_radius - k*run .. top_radius-(k+1)*run].
+	for k in range(steps):
+		var r_outer := top_radius - run * float(k)
+		var r_inner := top_radius - run * float(k + 1)
+		var y_tread := -riser * float(k)         # tread top surface height
+		var y_next := -riser * float(k + 1)      # next tread height (bottom of this riser)
+		for i in range(segments):
+			var a0 := TAU * float(i) / float(segments)
+			var a1 := TAU * float(i + 1) / float(segments)
+			var co0 := Vector3(cos(a0), 0, sin(a0))
+			var co1 := Vector3(cos(a1), 0, sin(a1))
+			# Flat tread ring at y_tread, from r_inner to r_outer.
+			var to0 := co0 * r_outer + Vector3(0, y_tread, 0)
+			var to1 := co1 * r_outer + Vector3(0, y_tread, 0)
+			var ti0 := co0 * r_inner + Vector3(0, y_tread, 0)
+			var ti1 := co1 * r_inner + Vector3(0, y_tread, 0)
+			st.add_vertex(to0); st.add_vertex(ti0); st.add_vertex(to1)
+			st.add_vertex(to1); st.add_vertex(ti0); st.add_vertex(ti1)
+			# Vertical riser at r_inner, from y_tread down to y_next.
+			var ru0 := co0 * r_inner + Vector3(0, y_tread, 0)
+			var ru1 := co1 * r_inner + Vector3(0, y_tread, 0)
+			var rd0 := co0 * r_inner + Vector3(0, y_next, 0)
+			var rd1 := co1 * r_inner + Vector3(0, y_next, 0)
+			st.add_vertex(ru0); st.add_vertex(rd0); st.add_vertex(ru1)
+			st.add_vertex(ru1); st.add_vertex(rd0); st.add_vertex(rd1)
+
+	# Flat bottom disc (slightly-flattened deep floor, not pointy) at y = -depth.
+	var bottom_center := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var b0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var b1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		st.add_vertex(b0); st.add_vertex(bottom_center); st.add_vertex(b1)
+
+	st.generate_normals()
+	var mesh := st.commit()
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.24, 0.25, 0.29)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh_instance.material_override = mat
+	body.add_child(mesh_instance)
+
+	# Collision: a single clean SMOOTH cone (rim at top_radius/y=0 -> flat bottom disc at
+	# -depth), no overlap, no steps, no stacked shapes. With a gentle slope (< floor_max_angle)
+	# plain move_and_slide walks the capsule straight in and out. The stepped mesh above is
+	# visual only. Keeping this dead simple after stepped/overlap/cylinder variants all fought
+	# the CharacterBody3D.
+	var cst := SurfaceTool.new()
+	cst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var c_bottom := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var t0 := Vector3(cos(a0) * top_radius, 0.0, sin(a0) * top_radius)
+		var t1 := Vector3(cos(a1) * top_radius, 0.0, sin(a1) * top_radius)
+		var bd0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var bd1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		cst.add_vertex(t0); cst.add_vertex(bd0); cst.add_vertex(t1)
+		cst.add_vertex(t1); cst.add_vertex(bd0); cst.add_vertex(bd1)
+		cst.add_vertex(bd0); cst.add_vertex(c_bottom); cst.add_vertex(bd1)
+	cst.generate_normals()
+	var cmesh := cst.commit()
+	var collision := CollisionShape3D.new()
+	collision.shape = cmesh.create_trimesh_shape()
+	body.add_child(collision)
+
+
 func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6, 0.6, 0.62)) -> void:
 	var id := String(box.get("id", "box"))
 	var pos := _to_vec3(box.get("position", [0, 0, 0]))
@@ -365,6 +615,11 @@ func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6,
 	var body := StaticBody3D.new()
 	body.name = id
 	body.position = pos
+	# Optional rotation (degrees, XYZ) — used for tilted-box ramps. A solid rotated box is a
+	# convex collider, so a CharacterBody3D walks its sloped face cleanly (no trimesh needed).
+	if box.has("rotation_deg"):
+		var rd := _to_vec3(box.get("rotation_deg", [0, 0, 0]))
+		body.rotation = Vector3(deg_to_rad(rd.x), deg_to_rad(rd.y), deg_to_rad(rd.z))
 	body.collision_layer = LAYER_WORLD
 	body.collision_mask = 0
 	parent.add_child(body)
@@ -403,9 +658,15 @@ func _build_region(region: Dictionary, parent: Node3D) -> void:
 	parent.add_child(area)
 
 	var collision := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = size
-	collision.shape = shape
+	if String(region.get("shape", "box")) == "circle":
+		var cyl := CylinderShape3D.new()
+		cyl.radius = float(region.get("radius", 1.0))
+		cyl.height = size.y
+		collision.shape = cyl
+	else:
+		var shape := BoxShape3D.new()
+		shape.size = size
+		collision.shape = shape
 	area.add_child(collision)
 
 
@@ -499,6 +760,7 @@ func get_map_overlay() -> Dictionary:
 		var r := {
 			"id": region.get("id", ""),
 			"name": region.get("name", region.get("id", "")),
+			"shape": region.get("shape", "box"),
 		}
 		var c := _to_vec3(region.get("center", [0, 0, 0]))
 		var s := _to_vec3(region.get("size", [1, 1, 1]))
@@ -506,6 +768,7 @@ func get_map_overlay() -> Dictionary:
 		r["z"] = c.z
 		r["w"] = s.x
 		r["d"] = s.z
+		r["radius"] = float(region.get("radius", 0.0))
 		overlay["regions"].append(r)
 	for spawn in map_data.get("spawns", []):
 		var p := _to_vec3(spawn.get("position", [0, 0, 0]))

@@ -1,50 +1,50 @@
-# Shared contracts ? proposed v0
+# Current integration contracts
 
-**Status: proposed, not frozen.** Person 3 coordinates schema definitions; all three confirm them at kickoff. These examples are starting points, not tested engine APIs. The brief's requirements take precedence.
+The selected player message schema is [comms.v1](COMMANDS.md) and
+[its JSON Schema](../schemas/comms_v1.schema.json). Current implementation details live
+in the [voice/game guide](../bots/VOICE_GAME.md), [scenario guide](../bots/LOTUS_SCENARIO.md)
+and [executor reference](PERSON2_EXECUTOR.md). Old proposed v0 examples remain historical
+fixtures; they are not automatically upgraded APIs.
 
-## Selected natural-language boundary
+## Boundaries in use
 
-Use [communication contract v1](COMMANDS.md) and its JSON Schema for new player messages. The user selected this interface for implementation: flexible phrasing becomes a validated report, flash command or coordinated swing, with explicit timing and lifecycle results. Person 3 interprets/reports; Person 2 validates/executes; Person 1 supplies mechanics/markers. Other contracts below remain proposed; the old fixture is not silently upgraded.
+| Boundary | Actual shape / responsibility |
+|---|---|
+| Interpreter -> Godot | Proposal only. Model cannot assign trusted message IDs/ticks, world coordinates or direct actor operations |
+| Godot -> delayed inbox | Trusted host stamps current receipt tick + 1, speaker/recipient/expiry and observation ID; existing 18-tick fixture delay applies |
+| Observation | `{id, bot_id, event_tick, available_tick, source, speaker_id, content}`; copied plain data. Actual delivery tick is logged separately |
+| Belief -> planner | Pinned `57f809d`: `{bot_id, tick, enemies, trust, evidence_ids}`. `trust: {}` is inert compatibility data, not a credibility feature |
+| Model context | `{context_id, bot_id, tick, expires_tick, observations, belief, own_state, active_command}`; released bot-local observations only |
+| Optional model candidate | `{context_id, decision_id, bot_id, goal, target_id, watch_region_id, evidence_ids}`; gate validates copied recorded context, allowed markers, evidence and expiry |
+| Physical executor | Receives authored target IDs, permitted delayed last-observed aim and own-state; shared physics resolves paths, shots and utility without returning hidden targets to policy |
+| Local bridge | Localhost-only JSON-lines transport with round session, request deduplication, bounded buffers and heartbeat/disconnect fallback. Internal integration seam, not a new shared schema version |
+| Late enemy registration | Privileged scene adds real actor to sensing registry only. No spawn testimony, guessed initial body or reset of legitimate pending observations |
+| Source scenario | Uses Person 3 scenario.v1 schema/validator read-only from its snapshot; own checks bind unknown starts and first-known beats to runtime schedule/region bounds |
 
-## Conventions to confirm
+The approved paired field-removal work is on Person 3's `comms-belief` and
+`drop-trust-planner` branches. Changing only one consumer breaks validation. Field
+removal alone does not fix the known working-belief full-acceptance behavior.
 
-Proposed coordinates: meters, Y up, Godot Vector3 serialized as [x, y, z]. Integer ticks are authoritative; simulation timestamps can be derived from the configured rate. Use stable string IDs, schema_version and named unknown-region handling. The fixture's 60 Hz is illustrative and does not pin runtime settings.
+## Time and evidence
 
-Copy values into policy inputs; never pass live nodes or global truth dictionaries. Private recording access and bot subscription access are separate.
+The authored scenario clock starts at plant and uses 60Hz ticks; arrivals are at tick
+1380. Runtime clocks are monotonic per bot; late-created enemies start their own runtime
+clock when instantiated. Do not compare different clock domains without conversion.
+Model/STT wall-time is telemetry, not permission to backdate game evidence.
 
-**Latest user rule:** teammates always fully trust valid, delivered player comms. No credibility/history score, corroboration prerequisite or numeric hedge-based credibility discount is part of the product. Preserve explicit uncertainty as content and retain delay, validation, physical constraints and evidence provenance. Person 3 owns aligning its working-belief/model implementation. The existing empty `trust: {}` snapshot field is inert compatibility metadata; this documentation change does not remove it or change a schema.
+Every cited observation must belong to that bot and have actually been delivered by
+the decision/context tick. Keep event, configured availability and actual delivery
+distinct. Reject foreign/future/expired evidence. A reset creates a new session; old
+speech/model replies cannot operate the new actor. Physical completion is measured,
+not inferred from emitting an intent.
 
-| Contract | Producer -> consumer | Required concepts |
-|---|---|---|
-| Region registry/graph | Person 1 -> Persons 2/3 | ID/name, bounds/center, neighbors, travel times, unknown fallback and version |
-| Gameplay event (privileged) | Person 1 -> perception/private recorder | ID/tick/type, actor, position, payload |
-| Observation (bot-local) | Person 2 -> beliefs/policy | ID, bot, event/availability tick, source, copied content, confidence, speaker/provenance |
-| Callout | Person 3 -> delayed delivery | ID, speaker, type, region, count, hedge, event tick |
-| Belief query | Person 3 -> Person 2 | Bot-local working enemy-region beliefs and available evidence IDs; inert legacy field retained for compatibility |
-| Actor intent | Person 2 -> Person 1 | Actor, movement/aim/fire/reload/utility/defuse intent; no hidden target tracking |
-| Decision record | Person 2 -> Person 3 | Tick, bot, goal/action, evidence IDs, reason, branch/fallback |
-| Archive (privileged) | All -> Person 3 | Version/config/seed, inputs, snapshots, truth and per-bot observations |
+Static map/marker affordances may be public. Model/policy cannot receive live enemy
+Nodes/transforms, scene-tree lookup access, private truth streams or player-only recon.
+Delayed `enemy_aim` is a copied actually visible torso sample, not live target tracking.
+Public terminal round outcomes may stop the controller; private truth cannot choose
+a tactical branch. Fallback obeys the same information boundary.
 
-## Tick ordering and delay
-
-Proposed order: collect physical events -> make due observations available -> deliver due callouts -> update belief -> plan -> execute actions -> record. Ensure logs distinguish actual event time from availability time. Freeze exact ordering before implementation. No policy consumes an observation early.
-
-## Public information
-
-Create an explicit allowlist. Own health, ammunition and actor pose are own-state inputs. Static map layout may be known. Whether teammate elimination and spike/timer signals are globally public must be decided and documented. An evaluator seeing a hidden position is not grounds to notify a bot.
-
-## Synthetic handoff fixture
-
-examples/interface_fixture.json illustrates one player callout delivered to one bot and a later decision citing it. It is not a pro round, schema standard, trained policy or fairness test suite. The documentation checker only verifies basic example consistency.
-
-Person 1 should expose actor movement/action execution and a map query adapter. Person 2's policy consumes a belief provider and delayed observation provider. Person 3 must be able to replay observations without loading the 3D world. Avoid hard dependencies on another lane's scene internals.
-
-## Required fairness tests when implemented
-
-1. Evidence IDs belong to the deciding bot and are available by the decision tick.
-2. Policy dependencies cannot access hidden truth, scene lookups or live target nodes.
-3. Moving an unseen enemy while holding all allowed inputs and seeds fixed leaves the policy decision unchanged.
-4. Smoke/flash and reaction delay suppress or delay observations for every actor.
-5. Fallback stays inside the same information boundary.
-
-Person 2 now tests delayed evidence, private-input boundaries and hidden-state perturbation in isolated modules; see [the runtime guide](PERSON2_EXECUTOR.md). Scene-based smoke/flash perception and full-game checks remain pending.
+For nondeterministic model attempts, preserve exact inputs, schema/options, prompt,
+raw output, parsed result, error/source and context ID. Do not substitute deterministic
+replay for auditing what the model actually received. The documentation checker verifies
+links/fixtures only; passing it is not a fairness gate.

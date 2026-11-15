@@ -71,6 +71,12 @@ func text_for(id: String) -> String:
 func set_tool_feedback(message: String) -> void:
 	_labels.ToolsFeedback.text = message
 
+func set_test_tools_enabled(enabled: bool) -> void:
+	var column: Node = get_child(0)
+	for index in range(9, column.get_child_count()):
+		var control: Control = column.get_child(index)
+		control.visible = enabled
+
 func update_information(state: Dictionary) -> void:
 	var tick: int = int(state.get("tick", -1))
 	var rate: float = float(Engine.physics_ticks_per_second)
@@ -140,7 +146,7 @@ func update_information(state: Dictionary) -> void:
 		_labels.Vision.text = "Vision: inactive — teammate down"
 		_labels.Vision.add_theme_color_override("font_color", Color(1, 0.75, 0.35))
 		_labels.Smoke.text = "Smoke: no live view — teammate down"
-	if physical.get("reason") in ["detonated", "defused", "team_eliminated"]:
+	if physical.get("reason") in ["detonated", "defused", "team_eliminated", "enemies_eliminated"]:
 		_labels.Action.text = "Action: round ended — press F to reset"
 		_labels.Vision.text = "Vision: inactive — round ended"
 		_labels.Vision.add_theme_color_override("font_color", Color(1, 0.75, 0.35))

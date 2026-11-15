@@ -8,8 +8,9 @@ extends ActorBase
 ##
 ## Weapons/shooting/damage sources and defuse are later increments.
 
-@export var mouse_sensitivity: float = 0.0025
-@export var stand_height: float = 1.8
+# User-requested tuning: mouse sensitivity scaled to 3/4 of the original 0.0025.
+@export var mouse_sensitivity: float = 0.001875
+@export var stand_height: float = 1.96
 @export var crouch_height: float = 1.0
 
 @onready var camera: Camera3D = $Camera3D
@@ -64,8 +65,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("throw_smoke"):
 			utility.throw_smoke(_aim_landing_point())
 		elif event.is_action_pressed("throw_flash"):
-			var from := camera.global_position - camera.global_transform.basis.z * 0.5
-			var toss := -camera.global_transform.basis.z * 12.0 + Vector3.UP * 3.0
+			var from := camera.global_position - camera.global_transform.basis.z * 0.4
+			var toss := _calc_flash_toss(from)
 			var f := utility.throw_flash(from, toss)
 			if f:
 				f.detonated.connect(_on_flash_detonated)
@@ -98,6 +99,40 @@ func _aim_landing_point() -> Vector3:
 	if hit:
 		return hit.position
 	return origin + dir * 15.0
+
+
+## Calculate flash toss velocity targeting the player's crosshair aim point.
+## Arrives at target in ~0.75s right as fuse expires, popping right in front of target.
+func _calc_flash_toss(from: Vector3) -> Vector3:
+	var look_dir := -camera.global_transform.basis.z
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(camera.global_position, camera.global_position + look_dir * 35.0)
+	query.collision_mask = 1 << 0 | 1 << 2 | 1 << 6  # world, actors, hitboxes
+	query.collide_with_bodies = true
+	query.exclude = [get_rid()]
+	var hit := space.intersect_ray(query)
+	var target_pt: Vector3
+	if hit:
+		var normal: Vector3 = hit.get("normal", Vector3.UP)
+		var dist_to_hit := (hit.position as Vector3 - camera.global_position).length()
+		var offset_dist := clampf(dist_to_hit * 0.12, 0.5, 1.2)
+		target_pt = (hit.position as Vector3) + normal * offset_dist
+		if (target_pt - from).dot(look_dir) < 0.2:
+			target_pt = from + look_dir * maxf(dist_to_hit, 2.0)
+	else:
+		target_pt = camera.global_position + look_dir * 14.0
+
+	var delta := target_pt - from
+	var dist_xz := Vector2(delta.x, delta.z).length()
+	dist_xz = clampf(dist_xz, 1.5, 25.0)
+	var fuse: float = float(utility._defs.get("flash", {}).get("trigger_delay_s", 0.75))
+	var speed_xz := clampf(dist_xz / fuse, 4.0, 22.0)
+	var dir_xz := Vector3(delta.x, 0.0, delta.z)
+	if dir_xz.length_squared() < 0.001:
+		dir_xz = Vector3(look_dir.x, 0.0, look_dir.z)
+	dir_xz = dir_xz.normalized()
+	var vy := clampf((delta.y + 0.5 * 9.8 * fuse * fuse) / fuse, 1.0, 7.5)
+	return dir_xz * speed_xz + Vector3.UP * vy
 
 
 func _on_flash_detonated(source_position: Vector3) -> void:
@@ -174,7 +209,7 @@ func _process(delta: float) -> void:
 	# In-smoke camera fog: fade in when the camera is inside a smoke volume.
 	if smoke_overlay and utility:
 		var inside := utility.point_in_smoke(camera.global_position)
-		var target := 0.9 if inside else 0.0
+		var target := 0.6 if inside else 0.0
 		smoke_overlay.color.a = move_toward(smoke_overlay.color.a, target, delta * 4.0)
 
 

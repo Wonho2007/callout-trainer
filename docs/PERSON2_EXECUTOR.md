@@ -1,5 +1,11 @@
 # Person 2 command runtime
 
+**Module reference, not current project status.** The fake-actor executor described
+here is now part of a larger integrated prototype. Use [the current handoff](PERSON2_HANDOFF.md)
+for ownership, dependencies, installed paths and acceptance state, and
+[the scenario guide](../bots/LOTUS_SCENARIO.md) for the current player entry point.
+Historical module test results below retain their original scope.
+
 Implemented on person-2/bot-perception. Tested with the official Godot 4.4.1 stable build proposed by Person 1. This is a headless command runtime with fake actor integration, not a playable sandbox, speech interpreter, raycast sensor or professional-play policy.
 
 ## Components

@@ -1,5 +1,10 @@
 # First-person action playtest
 
+**Developer fixture reference.** This is the earlier three-region action harness,
+not the new plant-start player scenario. Use [LOTUS_SCENARIO.md](LOTUS_SCENARIO.md)
+to play and [the current handoff](../docs/PERSON2_HANDOFF.md) for continuation state.
+Historical paths/results in this reference do not override the current setup.
+
 This developer harness runs the **current first-person map**, shared player and
 teammate mechanics, existing sensory/HUD integration, and bot executor. It is an
 inherited scene, not a replacement map or the older overhead demo. Normal

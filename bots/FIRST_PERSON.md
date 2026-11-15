@@ -1,5 +1,17 @@
 # First-person teammate integration
 
+**Original three-region module reference.** Current project/ownership/status is in
+[the single handoff](../docs/PERSON2_HANDOFF.md). The default player profile is documented
+in [LOTUS_SCENARIO.md](LOTUS_SCENARIO.md); old test snapshots and tool paths below are
+historical where they differ. Do not resume an old implementation checkpoint from them.
+
+**Current voice-enabled variant:** use [VOICE_GAME.md](VOICE_GAME.md) and
+`validation/run_voice_game.ps1` for the new local microphone/LLM-to-game bridge.
+It retains this three-region synthetic scene and delayed physical execution.
+Its selected scope is LLM interpretation with scripted goals after measured goal
+timeouts; full model-goal acceptance remains unestablished. The original plain
+`--first-person` mode below intentionally has no voice host.
+
 The user confirmed the newer [Person 2 direction](../docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](../docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only comms, grounded local LLM teammate goals, fully accepted player comms without credibility scoring, deterministic safety fallback, grading/debrief deferred. This scene implements the Person 2 integration slice. **Person 3 has since published local STT scaffolding at `57f809d`; its target-machine results are unfilled, and the interpreter/model service and game bridge remain dependencies. Live spoken reactions are not implemented by this change.**
 
 ## What runs

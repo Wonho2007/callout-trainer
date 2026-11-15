@@ -1,0 +1,322 @@
+{
+  "schema_version": "scenario.v1",
+  "id": "fnc_prx_lotus_toronto2024_gf",
+  "synthetic": false,
+  "source": {
+    "vod_url": "https://www.youtube.com/watch?v=Al4HobbrHWM",
+    "map": "Lotus",
+    "round": "unknown",
+    "plant_timestamp": "01:01:25",
+    "annotator": "Person 3 (name not supplied in source notes)",
+    "note": "Converted from b84cc93 annotation. Event/year/title/channel and team review remain unverified. Legacy identifier preserved, not independently verified source metadata."
+  },
+  "map": "lotus_b_adaptation",
+  "map_file": "world/maps/lotus_b_adaptation.json",
+  "side": "attacker",
+  "round_context": {
+    "time_left_s": "unknown",
+    "spike_planted": true,
+    "spike_site_region": "b_pit",
+    "spike_position": "unknown",
+    "seed": 73,
+    "note": "Runtime uses an explicitly authored 45-second timer, shared generic rifle/utility and combined HP/armor; exact source geometry/coordinates unknown."
+  },
+  "actors": [
+    {
+      "id": "player",
+      "team": "attacker",
+      "agent": "Yoru",
+      "role": "Something (PRX)",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "b_heaven",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [],
+      "is_player": true
+    },
+    {
+      "id": "ally",
+      "team": "attacker",
+      "agent": "Omen",
+      "role": "f0rsakeN (PRX)",
+      "hp": 70,
+      "armor": 0,
+      "start_region": "b_pit",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [
+        {
+          "ability_id": "smoke",
+          "charges": 1
+        }
+      ],
+      "is_player": false
+    },
+    {
+      "id": "chronicle",
+      "team": "defender",
+      "agent": "Viper",
+      "role": "Chronicle (FNC)",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "unknown",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [],
+      "is_player": false
+    },
+    {
+      "id": "crashies",
+      "team": "defender",
+      "agent": "Fade",
+      "role": "crashies (FNC)",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "unknown",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [],
+      "is_player": false
+    },
+    {
+      "id": "kaajak",
+      "team": "defender",
+      "agent": "Raze",
+      "role": "kaajak (FNC)",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "unknown",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [
+        {
+          "ability_id": "molly",
+          "charges": 1
+        }
+      ],
+      "is_player": false
+    },
+    {
+      "id": "boaster",
+      "team": "defender",
+      "agent": "Omen",
+      "role": "Boaster (FNC)",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "unknown",
+      "weapon": {
+        "id": "unknown"
+      },
+      "utility": [
+        {
+          "ability_id": "blind_wave",
+          "charges": 1
+        },
+        {
+          "ability_id": "smoke",
+          "charges": 2
+        }
+      ],
+      "is_player": false
+    }
+  ],
+  "timeline": [
+    {
+      "tick": 0,
+      "actor_id": "player",
+      "action": "reference_hold",
+      "region": "b_heaven",
+      "evidence_source": "Person 3 annotation section 4; minimap",
+      "certainty": "confirmed",
+      "note": "Player-controlled: never force the recorded player movement."
+    },
+    {
+      "tick": 0,
+      "actor_id": "ally",
+      "action": "hold",
+      "region": "b_pit",
+      "evidence_source": "Person 3 annotation section 4; POV/minimap",
+      "certainty": "confirmed"
+    },
+    {
+      "tick": 120,
+      "actor_id": "ally",
+      "action": "reference_move",
+      "region": "b_cubby",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Observed at +2s; baseline timing is a reference, not a forced teleport."
+    },
+    {
+      "tick": 120,
+      "actor_id": "ally",
+      "action": "reference_smoke",
+      "region": "c_link",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Observed smoke. Exact placement not known; generic utility adaptation."
+    },
+    {
+      "tick": 120,
+      "actor_id": "player",
+      "action": "reference_move",
+      "region": "a_link",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Human role is not scripted."
+    },
+    {
+      "tick": 960,
+      "actor_id": "boaster",
+      "action": "reference_smoke",
+      "region": "b_main",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Source actor position remains unknown at +16s; this remote effect does not permit spawning Boaster."
+    },
+    {
+      "tick": 1140,
+      "actor_id": "ally",
+      "action": "reference_smoke",
+      "region": "b_main",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Baseline uses the initial +18s smoke readiness; exact placement remains approximate."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "chronicle",
+      "action": "first_known_position",
+      "region": "b_heaven",
+      "evidence_source": "Person 3 annotation section 5; +23s / 01:01:48",
+      "certainty": "confirmed",
+      "note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "crashies",
+      "action": "first_known_position",
+      "region": "b_heaven",
+      "evidence_source": "Person 3 annotation section 5; +23s / 01:01:48",
+      "certainty": "confirmed",
+      "note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "kaajak",
+      "action": "first_known_position",
+      "region": "c_link",
+      "evidence_source": "Person 3 annotation section 5; +23s / 01:01:48",
+      "certainty": "confirmed",
+      "note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "boaster",
+      "action": "first_known_position",
+      "region": "b_main",
+      "evidence_source": "Person 3 annotation section 5; +23s / 01:01:48",
+      "certainty": "confirmed",
+      "note": "First localized by recorded death at +23s. Spawned alive as explicit adaptation; no forced source kill."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "ally",
+      "action": "reference_move",
+      "region": "b_main",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "No recorded kill is forced."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "crashies",
+      "action": "reference_recon",
+      "region": "b_heaven",
+      "evidence_source": "Person 3 annotation section 5; +23s Eye",
+      "certainty": "confirmed",
+      "note": "Shared scan-orb adaptation; private delayed enemy region sightings, not player HUD marks."
+    },
+    {
+      "tick": 1560,
+      "actor_id": "player",
+      "action": "reference_hold",
+      "region": "a_link",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Boundary mapped by annotator; player remains controlled."
+    },
+    {
+      "tick": 1560,
+      "actor_id": "ally",
+      "action": "reference_move",
+      "region": "b_cubby",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Reference movement only."
+    },
+    {
+      "tick": 1680,
+      "actor_id": "player",
+      "action": "reference_move",
+      "region": "b_pit",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Human controls this movement."
+    },
+    {
+      "tick": 1680,
+      "actor_id": "kaajak",
+      "action": "reference_grenade",
+      "region": "b_pit",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Source grenade has no exact shared replica; utility mapping is approximate."
+    },
+    {
+      "tick": 1800,
+      "actor_id": "chronicle",
+      "action": "reference_last_position",
+      "region": "b_upper",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Recorded death is not forced."
+    },
+    {
+      "tick": 1800,
+      "actor_id": "kaajak",
+      "action": "reference_last_position",
+      "region": "c_link",
+      "evidence_source": "Person 3 annotation section 5",
+      "certainty": "confirmed",
+      "note": "Recorded death is not forced."
+    }
+  ],
+  "branches": [
+    {
+      "id": "observed_heaven_flank",
+      "weight": 1.0,
+      "trigger_condition": "Retaker receives its own delayed seen enemy_seen in b_heaven; then route via a_link for three seconds before baseline resumes. Never uses hidden player position.",
+      "beats": [
+        {
+          "tick": 0,
+          "actor_id": "chronicle",
+          "action": "authored_flank",
+          "region": "a_link",
+          "evidence_source": "authored alternative, not pro footage",
+          "certainty": "inferred",
+          "note": "Relative to branch activation, not plant."
+        }
+      ],
+      "note": "Pro-inspired adaptation only; not observed pro behavior. Applies to retaker policies."
+    }
+  ],
+  "branch_weights_source": "authored single branch, not empirical probability",
+  "note": "Pending-review source annotation converted without inventing unknown enemy starts. All four unknown enemies remain absent until first known +23s position. Boaster appears alive at his first-localized recorded-death position as explicit adaptation. World coordinates and all continuation outcomes are authored; no professional outcome is forced. Player reference beats are never input automation. Annotated bot movement and generic utility beats now form the baseline until an evidence-driven deviation; exact agent kits and continuous trajectories remain approximate."
+}

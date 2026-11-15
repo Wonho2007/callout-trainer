@@ -6,6 +6,7 @@ const Planner = preload("res://bots/knowledge_planner.gd")
 const Motion = preload("res://bots/motion_controller.gd")
 const Gate = preload("res://bots/intent_gate.gd")
 const FlashController = preload("res://bots/flash_controller.gd")
+const VisibleFlashController = preload("res://bots/visible_flash_controller.gd")
 const CombatPolicy = preload("res://bots/combat_policy.gd")
 const CombatController = preload("res://bots/combat_controller.gd")
 signal policy_context_ready(context: Dictionary)
@@ -38,12 +39,21 @@ var _flash: RefCounted
 var _combat_policy: RefCounted
 var _combat_adapter: RefCounted
 var _combat_decision: Dictionary = {}
+var _scenario_policy: RefCounted
+var _player_goal: Dictionary = {}
+var _position_orders: Dictionary = {}
+var _last_position_serial: int = 0
+var _completed_player_moves: Dictionary = {}
+
+func attach_scenario_policy(policy: RefCounted) -> void:
+	_scenario_policy = policy
 
 func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCounted,
 		configuration: Dictionary, markers: Dictionary, entries: Dictionary, round_id: int,
 		utility: Node3D = null, flash_targets: Dictionary = {}, flash_charges: int = 0) -> void:
 	_bot_id = bot_id
 	_actor = actor
+	_actor.died.connect(_on_actor_died)
 	_nav = navigation
 	_belief = belief
 	_round_id = round_id
@@ -51,8 +61,10 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 	_markers = markers.duplicate(true)
 	_entries = entries.duplicate(true)
 	var schema: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://schemas/comms_v1.schema.json"))
-	_flash = FlashController.new(actor, utility, flash_targets, markers, flash_charges)
-	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": _flash.targets().keys(), "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
+	var visible_flashes: bool = flash_targets.values().any(func(target: Variant): return target is Dictionary and target.has("aim_points"))
+	_flash = VisibleFlashController.new(actor, utility, flash_targets, markers, flash_charges) if visible_flashes else FlashController.new(actor, utility, flash_targets, markers, flash_charges)
+	var visibility_flashes: Array = _flash.targets().keys() if visible_flashes else []
+	_executor = Executor.new(bot_id, {"entries": entries.keys(), "flashes": _flash.targets().keys(), "visibility_flashes": visibility_flashes, "regions": configuration.regions, "speakers": ["player"]}, schema, 600)
 	_planner = Planner.new(bot_id, configuration)
 	_motion = Motion.new(bot_id, actor, navigation, markers, entries)
 	_motion.attach_flash(_flash)
@@ -61,6 +73,19 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 		affordances[marker] = markers[marker].watch_points.keys()
 	_gate = Gate.new(bot_id, affordances)
 	_configured = true
+
+func _on_actor_died() -> void:
+	# Keep the record for round logic and sensor registries, remove its physical
+	# presence immediately. The player never uses this bot runtime.
+	_actor.hide()
+	_actor.set_deferred("collision_layer", 0)
+	_actor.set_deferred("collision_mask", 0)
+	for child in _actor.get_children():
+		if child is CollisionObject3D:
+			child.set_deferred("collision_layer", 0)
+			child.set_deferred("collision_mask", 0)
+	_actor.set_physics_process(false)
+	finish_round("actor_dead")
 
 func enable_combat(utility: Node3D) -> bool:
 	# Trusted scene opt-in only. configure() leaves combat disabled so sensory
@@ -82,6 +107,9 @@ func attach_perception(adapter: RefCounted) -> void:
 	if _sensing != null:
 		_sensing.dispose()
 	_sensing = adapter
+
+func register_opponent(id: String, actor: CharacterBody3D) -> bool:
+	return _sensing != null and _sensing.register_opponent(id, actor)
 
 func _exit_tree() -> void:
 	if _combat_adapter != null:
@@ -106,21 +134,109 @@ func submit_intent(candidate: Dictionary) -> Dictionary:
 		return {"ok": false, "reason": "not_ready"}
 	return _gate.propose(candidate, _tick)
 
+# Local positioning seam, separate from the shared swing/flash comms schema.
+# Only static authored marker IDs enter; delivery uses the same radio delay.
+func submit_position_order(target_id: String) -> Dictionary:
+	if not _configured or _bot_id != "ally" or not _actor.is_alive:
+		return {"ok": false, "reason": "not_ready"}
+	if not target_id.is_empty() and (not _markers.has(target_id) or not _markers[target_id].watch_points.has(target_id)):
+		return {"ok": false, "reason": "unknown_position"}
+	var issued: int = _tick + 1
+	# Supersede a pending swing/flash through its existing cancellation rules.
+	var active_id: String = _executor.active_command_id()
+	if not active_id.is_empty():
+		submit_comm({"schema_version": "comms.v1", "message_id": "position-cancel:" + str(_delivery_serial + 1),
+			"speaker_id": "player", "recipient_id": _bot_id, "issued_tick": issued,
+			"expires_tick": issued + 600, "kind": "cancel", "payload": {"command_id": active_id}})
+	_delivery_serial += 1
+	var id: String = _bot_id + ":round:" + str(_round_id) + ":position:" + str(_delivery_serial)
+	var answer: Dictionary = _executor.enqueue({"id": id, "bot_id": _bot_id,
+		"event_tick": issued, "available_tick": issued + 18, "source": "told",
+		"speaker_id": "player", "content": {"type": "player_position", "target_id": target_id}})
+	if answer.ok:
+		_position_orders[id] = _delivery_serial
+	return answer
+
+func _update_player_goal() -> void:
+	for observation in _executor.inbox.available():
+		if not _position_orders.has(observation.id) or _position_orders[observation.id] <= _last_position_serial:
+			continue
+		_last_position_serial = _position_orders[observation.id]
+		var target: String = observation.content.target_id
+		_player_goal = {} if target.is_empty() else {"target_id": target, "evidence_ids": [observation.id]}
+		_promote(observation.id)
+		if _scenario_policy != null and not _player_goal.is_empty():
+			_scenario_policy.consider_player_plan(_player_goal)
+
+func _player_position_plan(own: Dictionary) -> Dictionary:
+	var target: String = _player_goal.target_id
+	var watch: String = _player_goal.get("watch_region_id", target)
+	var reachable: bool = target in own.reachable_marker_ids
+	return {"ok": true, "errors": [], "replanned": true, "decision": {
+		"tick": _tick, "bot_id": _bot_id,
+		"goal": ("hold" if own.marker_id == target else "reposition") if reachable else "stop",
+		"target_id": target if reachable else null, "watch_region_id": watch if reachable else null,
+		"reason": "persistent_player_position" if reachable else "player_position_unreachable",
+		"evidence_ids": _player_goal.evidence_ids.duplicate(), "score": 0.0}}
+
+func _retain_completed_movement(result: Dictionary) -> void:
+	# Completion is physical executor feedback, not merely a proposed/accepted
+	# command. Keep its destination as the new position instead of spike fallback.
+	if _bot_id != "ally" or result.status != "completed" or _completed_player_moves.has(result.message_id):
+		return
+	for observation in _executor.inbox.available():
+		if observation.id not in result.evidence_ids or observation.source != "told" or observation.speaker_id != "player":
+			continue
+		var message: Dictionary = observation.content.get("message", {})
+		if message.get("message_id") != result.message_id or message.get("kind") != "command":
+			continue
+		var payload: Dictionary = message.get("payload", {})
+		if payload.get("action") != "swing_together" or not _entries.has(payload.get("target_id")):
+			continue
+		var entry: Dictionary = _entries[payload.target_id]
+		var target: String = entry.route_marker_ids[-1]
+		var watch: String = entry.get("watch_region_id", _markers[target].watch_points.keys()[0])
+		_completed_player_moves[result.message_id] = true
+		_player_goal = {"target_id": target, "watch_region_id": watch, "evidence_ids": result.evidence_ids.duplicate()}
+		return
+
 func current_tick() -> int:
 	return _tick
+
+func invalidate_model_goal() -> void:
+	# A disconnected/timed-out local host immediately relinquishes model control.
+	# The pure gate rejects this empty candidate and clears the current proposal.
+	if _configured:
+		_gate.propose({}, _tick)
 
 func finish_round(reason: String) -> void:
 	# Trusted bootstrap calls for public round completion, not hidden events.
 	_configured = false
+	_player_goal.clear()
 	_actor.set_move_dir(Vector3.ZERO)
 	_status = {"ok": true, "state": "stopped", "reason": reason}
 
 func snapshot() -> Dictionary:
 	return {"tick": _tick, "bot_id": _bot_id, "physical": _status.duplicate(true),
+		"player_goal": _player_goal.duplicate(true),
 		"plan": _last_plan.duplicate(true), "active_command": _executor.active_command_snapshot(),
 		"observations": _policy_observations(), "flash_count": _flash.remaining(),
 		"combat": {"enabled": _combat_adapter != null, "decision": _combat_decision.duplicate(true), "physical": _motion.combat_status()},
 		"own_perception": _sensing.own_status() if _sensing != null else {}}
+
+func scenario_snapshot() -> Dictionary:
+	return _scenario_policy.snapshot() if _scenario_policy != null and _scenario_policy.has_method("snapshot") else {}
+
+func set_scenario_tick(tick: int) -> void:
+	if _scenario_policy != null and _scenario_policy.has_method("set_scenario_tick"):
+		_scenario_policy.set_scenario_tick(tick)
+
+func take_scenario_utility() -> Array:
+	return _scenario_policy.take_utility() if _scenario_policy != null and _scenario_policy.has_method("take_utility") else []
+
+func scan_scenario_recon(origin: Vector3) -> void:
+	if _configured and _sensing != null:
+		_sensing.scan_recon(origin)
 
 func _own_state() -> Dictionary:
 	var marker_id: String = ""
@@ -163,7 +279,7 @@ func _physics_process(_delta: float) -> void:
 		if reachable:
 			reachable_entries.append(id)
 	for id in _flash.targets():
-		if _flash.targets()[id].stage_marker_id in own.reachable_marker_ids:
+		if (_flash.has_method("uses_visibility") and _flash.uses_visibility(id)) or _flash.targets()[id].stage_marker_id in own.reachable_marker_ids:
 			reachable_entries.append(id)
 	var output: Dictionary = _executor.step(_tick, {"alive": _actor.is_alive,
 		"flash_count": _flash.remaining(), "reachable_target_ids": reachable_entries}, _motion.take_feedback())
@@ -175,6 +291,7 @@ func _physics_process(_delta: float) -> void:
 				if not applied.ok:
 					output.errors.append("belief_rejected_accepted_report")
 	for result in output.results:
+		_retain_completed_movement(result)
 		if result.status != "rejected":
 			for id in result.evidence_ids:
 				_promote(id)
@@ -192,19 +309,36 @@ func _physics_process(_delta: float) -> void:
 				continue
 		_promote(observation.id)
 	var active: Dictionary = _executor.active_command_snapshot()
+	_update_player_goal()
+	var own_vision: Dictionary = _sensing.own_status() if _sensing != null else {}
+	var blinded: bool = int(own_vision.get("blind_until_tick", _tick + 1)) > _tick
+	_actor.set_meta("bot_blinded", blinded)
+	if _combat_policy != null:
+		own_vision["alive"] = own.alive
+		_combat_decision = _combat_policy.decide(_tick, _policy_observations(), own_vision)
 	var plan: Dictionary = _planner.decide(_tick, _belief.snapshot(), own, _executor.inbox, active)
+	if _scenario_policy != null:
+		if _scenario_policy.has_method("consider_player_plan"):
+			_scenario_policy.consider_player_plan(active)
+		if active.is_empty() and _player_goal.is_empty():
+			var scenario_own: Dictionary = own.duplicate(true)
+			scenario_own["hp"] = _actor.health.hp
+			scenario_own["blinded"] = blinded
+			scenario_own["engaged"] = _combat_decision.get("action") == "engage"
+			var scenario_decision: Dictionary = _scenario_policy.decide(_tick, _policy_observations(), scenario_own)
+			if not scenario_decision.is_empty():
+				plan = {"ok": true, "errors": [], "replanned": true, "decision": scenario_decision}
 	var model: Dictionary = _gate.decision(_tick, _executor.inbox)
 	var policy: String = "scripted_fallback"
-	if not model.is_empty() and active.is_empty() and own.alive:
+	if not _player_goal.is_empty() and active.is_empty() and own.alive:
+		plan = _player_position_plan(own)
+		policy = "persistent_player_position"
+	elif not model.is_empty() and active.is_empty() and own.alive:
 		plan = {"ok": true, "errors": [], "decision": model, "replanned": true}
 		policy = "local_model"
 	elif not active.is_empty():
 		policy = "accepted_player_command"
 	_last_plan = plan.duplicate(true)
-	if _combat_policy != null:
-		var own_vision: Dictionary = _sensing.own_status() if _sensing != null else {}
-		own_vision["alive"] = own.alive
-		_combat_decision = _combat_policy.decide(_tick, _policy_observations(), own_vision)
 	_status = _motion.step(_tick, plan, output, active, _executor.inbox, _combat_decision)
 	decision_recorded.emit({"tick": _tick, "bot_id": _bot_id, "policy": policy,
 		"plan": plan.duplicate(true), "physical": _status.duplicate(true), "model_record": _gate.active_record(),

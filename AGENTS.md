@@ -1,54 +1,95 @@
 # Instructions for AI collaborators
 
-## Read before changing code
+## Read first and establish current state
 
-Read the complete callout_trainer_brief.md, then docs/TEAM.md, docs/CONTRACTS.md, docs/DECISIONS.md and docs/HANDOFFS.md. Inspect git status and the assigned issue. User instructions take precedence. The brief is authoritative for product requirements; record conflicts rather than silently dropping requirements.
+Read README.md, docs/PROJECT_DESCRIPTION.md, docs/PERSON2_HANDOFF.md,
+docs/DECISIONS.md, docs/TEAM.md and docs/CONTRACTS.md before implementation. Inspect
+`git status --short --branch` and the current commit. The current handoff provides
+source revisions, commands, test scopes and next work. Do not infer completion from
+historical documents or old test totals.
 
-The repository began as documentation and examples. Person 2's isolated delayed inbox/command executor now has headless tests and a fake actor demo; read docs/PERSON2_EXECUTOR.md for exact scope. Do not claim a playable sandbox, speech interpreter, full-game fairness, real physics integration or evaluation data from those tests.
+User instructions take precedence. The user made the six-hour final-sprint reassignment
+authoritative, then required a plant start and enemies appearing only at their first
+known annotation positions. The original six-hour budget is historical context, not
+a fresh six-hour deadline each time a window opens. Do not invent remaining time.
 
-## Scope and ownership
+Current work branch: `person-2/model-capability-spike`. Last gameplay checkpoint:
+`608cae7`; newer documentation commits may follow. Preserve local/teammate edits.
+Do not reset, clean, switch to obsolete lane branches or pull/merge blindly. PR #4
+is already merged; old draft/no-merge directions for that PR are historical. Do not
+merge the current branch to main without an explicit instruction.
 
-Use Godot 4. Do not reopen engine choice. Exact editor version must be pinned by Person 1 at kickoff with the team. Typed GDScript is the proposed default, not a confirmed event rule.
+## Ownership now
 
-Know which lane the user assigned. If no lane is assigned, inspect open issues and make safe independent progress; clarify before making cross-lane implementation choices. Do not overwrite others' edits.
+Person 1 has left. Person 2 owns the GPU PC's model/STT runtime, fair perception,
+bots, physical execution, inherited world/greybox/spawning, scenarios, validation
+and engine integration. Person 3 supplies interpretation/glue, beliefs, logging/audits,
+annotation and demo support. Preserve Person 3's branch/checkouts; coordinate changes
+to its implementation or shared schemas. Read docs/TEAM.md for the current split.
 
-- Person 1 owns world/, actors/, weapons/, utility/, scenes/maps/, scenes/player/, main scene, project.godot and export settings.
-- Person 2 owns perception/, bots/, scenarios/, validation/, scenes/bots/ and bot/perception tests.
-- Person 3 owns annotations/ for verified video notes, comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schemas and belief/log tests.
-- Shared contracts and fixture changes require explaining the change to both consumers in the PR and updating docs/examples together. Do not treat proposed examples as already frozen APIs.
+Godot **4.4.1 stable**, GDScript, Compatibility renderer are the implemented baseline.
+Do not reopen engine choice. Use the existing data-driven builder and shared actor,
+weapon, damage and utility components. Keep changes small and reviewable. The default voice scenario now uses Person 3's seven-zone B site map at `0260f28`
+(merged from `person-3/greybox-b-site` at `1fae655`, per the user). Old room/custom
+Lotus maps are explicit legacy profiles. Preserve the imported source map; scenario-only height/volume adjustments and
+authored jump links over existing box_3 are documented in bots/SITE_SCENARIO.md.
 
-Use short-lived lane branches and small reviewable PRs. Keep shared root settings/main scene edits under Person 1's coordination. GitHub issues track work; docs/HANDOFFS.md records current integration facts.
+## Product rules
 
-## Agent-led construction and human review
-
-Read docs/AGENT_WORKFLOW.md. The team has no engine experience and prefers code-generated scenes/data with minimal manual authoring. Person 1 owns world/sandbox_builder.gd and world/maps/ for static geometry; Person 3 owns video annotation notes in annotations/; Person 2 converts them to executable scenario actors/branches in scenarios/. Follow docs/VIDEO_ANNOTATION.md. Start with a JSON-generated synthetic room and reusable actors; create matching collision and navigation, then integrate one communication moment before pro-site detail.
-
-Implement short increments with explicit acceptance criteria and real launch/check commands. Agents may create scenes, scripts, data/settings and run Godot when available. Humans verify movement, rendering, input, sightlines, bot reactions and the exported build. Keep automated results separate from manual playtest records; never infer manual success from headless logs. If executable or visual access is unavailable, state it and provide reproducible teammate steps.
-
-Do not add external editor-control plugins or complex asset workflows merely to avoid a few manual checks. Preserve the current ownership boundaries and all final acceptance requirements.
+- First-person voice communication is core. Quick-call/typed fixtures are developer
+  helpers, not the player communication UI. Local/free models; no training or paid
+  API required. Keep the demo offline-capable.
+- The measured sprint go/no-go selected **LLM interpretation + deterministic goal
+  selection**. Experimental model goals remain opt-in and unaccepted after latency/
+  validity failures. Keep their failing test distinct; never relax expiry to claim a pass.
+- Fully accept valid delivered player testimony, even when wrong. No credibility/history
+  feature or truth-based corroboration filter. Preserve explicit uncertainty, validation,
+  clarification, delivery delay and physical limitations. The pinned belief implementation
+  still has a documented hedge/full-acceptance gap; do not claim it fixed.
+- The scene uses belief `57f809d` with the current planner compatibility field. Person 3
+  `b84cc93` and `person-3/drop-trust-planner` contain the coordinated removal work.
+  Review/test both consumers together before adopting it. Do not silently drop the field.
+- Start the adaptation at the plant. Unknown enemies have no actor/collider until their
+  first known annotated position. A remote utility effect does not locate its thrower.
+  Current four arrivals are at +23s; Boaster alive at a recorded-death location is an
+  explicitly labeled adaptation. Never force the recorded kills or outcome.
+- Keep unknown source values unknown. Geometry/within-region coordinates are authored,
+  source metadata is pending review, and player reference beats do not automate input.
+  Grading/debrief/counterfactual/evaluation are deferred, not completed or permanently cut.
 
 ## Fairness boundary
 
-Policy receives copied, delayed observations, its own state, local beliefs and explicitly allowed public round signals. No live target Node references, hidden transforms, global truth singleton or unrestricted scene-tree/event-bus reads.
+Policy/model inputs are copied delayed observations, local beliefs, own allowed state
+and explicitly public signals. No live target Nodes, hidden transforms, scene-tree
+lookups, truth singletons, unrestricted event bus or player-only minimap/recon data.
+Privileged sensing, spawning, physics and evaluator code may access the world, but
+must not leak that access into policy. Fallback obeys the same limits.
 
-Perception and privileged physics/evaluator/replay code may access the world; their truth must not leak into policy. Policy uses target IDs and last observed data. Fallback bots obey the same restrictions.
+Verify evidence ownership and actual delivery time, forbidden dependencies and unseen-
+state perturbation. Audit actual recorded model contexts/prompts/raw outputs. A grep,
+schema check, deterministic rerun or documentation check alone is not a fairness proof.
+Registration/spawning must not inject a sighting or discard legitimate pending evidence.
+Godot stamps message arrival ticks; STT/model processing must not backdate availability.
 
-Write the leak-test fixture before bot intelligence. Verify evidence IDs existed and were available at the decision tick; also check forbidden dependencies and unseen-state perturbation. A grep alone is not a complete proof. Never mark the fairness gate passing just because the documentation checker passes.
+## Work, validation and handoff
 
-## Product constraints
+Use existing runners and installed tools documented in docs/PERSON2_HANDOFF.md.
+For docs changes run `python tools/check_repo.py` and `git diff --check`. For runtime
+changes run the relevant Godot 4.4.1 suites and required Person 2 runner. Keep strict
+engine-error checks and timeouts. Do not repeatedly broaden checks after they pass
+without a new change or unresolved concern.
 
-The user confirmed the newer direction documents from Person 3's `b078210` as authoritative in this session. Read [Person 2's direction handoff](docs/PERSON2_HANDOFF.md), [Person 3's core handoff](docs/PERSON3_KIRO_HANDOFF.md) and [parallel tracks](docs/PERSON3_ANTIGRAVITY_HANDOFF.md). Their direction overrides older planning defaults below and in the brief.
+Humans verify controls, movement feel, visibility, spoken reactions and the exported
+build. Separate human, synthetic/typed, headless and rendered-capture results. Never
+claim export, offline acceptance, full fairness, pro fidelity, training benefit or
+latency that was not measured in the stated configuration.
 
-Build a first-person comms coach with voice-only player comms and local, free LLM teammate decisions. Person 3 owns voice/grounded interpretation, model goal generation, beliefs and model prompt/output logging. Person 2 owns fair perception and physical intent execution. Keep the deterministic planner as a required safety fallback; quick-call code is a test/fallback helper, not the player input UI. No training or paid API is required. Teammates always fully trust valid, delivered player comms, even when wrong. No credibility/history score, corroboration prerequisite or numeric credibility discount based on a hedge; preserve explicit player uncertainty as content, with clarification and physical/delivery checks intact. Keep the compatibility `trust: {}` field until both consumers coordinate a schema change.
+Update the **single current** docs/PERSON2_HANDOFF.md, relevant component guide and
+docs/HANDOFFS.md with actual results, interface effects and remaining work. Replace
+stale status rather than appending contradictory resume instructions. Historical
+records are indexed in docs/ARCHIVE.md and retained in Git history.
 
-Grading/debrief and the belief-only counterfactual are deferred until the core voice-to-reaction loop works, not removed from the eventual product. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence. Source clip/year/timestamps still require Person 3's verified notes. With nondeterministic model decisions, audit the exact recorded inputs/prompt/output; deterministic policy perturbation tests alone cannot establish full model fairness.
-
-Use synthetic fixtures for unresolved map/clip details and label them. No client access, ripped assets, replay-file scraping, secrets or paid required services. Keep the demo offline-capable.
-
-## Validation and handoff
-
-Run python tools/check_repo.py for documentation/contracts/examples changes. For Person 2 runtime changes also run validation/run_person2_tests.py with --godot pointing to Godot 4.4.1 stable; see docs/PERSON2_EXECUTOR.md. Run meaningful Godot checks once implemented, using the pinned editor and documented commands; report unavailable checks honestly. Avoid unrelated tests or dependencies.
-
-Each handoff includes changed paths, interface/schema effects, real commands/results, remaining dependency and next integration step. Update the owning lane's row in docs/HANDOFFS.md. A handoff update is not permission to mark unfinished work complete.
-
-Do not add a code license without the repository owner's decision; available source is not permission to redistribute third-party assets.
+No secrets, model weights, raw audio, private run logs, reference footage or ripped
+assets in commits. No external editor-control plugins merely to avoid manual checks.
+Do not add a repository code license without the owner's decision; check third-party
+redistribution separately.

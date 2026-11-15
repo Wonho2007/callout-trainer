@@ -115,10 +115,16 @@ func _spawn_target() -> void:
 	var spawn: Marker3D = builder.get_spawn("enemy")
 	_target = ActorScene.instantiate()
 	add_child(_target)
+	_target.utility_system = utility
+	if _target.health:
+		_target.health.max_hp = 150.0
+		_target.health.hp = 150.0
 	if spawn:
 		_target.teleport_to(spawn)
+		_target.rotation.y = PI
 	else:
 		_target.global_position = Vector3(7, 1, -7)
+		_target.rotation.y = PI
 	_wire_minimap()
 
 
@@ -179,6 +185,7 @@ func _restart() -> void:
 	var espawn: Marker3D = builder.get_spawn("enemy")
 	if _target and espawn:
 		_target.teleport_to(espawn)
+		_target.rotation.y = PI
 	if _spike:
 		var pos = builder.get_spike_position()
 		if pos != null:
@@ -198,6 +205,7 @@ func _update_hud() -> void:
 func _update_status() -> void:
 	_update_round_label()
 	_update_events_label()
+	_update_coords()
 	var label := get_node_or_null("HUD/Status")
 	if label == null or _player == null:
 		return
@@ -212,6 +220,39 @@ func _update_status() -> void:
 		var tstate := "" if _target.is_alive else " (down)"
 		tgt = "   Target HP: %d%s" % [int(_target.health.hp), tstate]
 	label.text = "HP: %d   %s%s%s" % [int(hp), state, ammo, tgt]
+
+
+func _update_coords() -> void:
+	# Live player-position readout + the region the player is currently inside.
+	# Helper for authoring region bounds: walk to a boundary and read the coordinates.
+	var lab := get_node_or_null("HUD/Coords")
+	if lab == null or _player == null:
+		return
+	var p: Vector3 = _player.global_position
+	var region := _region_at(p)
+	lab.text = "Pos: X %6.2f  Y %6.2f  Z %6.2f   Region: %s" % [p.x, p.y, p.z, region]
+
+
+func _region_at(p: Vector3) -> String:
+	# First region (in list order) whose footprint contains the point, else "-".
+	# Box regions: AABB on XZ. Circle regions: radius on XZ. List order sets precedence,
+	# so b_upper (listed before b_pit) wins the overlap -> Pit reads as the circle minus Upper.
+	if builder == null or not (builder.map_data is Dictionary):
+		return "-"
+	for region in builder.map_data.get("regions", []):
+		var c = region.get("center", [0, 0, 0])
+		var inside := false
+		if String(region.get("shape", "box")) == "circle":
+			var r: float = float(region.get("radius", 0.0))
+			var dx: float = p.x - float(c[0])
+			var dz: float = p.z - float(c[2])
+			inside = (dx * dx + dz * dz) <= (r * r)
+		else:
+			var s = region.get("size", [0, 0, 0])
+			inside = abs(p.x - float(c[0])) <= float(s[0]) * 0.5 and abs(p.z - float(c[2])) <= float(s[2]) * 0.5
+		if inside:
+			return String(region.get("name", region.get("id", "?")))
+	return "-"
 
 
 func _update_round_label() -> void:
