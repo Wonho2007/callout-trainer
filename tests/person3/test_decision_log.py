@@ -21,10 +21,10 @@ from recording import decision_log as D
 
 
 GOOD_INPUTS = {
-    "own_state": {"bot_id": "ally_1", "region": "b_site", "hp": 100},
-    "local_beliefs": {"heaven": 0.7},
+    "own_state": {"bot_id": "ally_1", "region": "b_pit", "hp": 100},
+    "local_beliefs": {"b_heaven": 0.7},
     "public_signals": {"spike_planted": True},
-    "vocabulary": {"region_ids": ["b_site", "heaven"]},
+    "vocabulary": {"region_ids": ["b_pit", "b_heaven"]},
 }
 
 
@@ -82,7 +82,7 @@ def test_log_interpret_from_interpreter_result(tmp_path):
     # shape returned by comms.interpreter.interpret()
     result = {"result": "report", "source": "model",
               "proposal": {"kind": "report", "payload": {"action": "report_enemy",
-                           "region_id": "heaven", "count": 2, "hedge": "sure"}},
+                           "region_id": "b_heaven", "count": 2, "hedge": "sure"}},
               "raw": '{"...": true}', "transcript": "two heaven"}
     log = D.DecisionLog(tmp_path / "dl.jsonl")
     rec = log.log_interpret(tick=7, inputs=GOOD_INPUTS, result=result,

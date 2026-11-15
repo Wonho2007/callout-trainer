@@ -10,10 +10,10 @@ Two separate name spaces — keep them straight:
   1. REAL community callouts from valorant-api.com (comms/vocabulary_cache.json).
      These ground natural language ("they're on heaven", "B main") but are NOT the
      IDs the executor understands.
-  2. FROZEN sandbox region IDs (Person 1, seam #1 in the handoffs). These are what a
-     comms.v1 report's region_id MUST be. They are NOT frozen yet, so REGION_IDS below
-     is a clearly-labeled PLACEHOLDER. When Person 1 freezes the Lotus B region list,
-     replace REGION_IDS and ALIASES with the real ids and re-run the tests.
+  2. FROZEN sandbox region IDs (annotation §2, frozen with the team). These are what a
+     comms.v1 report's region_id MUST be: the 7 Lotus B-scenario ids in REGION_IDS below.
+     Person 1 still owes the world-space Area3D bounds for each; the ids themselves are
+     frozen as the belief-space/vocabulary contract.
 
 The ability->primitive mapping is our design decision (brief 6.3 / utility/abilities.json),
 not API data: smoke=los_blocker, flash/blind_wave=blind, molly=area_damage, scan=recon.
@@ -28,39 +28,33 @@ from typing import Optional
 _CACHE_PATH = Path(__file__).resolve().parent / "vocabulary_cache.json"
 
 # ---------------------------------------------------------------------------
-# PLACEHOLDER sandbox region ids. NOT FROZEN. Replace with Person 1's frozen
-# Lotus B region list (seam #1) when available. These names are deliberately
-# generic Lotus B-area callouts so no pro position is invented; they are the
-# vocabulary the executor would accept, not claims about the real round.
+# FROZEN sandbox region ids for the FNC vs PRX Lotus B scenario
+# (annotations/fnc_prx_lotus_toronto2024_gf.md §2). These are the informal
+# community Lotus B callouts the scenario uses, frozen with the team as the
+# belief-space vocabulary. Person 1 later gives each a world-space Area3D bound;
+# the coordinate->region helper bridges them. No pro position is invented here.
 # ---------------------------------------------------------------------------
 REGION_IDS: list[str] = [
     "b_main",
-    "b_site",
+    "b_cubby",
+    "b_heaven",
+    "b_upper",
     "b_pit",
-    "b_link",
-    "b_tree",
-    "b_hut",
-    "b_drop",
-    "b_ct",
-    "mid",
-    "heaven",
+    "c_link",
+    "a_link",
 ]
-REGIONS_FROZEN: bool = False  # flip to True only after Person 1 freezes the list
+REGIONS_FROZEN: bool = True  # frozen for this scenario (annotation §2)
 
 # Natural-language callout -> frozen region id. Many spoken forms, one id.
 # Keep lowercase keys; the interpreter lowercases spoken text before lookup.
-# These are aliases for the PLACEHOLDER ids above; revisit when ids are frozen.
 REGION_ALIASES: dict[str, str] = {
-    "b main": "b_main", "bee main": "b_main", "b-main": "b_main",
-    "b site": "b_site", "site": "b_site", "b": "b_site",
+    "b main": "b_main", "bee main": "b_main", "b-main": "b_main", "main": "b_main",
+    "cubby": "b_cubby", "b cubby": "b_cubby",
+    "heaven": "b_heaven", "b heaven": "b_heaven",
+    "upper": "b_upper", "b upper": "b_upper",
     "pit": "b_pit", "b pit": "b_pit",
-    "link": "b_link", "b link": "b_link",
-    "tree": "b_tree", "trees": "b_tree",
-    "hut": "b_hut",
-    "drop": "b_drop",
-    "ct": "b_ct", "ct spawn": "b_ct", "back site": "b_ct",
-    "mid": "mid", "middle": "mid",
-    "heaven": "heaven",
+    "c link": "c_link", "c-link": "c_link", "see link": "c_link",
+    "a link": "a_link", "a-link": "a_link", "ay link": "a_link",
 }
 
 # Ability-id (utility/abilities.json) -> sandbox primitive. Our mapping, not API data.

@@ -50,7 +50,7 @@ def test_deterministic_report_with_count_and_hedge(vocab):
     r = I.interpret("two on heaven", vocab)  # no client -> deterministic
     assert r["result"] == "report"
     p = r["proposal"]["payload"]
-    assert p == {"action": "report_enemy", "region_id": "heaven", "count": 2, "hedge": "sure"}
+    assert p == {"action": "report_enemy", "region_id": "b_heaven", "count": 2, "hedge": "sure"}
     assert r["source"] == "deterministic"
 
 
@@ -68,11 +68,11 @@ def test_never_infer_one_from_someone(vocab):
 
 
 def test_swing_with_me_is_follow_player(vocab):
-    r = I.interpret("swing site with me", vocab)
+    r = I.interpret("swing main with me", vocab)
     assert r["result"] == "command"
     p = r["proposal"]["payload"]
     assert p["action"] == "swing_together"
-    assert p["target_id"] == "b_site"
+    assert p["target_id"] == "b_main"
     assert p["timing"]["mode"] == "follow_player"
 
 
@@ -127,11 +127,11 @@ def test_model_illegal_region_falls_back(vocab):
     r = I.interpret("one heaven", vocab, client)
     assert r["source"] == "deterministic_fallback"
     assert r["result"] == "report"
-    assert r["proposal"]["payload"]["region_id"] == "heaven"  # fallback resolved it
+    assert r["proposal"]["payload"]["region_id"] == "b_heaven"  # fallback resolved it
 
 
 def test_model_count_zero_is_illegal_falls_back(vocab):
-    client = EchoClient('{"result":"report","payload":{"action":"report_enemy","region_id":"heaven","count":0,"hedge":"sure"}}')
+    client = EchoClient('{"result":"report","payload":{"action":"report_enemy","region_id":"b_heaven","count":0,"hedge":"sure"}}')
     r = I.interpret("heaven", vocab, client)
     assert r["source"] == "deterministic_fallback"
 
@@ -153,14 +153,14 @@ def test_broken_client_trips_circuit_breaker(vocab):
 
 def test_illegal_command_timing_falls_back(vocab):
     # throw_flash does not allow follow_player -> illegal -> breaker
-    client = EchoClient('{"result":"command","payload":{"action":"throw_flash","target_id":"heaven","timing":{"mode":"follow_player"}}}')
+    client = EchoClient('{"result":"command","payload":{"action":"throw_flash","target_id":"b_heaven","timing":{"mode":"follow_player"}}}')
     r = I.interpret("flash heaven", vocab, client)
     assert r["source"] == "deterministic_fallback"
 
 
 def test_on_log_callback_receives_record(vocab):
     captured = []
-    I.interpret("two heaven", vocab, EchoClient('{"result":"report","payload":{"action":"report_enemy","region_id":"heaven","count":2,"hedge":"sure"}}'),
+    I.interpret("two heaven", vocab, EchoClient('{"result":"report","payload":{"action":"report_enemy","region_id":"b_heaven","count":2,"hedge":"sure"}}'),
                 on_log=captured.append)
     assert len(captured) == 1
     rec = captured[0]
