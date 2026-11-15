@@ -198,6 +198,7 @@ func _update_hud() -> void:
 func _update_status() -> void:
 	_update_round_label()
 	_update_events_label()
+	_update_coords()
 	var label := get_node_or_null("HUD/Status")
 	if label == null or _player == null:
 		return
@@ -212,6 +213,31 @@ func _update_status() -> void:
 		var tstate := "" if _target.is_alive else " (down)"
 		tgt = "   Target HP: %d%s" % [int(_target.health.hp), tstate]
 	label.text = "HP: %d   %s%s%s" % [int(hp), state, ammo, tgt]
+
+
+func _update_coords() -> void:
+	# Live player-position readout + the region the player is currently inside.
+	# Helper for authoring region bounds: walk to a boundary and read the coordinates.
+	var lab := get_node_or_null("HUD/Coords")
+	if lab == null or _player == null:
+		return
+	var p: Vector3 = _player.global_position
+	var region := _region_at(p)
+	lab.text = "Pos: X %6.2f  Y %6.2f  Z %6.2f   Region: %s" % [p.x, p.y, p.z, region]
+
+
+func _region_at(p: Vector3) -> String:
+	# First region whose AABB (center +/- size/2, XZ only) contains the point, else "-".
+	if builder == null or not (builder.map_data is Dictionary):
+		return "-"
+	for region in builder.map_data.get("regions", []):
+		var c = region.get("center", [0, 0, 0])
+		var s = region.get("size", [0, 0, 0])
+		var hx: float = float(s[0]) * 0.5
+		var hz: float = float(s[2]) * 0.5
+		if abs(p.x - float(c[0])) <= hx and abs(p.z - float(c[2])) <= hz:
+			return String(region.get("name", region.get("id", "?")))
+	return "-"
 
 
 func _update_round_label() -> void:
