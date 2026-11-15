@@ -23,3 +23,14 @@ runs/
 recordings/
 reference-footage/
 *.log
+# Track D: faster-whisper / Whisper model weight cache (large binaries; download on target machine)
+# Default cache locations:
+voice/models/
+# Hugging Face hub cache for faster-whisper (host-level, but document here for clarity)
+# ~/.cache/huggingface/hub/models--Systran--faster-whisper-*/
+# scratch
+scratch/
+# Local read-only copies of Person 1 files extracted from origin/main for validator done-tests.
+# These files live on origin/main; do not commit them from this branch.
+utility/
+world/

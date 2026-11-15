@@ -1,0 +1,163 @@
+{
+  "schema_version": "scenario.v1",
+  "id": "synthetic_test_room_post_plant_01",
+  "synthetic": true,
+  "note": "SYNTHETIC SAMPLE — NOT a real pro round. NOT FNC/PRX data. NOT Lotus. Uses the synthetic test_room map (world/maps/test_room.json). Created to validate schemas/scenario.schema.json and tools/validate_scenario.py. All positions, actor names, and timeline beats are invented for testing purposes only.",
+  "source": {
+    "vod_url": "synthetic",
+    "map": "test_room_01",
+    "round": "unknown",
+    "plant_timestamp": "unknown",
+    "annotator": "person3_synthetic_fixture",
+    "note": "No real VOD. Synthetic fixture for Track A done-test only."
+  },
+  "map": "test_room_01",
+  "map_file": "world/maps/test_room.json",
+  "side": "defender",
+  "round_context": {
+    "time_left_s": 35.0,
+    "spike_planted": true,
+    "spike_site_region": "region_b",
+    "spike_position": [6, 0, 6],
+    "seed": 42,
+    "note": "Spike position matches test_room.json spike field. Seed is placeholder."
+  },
+  "actors": [
+    {
+      "id": "player",
+      "team": "defender",
+      "agent": "unknown",
+      "role": "entry",
+      "hp": 100,
+      "armor": 0,
+      "start_region": "region_a",
+      "weapon": { "id": "rifle", "ammo_in_mag": 25, "reserve_ammo": 50 },
+      "utility": [
+        { "ability_id": "flash", "charges": 1 },
+        { "ability_id": "smoke", "charges": 1 }
+      ],
+      "is_player": true
+    },
+    {
+      "id": "ally_1",
+      "team": "defender",
+      "agent": "unknown",
+      "role": "support",
+      "hp": 80,
+      "armor": 0,
+      "start_region": "region_mid",
+      "weapon": { "id": "rifle", "ammo_in_mag": 18, "reserve_ammo": 30 },
+      "utility": [
+        { "ability_id": "flash", "charges": 1 }
+      ],
+      "is_player": false
+    },
+    {
+      "id": "enemy_1",
+      "team": "attacker",
+      "agent": "unknown",
+      "role": "unknown",
+      "hp": 100,
+      "armor": 50,
+      "start_region": "region_b",
+      "weapon": { "id": "rifle", "ammo_in_mag": 30, "reserve_ammo": 0 },
+      "utility": [],
+      "is_player": false
+    },
+    {
+      "id": "enemy_2",
+      "team": "attacker",
+      "agent": "unknown",
+      "role": "unknown",
+      "hp": 75,
+      "armor": 0,
+      "start_region": "region_b",
+      "weapon": { "id": "rifle", "ammo_in_mag": 12, "reserve_ammo": 0 },
+      "utility": [],
+      "is_player": false
+    }
+  ],
+  "timeline": [
+    {
+      "tick": 0,
+      "actor_id": "enemy_1",
+      "action": "hold",
+      "region": "region_b",
+      "evidence_source": "synthetic",
+      "certainty": "confirmed",
+      "note": "Enemy holds spike position at round start."
+    },
+    {
+      "tick": 0,
+      "actor_id": "enemy_2",
+      "action": "hold",
+      "region": "region_b",
+      "evidence_source": "synthetic",
+      "certainty": "confirmed"
+    },
+    {
+      "tick": 60,
+      "actor_id": "player",
+      "action": "move",
+      "region": "region_mid",
+      "evidence_source": "synthetic",
+      "certainty": "confirmed",
+      "note": "Player pushes toward mid at t=1s (60Hz ticks)."
+    },
+    {
+      "tick": 120,
+      "actor_id": "ally_1",
+      "action": "flash",
+      "region": "region_mid",
+      "evidence_source": "synthetic",
+      "certainty": "confirmed",
+      "note": "Ally throws flash from mid toward region_b."
+    },
+    {
+      "tick": 150,
+      "actor_id": "player",
+      "action": "move",
+      "region": "region_b",
+      "evidence_source": "synthetic",
+      "certainty": "inferred",
+      "note": "Player enters site under flash cover."
+    }
+  ],
+  "branches": [
+    {
+      "id": "branch_hold",
+      "weight": 0.6,
+      "trigger_condition": "enemy_1 remains in region_b after flash expires",
+      "beats": [
+        {
+          "tick": 180,
+          "actor_id": "enemy_1",
+          "action": "hold",
+          "region": "region_b",
+          "evidence_source": "synthetic",
+          "certainty": "inferred"
+        }
+      ],
+      "note": "Enemies continue holding spike. Synthetic branch."
+    },
+    {
+      "id": "branch_rotate",
+      "weight": 0.4,
+      "trigger_condition": "enemy_2 rotates away from region_b before tick 100",
+      "beats": [
+        {
+          "tick": 90,
+          "actor_id": "enemy_2",
+          "action": "move",
+          "region": "region_mid",
+          "evidence_source": "synthetic",
+          "certainty": "inferred",
+          "note": "Enemy rotates to contest mid. Synthetic branch."
+        }
+      ],
+      "note": "Enemies split to contest retake. Synthetic branch."
+    }
+  ],
+  "branch_weights_source": "synthetic_uniform",
+  "note": "SYNTHETIC SAMPLE — validator done-test only. See source.note."
+}
