@@ -181,6 +181,10 @@ func _build(m: Dictionary) -> void:
 	for box in m["cover"]:
 		_build_solid_box(box, nav_region, Color(0.90, 0.45, 0.15))
 	for divot in m.get("divots", []):
+		# Stair/circular divots are built as part of the CSG floor-pit (collision + surface);
+		# skip the legacy per-divot mesh so there is no competing collision.
+		if String(divot.get("shape", "ramp")) == "stairs":
+			continue
 		_build_divot(divot, nav_region)
 
 	var regions := Node3D.new()
@@ -257,22 +261,21 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 		_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
 		return
 
-	# Circular (stair/cone) divot: build a CONTINUOUS floor with a round hole exactly the
-	# size of the divot rim, so the floor meets the pit edge with no square-corner gaps and
-	# no bottom cap (the divot mesh is the only surface inside the circle -> no z-fighting).
+	# Circular (stair/cone) divot: build the floor AND the pit void as ONE CSG solid so Godot
+	# generates the hole and its collision (no hand-built trimesh seam at the rim, which was
+	# where the capsule clipped in). The CSG combiner carries use_collision = true.
 	var circular: Dictionary = {}
 	for divot in m.get("divots", []):
 		var c := _to_vec3(divot.get("center", [0, 0, 0]))
-		var r: float
-		if String(divot.get("shape", "ramp")) == "stairs":
-			r = float(divot.get("top_radius", 6.0))
-		else:
-			r = float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
-		circular = {"x": c.x, "z": c.z, "r": r}
+		circular = {
+			"x": c.x, "z": c.z,
+			"top_radius": float(divot.get("top_radius", 5.5)),
+			"bottom_radius": float(divot.get("radius", 1.0)),
+			"depth": float(divot.get("depth", 3.0)),
+		}
 		break  # one divot supported here
 	if not circular.is_empty():
-		_build_floor_with_hole(fx, fz, fy, float(circular["x"]), float(circular["z"]),
-			float(circular["r"]), parent, Color(0.30, 0.31, 0.34))
+		_build_csg_floor_pit(fx, fz, fy, circular, parent, Color(0.30, 0.31, 0.34))
 		return
 
 	# (Legacy square-gap path kept for any non-circular future divot shapes.)
@@ -399,6 +402,55 @@ func _square_edge_point(dirx: float, dirz: float, half: float) -> Vector3:
 ## depth*RAMP_RUN_FACTOR further out. Built as a procedural mesh + trimesh
 ## collision. The top rim overlaps the floor gap so there are no seams.
 const RAMP_RUN_FACTOR := 2.5
+
+func _build_csg_floor_pit(fx: float, fz: float, fy: float, pit: Dictionary,
+		parent: Node3D, color: Color) -> void:
+	var cx := float(pit["x"])
+	var cz := float(pit["z"])
+	var top_r := float(pit["top_radius"])
+	var bot_r := float(pit["bottom_radius"])
+	var depth := float(pit["depth"])
+	var slab_thick := depth + 2.0            # floor block thick enough to contain the pit
+
+	var combiner := CSGCombiner3D.new()
+	combiner.name = "floor_pit_csg"
+	combiner.use_collision = true
+	combiner.collision_layer = LAYER_WORLD
+	combiner.collision_mask = 0
+	# Place so the slab TOP is at y = fy (floor surface at 0).
+	combiner.position = Vector3(0, fy - slab_thick * 0.5, 0)
+	parent.add_child(combiner)
+
+	# Floor slab (union).
+	var slab := CSGBox3D.new()
+	slab.name = "slab"
+	slab.size = Vector3(fx, slab_thick, fz)
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = color
+	slab.material = smat
+	combiner.add_child(slab)
+
+	# Pit void: a lathed cone profile, subtracted. The slab center is at local y=0, so the
+	# slab TOP is at +slab_thick/2. Carve from the top surface down `depth`.
+	var top_y := slab_thick * 0.5
+	var cut := CSGPolygon3D.new()
+	cut.name = "pit_void"
+	cut.operation = CSGShape3D.OPERATION_SUBTRACTION
+	cut.mode = CSGPolygon3D.MODE_SPIN
+	cut.spin_degrees = 360.0
+	cut.spin_sides = 64
+	cut.position = Vector3(cx, 0, cz)             # center the lathe on the pit
+	# 2D profile revolved around the local Y axis (x = radius). Enclosed area = the void:
+	# rim (top) -> cone wall down to the flat-bottom edge -> flat bottom to the axis -> up.
+	var prof := PackedVector2Array([
+		Vector2(top_r, top_y + 0.1),
+		Vector2(bot_r, top_y - depth),
+		Vector2(0.0,   top_y - depth),
+		Vector2(0.0,   top_y + 0.1),
+	])
+	cut.polygon = prof
+	combiner.add_child(cut)
+
 
 func _build_divot(divot: Dictionary, parent: Node3D) -> void:
 	var id := String(divot.get("id", "divot"))
