@@ -19,6 +19,10 @@ class_name ActorBase
 @export var crouch_speed: float = 2.0
 @export var jump_velocity: float = 4.5
 
+## Auto-step: when walking into a ledge/step no taller than this, the actor is lifted
+## up onto it instead of being blocked (so hard-edged stairs are walkable without jumping).
+@export var step_height: float = 0.6
+
 ## Dash: a short horizontal impulse burst. Respects collision (move_and_slide),
 ## so an actor cannot dash through walls. Distance = dash_speed * dash_time_s = 11.0 m.
 @export var dash_speed: float = 61.11
@@ -107,7 +111,40 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, speed)
 		velocity.z = move_toward(velocity.z, 0.0, speed)
 
+	var was_on_floor := is_on_floor()
+	var horiz := Vector3(velocity.x, 0.0, velocity.z)
 	move_and_slide()
+	# Auto-step: if we were on the floor and got blocked by a low ledge (a stair step),
+	# lift up and over it instead of snagging. Only triggers for obstacles up to step_height.
+	if was_on_floor and horiz.length() > 0.01 and is_on_wall():
+		_try_step_up(horiz, delta)
+
+
+## Attempt to climb a step no taller than step_height. Casts: up by step_height, forward
+## along the intended motion, then down; if that lands on solid ground, move the body there.
+func _try_step_up(horiz: Vector3, delta: float) -> void:
+	var motion := horiz * delta
+	if motion.length() < 0.0001:
+		return
+	var up := Vector3.UP * step_height
+	# 1. Is the space one step up clear? (room to rise)
+	var up_col := move_and_collide(up, true)  # test_only
+	if up_col != null:
+		return
+	# 2. From up there, can we move forward over the ledge?
+	var fwd_col := move_and_collide(up + motion, true)
+	# 3. Probe downward to find the step surface.
+	var down_col := move_and_collide(up + motion + Vector3.DOWN * (step_height + 0.05), true)
+	if down_col == null:
+		return  # nothing to land on within a step height -> not a climbable step
+	var n := down_col.get_normal()
+	if n.y < 0.7:
+		return  # landing surface too steep to be a floor/tread
+	# Climbable step: lift the body up and forward onto the tread.
+	global_position += up + motion
+	# settle onto the tread so the next frame's floor check is clean
+	move_and_collide(Vector3.DOWN * (step_height + 0.05))
+	return
 
 
 func _apply_gravity(delta: float) -> void:
