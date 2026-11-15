@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "synthetic": true,
-  "note": "Greybox: a small room with corner boxes, a vertical entry hallway at the bottom-middle, opening into a horizontal corridor spanning the room width. Fully walled (no falling off). Top-down: -Z top, -X left, +Z bottom. Synthetic prototype. Units: meters, Y up, [x, y, z]. Not affiliated with Riot Games.",
+  "note": "Greybox: a small B site with an approach corridor (bottom, +Z) through an entry choke into the site room (top, -Z). Partitioned into the 7 frozen Lotus B scenario regions (b_main, b_cubby, b_heaven, b_upper, b_pit, c_link, a_link) from annotations/fnc_prx_lotus_toronto2024_gf.md. Regions tile the interior with no overlap/gap (verified by tools/coords_to_region.py). Physical geometry (walls/floor/cover/bounds) is unchanged from the 3-region prototype; only the regions list and spike.site_region changed. Top-down: -Z top, -X left, +Z bottom. Synthetic prototype. Units: meters, Y up, [x, y, z]. Not affiliated with Riot Games.",
   "id": "b_site_box",
   "bounds": {
     "min": [-6, -1, -9],
@@ -39,13 +39,17 @@
     { "id": "divot_top_right", "center": [2.7, 0, 0.8], "radius": 1.0, "depth": 0.6 }
   ],
   "regions": [
-    { "id": "room", "name": "Room", "center": [0, 2, -2.5], "size": [11, 5, 12] },
-    { "id": "entry", "name": "Entry", "center": [0, 2, 8], "size": [3, 5, 4] },
-    { "id": "corridor", "name": "Corridor", "center": [0, 2, 11.5], "size": [11, 5, 3] }
+    { "id": "c_link",   "name": "C Link",   "center": [-3.875, 2, -5.875], "size": [3.75, 5, 5.75] },
+    { "id": "b_upper",  "name": "B Upper",  "center": [0, 2, -5.875],      "size": [4, 5, 5.75] },
+    { "id": "b_heaven", "name": "B Heaven", "center": [3.875, 2, -5.875],  "size": [3.75, 5, 5.75] },
+    { "id": "b_cubby",  "name": "B Cubby",  "center": [-3.875, 2, 1.5],    "size": [3.75, 5, 9] },
+    { "id": "b_pit",    "name": "B Pit",    "center": [0, 2, 1.5],         "size": [4, 5, 9] },
+    { "id": "a_link",   "name": "A Link",   "center": [3.875, 2, 1.5],     "size": [3.75, 5, 9] },
+    { "id": "b_main",   "name": "B Main",   "center": [0, 2, 9.375],       "size": [11.5, 5, 6.75] }
   ],
   "spawns": [
     { "id": "spawn_player", "role": "player", "position": [-4, 0, 11.5], "facing_deg": 90 },
     { "id": "spawn_enemy_1", "role": "enemy", "position": [-2, 0, -4], "facing_deg": 0 }
   ],
-  "spike": { "position": [0, 0, 0], "planted": true, "site_region": "room" }
+  "spike": { "position": [0, 0, 1.5], "planted": true, "site_region": "b_pit" }
 }
