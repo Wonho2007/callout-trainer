@@ -1,55 +1,361 @@
 {
   "schema_version": 1,
   "synthetic": true,
-  "note": "Greybox: a small B site with an approach corridor (bottom, +Z) through an entry choke into the site room (top, -Z). Partitioned into the 7 frozen Lotus B scenario regions (b_main, b_cubby, b_heaven, b_upper, b_pit, c_link, a_link) from annotations/fnc_prx_lotus_toronto2024_gf.md. Regions tile the interior with no overlap/gap (verified by tools/coords_to_region.py). Physical geometry (walls/floor/cover/bounds) is unchanged from the 3-region prototype; only the regions list and spike.site_region changed. Top-down: -Z top, -X left, +Z bottom. Synthetic prototype. Units: meters, Y up, [x, y, z]. Not affiliated with Riot Games.",
+  "note": "Flat grey platform built from the colored wall-length annotation (walllengths.png). Each colored segment is a wall of the hand-labeled length in meters; uncolored lines omitted. Completely flat (single Y level). Floor slab + colored walls only. Not affiliated with Riot Games.",
   "id": "b_site_box",
   "bounds": {
-    "min": [-6, -1, -9],
-    "max": [6, 5, 13]
+    "min": [
+      -33.3,
+      -1,
+      -26.4
+    ],
+    "max": [
+      33.3,
+      4.0,
+      26.4
+    ]
   },
   "floor": {
-    "size": [14, 26],
+    "size": [
+      64.69,
+      50.78
+    ],
     "y": 0
   },
-  "ceiling_height": 5,
-  "wall_thickness": 0.5,
+  "ceiling_height": 3.0,
+  "wall_thickness": 0.3,
   "walls": [
-    { "id": "wall_north", "position": [0, 2.5, -9], "size": [12, 5, 0.5] },
-    { "id": "wall_east", "position": [6, 2.5, -1.5], "size": [0.5, 5, 15] },
-    { "id": "wall_west", "position": [-6, 2.5, -1.5], "size": [0.5, 5, 15] },
-
-    { "id": "wall_south_left", "position": [-3.75, 2.5, 6], "size": [4.5, 5, 0.5] },
-    { "id": "wall_south_right", "position": [3.75, 2.5, 6], "size": [4.5, 5, 0.5] },
-
-    { "id": "hall_wall_left", "position": [-1.5, 2.5, 8], "size": [0.5, 5, 4] },
-    { "id": "hall_wall_right", "position": [1.5, 2.5, 8], "size": [0.5, 5, 4] },
-    { "id": "arch_lintel", "position": [0, 4.25, 6], "size": [3, 1.5, 0.5] },
-
-    { "id": "corridor_front_left", "position": [-3.75, 2.5, 10], "size": [4.5, 5, 0.5] },
-    { "id": "corridor_front_right", "position": [3.75, 2.5, 10], "size": [4.5, 5, 0.5] },
-    { "id": "corridor_back", "position": [0, 2.5, 13], "size": [12.5, 5, 0.5] },
-    { "id": "corridor_end_left", "position": [-6, 2.5, 11.5], "size": [0.5, 5, 3] },
-    { "id": "corridor_end_right", "position": [6, 2.5, 11.5], "size": [0.5, 5, 3] }
+    {
+      "id": "w_magenta_27",
+      "position": [
+        -16.84,
+        1.5,
+        -17.12
+      ],
+      "size": [
+        27,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_green_7t",
+      "position": [
+        7.43,
+        1.5,
+        -21.67
+      ],
+      "size": [
+        7,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_red_7tc",
+      "position": [
+        4.02,
+        1.5,
+        -18.17
+      ],
+      "size": [
+        0.3,
+        3.0,
+        7
+      ]
+    },
+    {
+      "id": "w_red_7tr",
+      "position": [
+        26.02,
+        1.5,
+        -19.89
+      ],
+      "size": [
+        0.3,
+        3.0,
+        7
+      ]
+    },
+    {
+      "id": "w_blue_7tc",
+      "position": [
+        3.2,
+        1.5,
+        -14.8
+      ],
+      "size": [
+        0.3,
+        3.0,
+        7
+      ]
+    },
+    {
+      "id": "w_yellow_1",
+      "position": [
+        4.25,
+        1.5,
+        -12.67
+      ],
+      "size": [
+        1,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_green_5tl",
+      "position": [
+        -6.75,
+        1.5,
+        -14.03
+      ],
+      "size": [
+        5,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_red_4",
+      "position": [
+        -4.7,
+        1.5,
+        -11.76
+      ],
+      "size": [
+        0.3,
+        3.0,
+        4
+      ]
+    },
+    {
+      "id": "w_blue_12",
+      "position": [
+        16.3,
+        1.5,
+        -14.39
+      ],
+      "size": [
+        12,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_blue_13L",
+      "position": [
+        -14.16,
+        1.5,
+        -2.8
+      ],
+      "size": [
+        0.3,
+        3.0,
+        13
+      ]
+    },
+    {
+      "id": "w_red_13",
+      "position": [
+        14.02,
+        1.5,
+        -5.26
+      ],
+      "size": [
+        0.3,
+        3.0,
+        13
+      ]
+    },
+    {
+      "id": "w_blue_11",
+      "position": [
+        21.8,
+        1.5,
+        -6.03
+      ],
+      "size": [
+        11,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_green_6",
+      "position": [
+        16.3,
+        1.5,
+        -3.12
+      ],
+      "size": [
+        0.3,
+        3.0,
+        6
+      ]
+    },
+    {
+      "id": "w_yellow_10",
+      "position": [
+        30.2,
+        1.5,
+        -1.12
+      ],
+      "size": [
+        0.3,
+        3.0,
+        10
+      ]
+    },
+    {
+      "id": "w_green_5lm",
+      "position": [
+        -12.11,
+        1.5,
+        6.61
+      ],
+      "size": [
+        5,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_yellow_5lm",
+      "position": [
+        -9.43,
+        1.5,
+        9.38
+      ],
+      "size": [
+        0.3,
+        3.0,
+        5
+      ]
+    },
+    {
+      "id": "w_red_11",
+      "position": [
+        -16.93,
+        1.5,
+        11.42
+      ],
+      "size": [
+        11,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_red_28",
+      "position": [
+        10.84,
+        1.5,
+        6.33
+      ],
+      "size": [
+        28,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_blue_8L",
+      "position": [
+        -3.25,
+        1.5,
+        10.61
+      ],
+      "size": [
+        0.3,
+        3.0,
+        8
+      ]
+    },
+    {
+      "id": "w_green_5bl",
+      "position": [
+        -1.02,
+        1.5,
+        14.33
+      ],
+      "size": [
+        5,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_blue_8R",
+      "position": [
+        10.66,
+        1.5,
+        14.7
+      ],
+      "size": [
+        0.3,
+        3.0,
+        8
+      ]
+    },
+    {
+      "id": "w_yellow_27",
+      "position": [
+        -10.75,
+        1.5,
+        21.06
+      ],
+      "size": [
+        27,
+        3.0,
+        0.3
+      ]
+    },
+    {
+      "id": "w_red_5b",
+      "position": [
+        5.52,
+        1.5,
+        23.24
+      ],
+      "size": [
+        5,
+        3.0,
+        0.3
+      ]
+    }
   ],
-  "cover": [
-    { "id": "box_top_right", "position": [3.5, 0.45, -3.5], "size": [4.5, 2.4, 4.5] },
-    { "id": "box_top_left", "position": [-4.75, 0.5, -4.75], "size": [2, 1, 2] }
-  ],
-  "divots": [
-    { "id": "divot_top_right", "center": [2.7, 0, 0.8], "radius": 1.0, "depth": 0.6 }
-  ],
-  "regions": [
-    { "id": "c_link",   "name": "C Link",   "center": [-2.64, 2, -5.2],  "size": [6.21, 5, 7.1] },
-    { "id": "b_heaven", "name": "B Heaven", "center": [3.11, 2, -5.2],   "size": [5.29, 5, 7.1] },
-    { "id": "b_cubby",  "name": "B Cubby",  "center": [-3.56, 2, 2.11],  "size": [4.37, 5, 7.53] },
-    { "id": "b_upper",  "name": "B Upper",  "center": [0.69, 2, -0.04],  "size": [4.14, 5, 3.22] },
-    { "id": "a_link",   "name": "A Link",   "center": [4.25, 2, 2.11],   "size": [2.99, 5, 7.53] },
-    { "id": "b_pit",    "name": "B Pit",    "center": [0.69, 2, 3.72],   "size": [4.14, 5, 4.3] },
-    { "id": "b_main",   "name": "B Main",   "center": [0, 2, 9.31],      "size": [11.5, 5, 6.88] }
-  ],
+  "cover": [],
+  "regions": [],
   "spawns": [
-    { "id": "spawn_player", "role": "player", "position": [-4, 0, 11.5], "facing_deg": 90 },
-    { "id": "spawn_enemy_1", "role": "enemy", "position": [-2, 0, -4], "facing_deg": 0 }
+    {
+      "id": "spawn_player",
+      "role": "player",
+      "position": [
+        0,
+        0,
+        23.39
+      ],
+      "facing_deg": 0
+    },
+    {
+      "id": "spawn_enemy_1",
+      "role": "enemy",
+      "position": [
+        9.46,
+        0.0,
+        -20.86
+      ],
+      "facing_deg": 0
+    }
   ],
-  "spike": { "position": [0.69, 0, 3.72], "planted": true, "site_region": "b_pit" }
+  "spike": {
+    "position": [
+      -11.04,
+      0.0,
+      -17.03
+    ],
+    "planted": true,
+    "site_region": ""
+  }
 }
