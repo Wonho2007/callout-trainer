@@ -31,7 +31,7 @@ func expect(condition: bool, name: String) -> void:
 func test_current_map_peek_config() -> void:
 	var scenario: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/b_site_coverage.json"))
 	var state: Dictionary = {"alive": true, "marker_id": "home", "reachable_marker_ids": scenario.motion_markers.keys(), "role": "hold", "objective": "none"}
-	var belief: Dictionary = {"bot_id": "ally", "tick": -1, "enemies": {"enemy": {"room": 0.3333333333333333, "entry": 0.3333333333333333, "corridor": 0.3333333333333333}}, "trust": {}, "evidence_ids": []}
+	var belief: Dictionary = {"bot_id": "ally", "tick": -1, "enemies": {"enemy": {"room": 0.3333333333333333, "entry": 0.3333333333333333, "corridor": 0.3333333333333333}}, "evidence_ids": []}
 	var inbox = Inbox.new("ally")
 	inbox.release(0)
 	var result: Dictionary = Planner.new("ally", scenario.planner).decide(0, belief, state, inbox)
@@ -51,7 +51,7 @@ func snapshot(probabilities: Dictionary = {}, evidence: Array = [], tick: int = 
 	if not probabilities.is_empty():
 		distribution = probabilities
 	return {"bot_id": "ally", "tick": tick, "enemies": {"enemy_1": distribution},
-		"trust": {}, "evidence_ids": evidence}
+		"evidence_ids": evidence}
 
 func report(id: String = "r", event: int = 0, available: int = 2, region: String = "logs") -> Dictionary:
 	return {"id": id, "bot_id": "ally", "event_tick": event, "available_tick": available, "source": "told", "speaker_id": "player",

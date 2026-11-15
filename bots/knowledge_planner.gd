@@ -101,19 +101,16 @@ func _valid_state(state: Dictionary) -> bool:
 	return true
 
 func _valid_belief(belief: Dictionary, tick: int, inbox: Inbox) -> bool:
-	if not Data.valid(belief) or not Data.keys_exact(belief, ["bot_id", "tick", "enemies", "trust", "evidence_ids"]):
+	if not Data.valid(belief) or not Data.keys_exact(belief, ["bot_id", "tick", "enemies", "evidence_ids"]):
 		return false
 	if not Data.nonempty(belief.bot_id) or belief.bot_id != _bot_id:
 		return false
 	if not (Data.integer(belief.tick) or Data.equal(belief.tick, -1)) or belief.tick > tick:
 		return false
-	if not belief.enemies is Dictionary or belief.enemies.is_empty() or not belief.trust is Dictionary or not _texts(belief.evidence_ids):
+	if not belief.enemies is Dictionary or belief.enemies.is_empty() or not _texts(belief.evidence_ids):
 		return false
 	for id in belief.evidence_ids:
 		if not inbox.evidence_available(id, int(belief.tick)):
-			return false
-	for speaker in belief.trust:
-		if not Data.nonempty(speaker) or not _fraction(belief.trust[speaker]):
 			return false
 	for enemy in belief.enemies:
 		var distribution: Variant = belief.enemies[enemy]
