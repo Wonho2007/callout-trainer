@@ -19,11 +19,13 @@ extends ActorBase
 ## Injected by main: the shared utility system and the HUD overlays.
 var utility: UtilitySystem
 var flash_overlay: ColorRect
+var blind_overlay: ColorRect
 var smoke_overlay: ColorRect
 
 var _pitch: float = 0.0
 var _mouse_captured: bool = false
 var _flash_blind_remaining: float = 0.0
+var _wave_blind_remaining: float = 0.0
 
 
 func _ready() -> void:
@@ -43,6 +45,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = _pitch
 	if event.is_action_pressed("toggle_mouse"):
 		_capture_mouse(not _mouse_captured)
+	# Dash (V): in the current move-input direction, else straight ahead.
+	if event.is_action_pressed("dash") and is_alive and _mouse_captured:
+		var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		var world_dir := transform.basis * Vector3(input_dir.x, 0, input_dir.y)
+		dash(world_dir)
 	# Reload (F). Only when alive and mouse captured (not in a menu).
 	if event.is_action_pressed("reload") and is_alive and _mouse_captured:
 		weapon.reload()
@@ -60,6 +67,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			var from := camera.global_position - camera.global_transform.basis.z * 0.5
 			var toss := -camera.global_transform.basis.z * 10.0 + Vector3.UP * 3.5
 			utility.throw_molly(from, toss)
+		elif event.is_action_pressed("blind_wave"):
+			var from := camera.global_position - camera.global_transform.basis.z * 0.5
+			var dir := -camera.global_transform.basis.z
+			var w := utility.throw_blind_wave(from, dir)
+			if w:
+				w.detonated.connect(_on_wave_detonated)
 
 
 ## Where the player is aiming lands on the first world surface, else a point
@@ -90,6 +103,20 @@ func _on_flash_detonated(source_position: Vector3) -> void:
 			_flash_blind_remaining = dur
 
 
+func _on_wave_detonated(_source_position: Vector3) -> void:
+	# The blind wave goes through walls: pass has_los = true so LOS geometry is
+	# ignored. It still only blinds if the player is within radius and facing it.
+	# The wave darkens the screen (black) and lingers ~1s longer than the flash.
+	var eye := camera.global_position
+	var forward := -camera.global_transform.basis.z
+	for wave in utility.active_blind_waves():
+		var dur: float = wave.blind_duration_for(eye, forward, true)
+		if dur > 0.0:
+			var total := dur + 1.0  # extra second of blackout
+			if total > _wave_blind_remaining:
+				_wave_blind_remaining = total
+
+
 ## Clear line of sight between two points: not blocked by world geometry or by
 ## any active smoke (the shared occlusion rule).
 func _has_clear_los(a: Vector3, b: Vector3) -> bool:
@@ -117,13 +144,17 @@ func _fire_weapon() -> void:
 
 
 func _process(delta: float) -> void:
-	# Fade the first-person flash whiteout.
+	# Fade the white flash overlay (E flash).
 	if _flash_blind_remaining > 0.0:
 		_flash_blind_remaining = maxf(0.0, _flash_blind_remaining - delta)
 	if flash_overlay:
-		# Alpha tracks remaining blind time (1.0 when fully blinded).
-		var a := clampf(_flash_blind_remaining, 0.0, 1.0)
-		flash_overlay.color.a = a
+		flash_overlay.color.a = clampf(_flash_blind_remaining, 0.0, 1.0)
+
+	# Fade the black blind overlay (G blind wave).
+	if _wave_blind_remaining > 0.0:
+		_wave_blind_remaining = maxf(0.0, _wave_blind_remaining - delta)
+	if blind_overlay:
+		blind_overlay.color.a = clampf(_wave_blind_remaining, 0.0, 1.0)
 
 	# In-smoke camera fog: fade in when the camera is inside a smoke volume.
 	if smoke_overlay and utility:
