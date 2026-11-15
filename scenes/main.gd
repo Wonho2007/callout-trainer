@@ -9,6 +9,7 @@ extends Node3D
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const ActorScene := preload("res://actors/actor_base.tscn")
 const SpikeScript := preload("res://world/spike.gd")
+const GameEventsScript := preload("res://recording/game_events.gd")
 
 @onready var builder = $SandboxBuilder
 @onready var utility: UtilitySystem = $UtilitySystem
@@ -16,10 +17,16 @@ const SpikeScript := preload("res://world/spike.gd")
 var _player: ActorBase
 var _target: ActorBase
 var _spike: Spike
+var _events: GameEvents
 var _round_state: String = "active"  # active | defused | detonated | player_down
 
 
 func _ready() -> void:
+	# Privileged event bus for Person 3's grader/recorder (not a policy input).
+	_events = GameEventsScript.new()
+	add_child(_events)
+	utility.deployed.connect(func(ability_id, thrower_id, pos):
+		_events.record(GameEvents.T_UTILITY, thrower_id, pos, {"ability": ability_id}))
 	# The builder builds itself on _ready; ensure it is ready before spawning.
 	await get_tree().process_frame
 	_spawn_player()
@@ -40,10 +47,17 @@ func _physics_process(delta: float) -> void:
 	# Hold-to-defuse: while alive, in range, and holding the defuse action.
 	if _round_state != "active" or _spike == null or _player == null:
 		return
-	if _player.is_alive and Input.is_action_pressed("defuse") \
-			and _spike.in_range(_player.global_position):
+	var holding := _player.is_alive and Input.is_action_pressed("defuse") \
+			and _spike.in_range(_player.global_position)
+	if holding:
+		var was := _spike.defuse_progress
 		_spike.defuse_step(_player.global_position, delta)
+		if was == 0.0 and _spike.defuse_progress > 0.0:
+			_events.record(GameEvents.T_DEFUSE_START, "player", _spike.global_position, {})
 	else:
+		if _spike.defuse_progress > 0.0:
+			_events.record(GameEvents.T_DEFUSE_STOP, "player", _spike.global_position,
+				{"progress": _spike.defuse_progress})
 		_spike.stop_defuse()
 
 
@@ -72,6 +86,17 @@ func _spawn_player() -> void:
 	_player.utility = utility
 	_player.flash_overlay = get_node_or_null("HUD/FlashOverlay")
 	_player.smoke_overlay = get_node_or_null("HUD/SmokeOverlay")
+	# Privileged event records for Person 3's grader (not a policy input path).
+	_player.health.damaged.connect(func(amount, remaining):
+		_events.record(GameEvents.T_DAMAGE, "player", _player.global_position,
+			{"amount": amount, "remaining": remaining}))
+	_player.died.connect(func():
+		_events.record(GameEvents.T_DEATH, "player", _player.global_position, {}))
+	var w := _player.get_node_or_null("Camera3D/Weapon")
+	if w:
+		w.fired.connect(func(from_pos, to_pos, hit):
+			_events.record(GameEvents.T_SHOT_FIRED, "player", from_pos,
+				{"to": [to_pos.x, to_pos.y, to_pos.z], "hit": hit}))
 	if spawn:
 		_player.teleport_to(spawn)
 	else:
@@ -104,10 +129,14 @@ func _spawn_spike() -> void:
 
 func _on_spike_defused() -> void:
 	_round_state = "defused"
+	if _events and _spike:
+		_events.record(GameEvents.T_DEFUSE_DONE, "player", _spike.global_position, {})
 
 
 func _on_spike_detonated() -> void:
 	_round_state = "detonated"
+	if _events and _spike:
+		_events.record(GameEvents.T_DETONATED, "", _spike.global_position, {})
 
 
 func _on_player_died() -> void:
@@ -132,6 +161,8 @@ func _restart() -> void:
 		if pos != null:
 			_spike.global_position = pos as Vector3
 		_spike.reset()
+	if _events:
+		_events.clear()
 	_round_state = "active"
 
 
@@ -143,6 +174,7 @@ func _update_hud() -> void:
 
 func _update_status() -> void:
 	_update_round_label()
+	_update_events_label()
 	var label := get_node_or_null("HUD/Status")
 	if label == null or _player == null:
 		return
@@ -179,3 +211,14 @@ func _update_round_label() -> void:
 				label.text = "Spike: %4.1fs   Defuse: %d%%%s" % [_spike.time_left, pct, dz]
 			else:
 				label.text = ""
+
+
+func _update_events_label() -> void:
+	var label := get_node_or_null("HUD/Events")
+	if label == null or _events == null:
+		return
+	var events_log := _events.get_log()
+	var last := ""
+	if events_log.size() > 0:
+		last = "   last: %s" % events_log[events_log.size() - 1]["type"]
+	label.text = "Events: %d%s" % [events_log.size(), last]

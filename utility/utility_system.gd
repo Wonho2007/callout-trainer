@@ -10,6 +10,10 @@ class_name UtilitySystem
 const SmokeScript := preload("res://utility/smoke.gd")
 const FlashScript := preload("res://utility/flash.gd")
 
+## Emitted when utility is deployed, for the privileged recorder/grader (not a
+## policy input). Carries the ability id, thrower id and world position.
+signal deployed(ability_id: String, thrower_id: String, position: Vector3)
+
 @export_file("*.json") var definitions_path: String = "res://utility/abilities.json"
 
 var _defs: Dictionary = {}
@@ -54,6 +58,7 @@ func throw_smoke(at: Vector3) -> Smoke:
 	smoke.deploy(start_center, settle_center)
 	_smokes.append(smoke)
 	smoke.expired.connect(func(): _smokes.erase(smoke))
+	deployed.emit("smoke", "player", settle_center)
 	return smoke
 
 
@@ -81,6 +86,7 @@ func throw_flash(from: Vector3, velocity: Vector3) -> Flash:
 	flash.throw(from, velocity)
 	_flashes.append(flash)
 	flash.expired.connect(func(): _flashes.erase(flash))
+	deployed.emit("flash", "player", from)
 	return flash
 
 

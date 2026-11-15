@@ -43,6 +43,13 @@ offset_right = 900.0
 offset_bottom = 96.0
 text = "Spike: --"
 
+[node name="Events" type="Label" parent="HUD"]
+offset_left = 12.0
+offset_top = 96.0
+offset_right = 900.0
+offset_bottom = 124.0
+text = "Events: 0"
+
 [node name="Crosshair" type="Label" parent="HUD"]
 anchors_preset = 8
 anchor_left = 0.5
