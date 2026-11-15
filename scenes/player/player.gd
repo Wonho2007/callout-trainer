@@ -56,6 +56,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var f := utility.throw_flash(from, toss)
 			if f:
 				f.detonated.connect(_on_flash_detonated)
+		elif event.is_action_pressed("throw_molly"):
+			var from := camera.global_position - camera.global_transform.basis.z * 0.5
+			var toss := -camera.global_transform.basis.z * 10.0 + Vector3.UP * 3.5
+			utility.throw_molly(from, toss)
 
 
 ## Where the player is aiming lands on the first world surface, else a point
