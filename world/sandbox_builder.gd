@@ -530,28 +530,29 @@ func _build_stair_pit(divot: Dictionary, parent: Node3D) -> void:
 	mesh_instance.material_override = mat
 	body.add_child(mesh_instance)
 
-	# Collision: hard-edged steps as a stack of solid cylinders, one per step (+ bottom disc).
-	# Each cylinder's TOP is at its tread height and it is solid below, giving flat treads with
-	# vertical risers (hard edges, no curve). The player's auto-step (ActorBase.step_height)
-	# climbs these edges going up; floor_snap_length carries it down. Visual mesh matches.
-	var floor_bottom := -depth - 2.0
-	for k in range(steps + 1):
-		var r_outer: float
-		var y_top: float
-		if k < steps:
-			r_outer = top_radius - run * float(k)
-			y_top = -riser * float(k)
-		else:
-			r_outer = bottom_radius
-			y_top = -depth
-		var h := y_top - floor_bottom
-		var cyl := CylinderShape3D.new()
-		cyl.radius = r_outer
-		cyl.height = h
-		var cshape := CollisionShape3D.new()
-		cshape.shape = cyl
-		cshape.position = Vector3(0, y_top - h * 0.5, 0)
-		body.add_child(cshape)
+	# Collision: a single clean SMOOTH cone (rim at top_radius/y=0 -> flat bottom disc at
+	# -depth), no overlap, no steps, no stacked shapes. With a gentle slope (< floor_max_angle)
+	# plain move_and_slide walks the capsule straight in and out. The stepped mesh above is
+	# visual only. Keeping this dead simple after stepped/overlap/cylinder variants all fought
+	# the CharacterBody3D.
+	var cst := SurfaceTool.new()
+	cst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var c_bottom := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var t0 := Vector3(cos(a0) * top_radius, 0.0, sin(a0) * top_radius)
+		var t1 := Vector3(cos(a1) * top_radius, 0.0, sin(a1) * top_radius)
+		var bd0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var bd1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		cst.add_vertex(t0); cst.add_vertex(bd0); cst.add_vertex(t1)
+		cst.add_vertex(t1); cst.add_vertex(bd0); cst.add_vertex(bd1)
+		cst.add_vertex(bd0); cst.add_vertex(c_bottom); cst.add_vertex(bd1)
+	cst.generate_normals()
+	var cmesh := cst.commit()
+	var collision := CollisionShape3D.new()
+	collision.shape = cmesh.create_trimesh_shape()
+	body.add_child(collision)
 
 
 func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6, 0.6, 0.62)) -> void:
