@@ -1,5 +1,26 @@
 # Person 2: resume in a new Codex window
 
+**Latest user priority (2026-11-15):** the six-hour final-sprint handoff at
+`4c85f39:docs/FINAL_SPRINT_PERSON2.md` supersedes older assignments. Person 2 owns this
+GPU PC's model/STT runtime and inherits Person 1's world work. PR #4 is already merged
+on main `8712f7d`. Current work branch: `person-2/model-capability-spike`.
+[First-step measurements and exact commands](../docs/CAPABILITY_SPIKE.md): local
+Llama 3.1 8B, 100% GPU, IPv4 warm median 0.590s, 8/8 semantic smoke checks; known
+broader-run prompt limitations recorded. Next are goal-selection timing and live
+mic/STT/bridge; neither is claimed tested. No Person 3 source/schema was changed.
+
+**PC voice setup continuation:** [LIVE_VOICE.md](LIVE_VOICE.md) now provides the
+launcher and actual checks. small.en CUDA speech + local Llama passed a synthetic
+speech-file check (0.668s STT, 1.298s audio-to-proposal), 47 Person 3 wrapper/glue/audit
+checks pass at `b84cc93`, and the live Razer-default-mic push-to-talk window is open.
+User confirms the first human sample, “two on heaven”: correct count/region, 0.285s
+STT, 0.881s total after release. Final five-call manual smoke: all five semantic
+outputs correct, one cue -> queue spelling error confirmed by user; median STT
+0.138s, median after-release total 0.718s, zero fallback. Broader accuracy is pending.
+No game dispatch, goal-selection timing
+or full-acceptance fix is claimed. Environment/weights remain outside Git; Python
+environment is `~/.cache/callout-voice-venv`. No cross-lane source/schema changes.
+
 **Current map:** the FPS scene inherits Person 1's default `b_site.json` at main `487ad73`, merged as `28950f4`, with no map override. The launcher follows latest locally fetched main and freezes/prints its commit per run. Bot spawn/coverage comes from `scenarios/b_site_coverage.json` using room/entry/corridor. Older integration records below are historical. See [FIRST_PERSON.md](FIRST_PERSON.md) for launch and [the current continuation result](../docs/PERSON2_HANDOFF.md) for tested live sensing/physical flash status.
 
 Handoff updated November 14, 2026. The latest increment adds privileged authored-path movement and command arbitration above the earlier `04291d8` perception baseline. Current automated results and dependencies are in the continuation record at the end and [motion guide](MOTION_CONTROLLER.md). This is not a claim that the game is complete. Recheck repository state before acting; newer teammate work may change integration facts.

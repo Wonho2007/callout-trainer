@@ -1,5 +1,38 @@
 # Person 2 handoff - perception, bot behavior, scenario runtime
 
+## Priority override — six-hour final sprint, 2026-11-15
+
+The user explicitly makes `docs/FINAL_SPRINT_PERSON2.md` on Person 3 commit `4c85f39`
+the highest-priority handoff. Person 1 has left; Person 2 owns GPU/model/STT runtime,
+inherited world/greybox/spawning, scenario authoring and live engine integration.
+Person 3 supplies non-GPU glue, logging/fairness and demo support. Older ownership,
+trust-field and schedule instructions below are historical where they conflict.
+Main already contains PR #4 at `8712f7d`; no further merge of that PR is needed.
+
+First step completed: [actual GPU capability results](CAPABILITY_SPIKE.md).
+Llama 3.1 8B Q4_K_M on the 16GB RTX 4060 Ti runs 100% GPU; IPv4 interpreter warm
+median 0.590s, eight semantic smoke checks correct with no fallback. Supplied broader
+runner exposes ambiguity/hedge limitations documented in that report. Next: real
+goal-selection measurement and live mic/STT/bridge. Full LLM-decides viability and
+spoken-comm acceptance remain unverified. Preserve the deterministic fallback.
+
+Next-step PC setup: [live microphone guide](../bots/LIVE_VOICE.md). Whisper small.en
+CUDA/float16 and local Llama successfully process synthetic speech (0.668s STT,
+1.298s audio-to-proposal). Windows default input is the Razer headset. A separate
+push-to-talk acceptance window has been opened at the user's selected default mic.
+First human sample is confirmed by the user: “two on heaven” -> “2 on heaven.” ->
+b_heaven/count 2/sure, model source, 0.285s STT and 0.881s total after release.
+All five suggested human calls have now completed: user confirms the only wording
+error is cue -> queue, with correct on_cue interpretation. All five semantic outputs
+match; median STT 0.138s, median release-to-interpretation 0.718s, no fallback.
+Raw microphone audio is not saved. Broader accuracy is not established.
+Person 3's newest `b84cc93` interpreter/log/pipeline/audit tests pass 47 checks in an
+isolated snapshot. No Person 3 source changed. Its published pipeline still has
+hedge-weighted beliefs, future-tick immediate headless application, and no local
+LLM goal-generation implementation: do not call it a completed live-game bridge.
+The current PC tool emits proposals only. Real goal prompt/timing, monotonic game
+clock/delayed delivery and full-acceptance alignment remain integration work.
+
 This is the current Person 2 work plan, refreshed after the user confirmed the correct map and visible teammate. Use it with [the project brief](../callout_trainer_brief.md), [decisions](DECISIONS.md), [ownership](TEAM.md) and [actual implementation records](../bots/PERSON2_HANDOFF.md). Older appended handoff records describe their original implementation snapshots.
 
 ## Current information-session result - 2026-11-15

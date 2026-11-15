@@ -5,7 +5,7 @@ Current Person 2 state: delayed inbox and command runtime implemented, with isol
 | Lane | Current state | Next deliverable | Blocker / dependency |
 |---|---|---|---|
 | Person 1 | Not started | Pin Godot version; JSON-driven synthetic room/builder, actor stubs and blank desktop export | Confirm target hardware and shared contracts |
-| Person 2 (Wonho2007) | Causal delivery/death regressions and inactive own-death HUD verified: 139 information + 36 HUD checks pass; [current results](PERSON2_HANDOFF.md) | User-authorized integration of PR #4 after checks; human information/utility/action playtest and consumer review | Person 3 live bridge/model audit/full acceptance; Person 1 shared wave/bootstrap/nav review; source/vocabulary review |
+| Person 2 (Wonho2007) | GPU interpreter median 0.590s; five live mic calls interpreted correctly, median after-release 0.718s; [voice results](../bots/LIVE_VOICE.md). PR #4 already merged | Real game bridge/goal measurement and inherited world/scenario integration | Goal-selection latency, full-acceptance alignment, source/region review, offline acceptance and end-to-end engine integration remain |
 | Person 3 | Not started | Verified video notes for Persons 1/2; schemas, fake run and evidence/time checks | Shared contracts; use synthetic fixture |
 
 Update only the facts for your lane. Append a short handoff using:
