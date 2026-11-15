@@ -62,11 +62,11 @@ func _belief_enemy_ids() -> Array:
 func _spawn_teammate() -> void:
 	super._spawn_teammate()
 	_annotation = JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/fnc_prx_lotus_toronto2024_gf.json"))
-	runtime.attach_scenario_policy(AnnotationPolicy.new("ally", _annotation.timeline))
+	runtime.attach_scenario_policy(AnnotationPolicy.new("ally", _annotation.timeline, 0, int(_scenario.get("utility_grace_ticks", 120))))
 	_utility_executors["ally"] = AnnotationExecutor.new("ally", teammate, runtime, utility, _scenario.motion_markers)
 	teammate.health.max_hp = float(_scenario.ally_hp)
 	teammate.health.reset()
-	if not OS.get_cmdline_user_args().has("--lotus-smoke"):
+	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke"):
 		runtime.enable_combat(utility)
 
 func _begin_plant() -> void:
@@ -149,8 +149,8 @@ func _materialize(spec: Dictionary) -> void:
 	enemy_runtime.configure(spec.actor_id, actor, builder, belief, configuration, _scenario.motion_markers, {}, _round_serial, utility)
 	enemy_runtime.attach_perception(SceneSensor.new(spec.actor_id, actor, builder, utility,
 		{"player": _player, "ally": teammate}, _scenario.perception, int(_scenario.perception_seed) + enemies.size(), _round_serial))
-	enemy_runtime.attach_scenario_policy(AnnotationPolicy.new(spec.actor_id, _annotation.timeline, int(spec.first_known_tick)))
-	if not OS.get_cmdline_user_args().has("--lotus-smoke"):
+	enemy_runtime.attach_scenario_policy(AnnotationPolicy.new(spec.actor_id, _annotation.timeline, int(spec.first_known_tick), int(_scenario.get("utility_grace_ticks", 120))))
+	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke"):
 		enemy_runtime.enable_combat(utility)
 	runtime.register_opponent(spec.actor_id, actor)
 	enemy_runtimes[spec.actor_id] = enemy_runtime

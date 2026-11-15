@@ -9,11 +9,12 @@ Close older voice-host consoles, then use PowerShell:
 
 ```powershell
 cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
-.\validation\run_voice_game.ps1 -Lotus
+.\validation\run_voice_game.ps1
 ```
 
-V talks, F restarts at plant, Esc releases the mouse. Omit `-Lotus` for the
-older three-region integration profile. [Scenario guide](../bots/LOTUS_SCENARIO.md),
+V talks, B dashes, F restarts at plant, Esc releases the mouse. The default is
+Person 3's seven-zone B site map; `-Lotus` remains a compatibility alias. Use
+`-LegacyRoom` or `-LegacyLotus` only for the older profiles. [Scenario guide](../bots/SITE_SCENARIO.md),
 [voice setup](../bots/LIVE_VOICE.md) and [bridge guide](../bots/VOICE_GAME.md) explain
 the installed environment and measured limits.
 

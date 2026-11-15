@@ -4,11 +4,11 @@ Updated 2026-11-15. This is a current index, not an append-only journal.
 
 | Work area | Implemented / evidence | Next or unresolved |
 |---|---|---|
-| Person 2 / PC | Local model and mic setup; five standalone spoken calls confirmed; delayed voice/game bridge; seven-region plant adaptation; annotated movement/utility baseline with observation-based deviations; flash firing gate/head icon; dead bots disappear | Human voice-to-Lotus/baseline acceptance, exact-kit fidelity, coordinated belief changes and final delivery |
+| Person 2 / PC | Local model and mic setup; five standalone spoken calls confirmed; delayed voice/game bridge; Person 3 seven-zone map as default; annotated movement/utility baseline with observation-based deviations; flash firing gate/head icon; dead bots disappear | Human voice-to-Lotus/baseline acceptance, exact-kit fidelity, coordinated belief changes and final delivery |
 | Person 3 supplied code | Interpreter/vocabulary/log/pipeline/audit and first-pass annotation at `b84cc93`; consumed read-only. Scene still uses belief `57f809d` | Source review, working-belief acceptance and paired snapshot/planner field-removal integration |
 | Inherited Person 1 work | Existing world, player, shared weapons/utility/navigation and root scaffold reused. Person 1 is no longer active | Person 2 owns remaining engine/world/export work; no dependency on Person 1 returning |
 
-Current branch: `person-2/model-capability-spike`. Gameplay checkpoint: `608cae7`.
+Current branch: `person-2/model-capability-spike`. Bot checkpoint: `86a54aa`; map merge: `513b2e9` (source `76b8eaa`).
 Previous checkpoints `156c581` (voice/game bridge) and `2a33eda` (GPU/live mic).
 PR #4 was already merged before this branch; no current-main merge is claimed.
 
@@ -21,11 +21,16 @@ the integration runner overlays the shared weapon script onto its pinned source.
 - [Person 2 handoff](PERSON2_HANDOFF.md): authoritative continuation state, exact tools,
   test scopes, remaining dependencies and next sequence.
 - [New Codex prompt](CODEX_RESUME_PROMPT.md): paste into a fresh window.
-- [Scenario guide](../bots/LOTUS_SCENARIO.md): plant start, +23s first-known spawning.
+- [Current site guide](../bots/SITE_SCENARIO.md): imported map, circular-zone precedence, plant starts and +23s arrivals.
 - [Voice/game guide](../bots/VOICE_GAME.md): transport, measured goal failures, selected fallback.
 - [Historical index](ARCHIVE.md): earlier implementation records and planning snapshots.
 
 ## Evidence to preserve
+
+Current imported map: 23 functional / 24 rendered checks pass, capture inspected;
+voice launcher syntax passes. Main was already included at `8712f7d`; new map
+arrived from `person-3/greybox-b-site` at `76b8eaa`. Existing bot/voice/damage changes
+were checkpointed before the merge. Source geometry/zones remain unchanged.
 
 575 current default/cross-lane assertions; 139 live-perception checks; 53 current functional scenario
 checks; seven Python authoring/voice-boundary tests; Person 3 schema validation with

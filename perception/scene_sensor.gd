@@ -176,6 +176,12 @@ func _region(point: Vector3) -> String:
 		var half := Vector3(s[0], s[1], s[2]) * 0.5
 		var offset: Vector3 = (point - center).abs()
 		if offset.x <= half.x and offset.y <= half.y and offset.z <= half.z:
+			if region.get("shape", "box") == "circle" and Vector2(point.x - center.x, point.z - center.z).length() > float(region.get("radius", 0)):
+				continue
+			# The imported map deliberately gives Upper precedence over its
+			# overlap with circular Pit, matching its HUD/minimap authoring.
+			if _navigation.map_data.get("region_precedence") == "list_order":
+				return region.id
 			# Ambiguous overlapping regions are unknown, not guessed identities.
 			if not found.is_empty():
 				return ""

@@ -13,11 +13,13 @@ var _used: Dictionary = {}
 var _utility: Array = []
 var _smoke_ready: Array = []
 var _initial_hp: float = -1.0
+var _utility_grace_ticks: int = 120
 
-func _init(id: String, timeline: Array, start_tick: int = 0) -> void:
+func _init(id: String, timeline: Array, start_tick: int = 0, utility_grace_ticks: int = 120) -> void:
 	_id = id
 	_timeline = timeline.duplicate(true)
 	_start_tick = start_tick
+	_utility_grace_ticks = maxi(0, utility_grace_ticks)
 	_scenario_tick = start_tick
 	var target: String = "b_upper" if id == "chronicle" else ("b_heaven" if id == "crashies" else "b_pit")
 	_retake = Retake.new(id, target)
@@ -86,7 +88,7 @@ func _queue_utility(own: Dictionary) -> void:
 			continue
 		# Never replay missed throws later in the round, while blind, or from
 		# the wrong staging region after physical displacement.
-		if _scenario_tick > int(beat.tick) + 120:
+		if _scenario_tick > int(beat.tick) + _utility_grace_ticks:
 			_used[index] = true
 			continue
 		var stage: String = _reference_region(_id, int(beat.tick))

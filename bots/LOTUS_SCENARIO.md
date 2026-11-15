@@ -1,7 +1,11 @@
 # Plant-start scenario with first-known enemy arrivals
 
+The current default uses the imported teammate map; see [current site guide](SITE_SCENARIO.md).
+This document describes shared baseline rules and the retained legacy custom map.
+Use `-LegacyLotus` to launch that old geometry explicitly.
+
 ```powershell
-.\validation\run_voice_game.ps1 -Lotus
+.\validation\run_voice_game.ps1 -LegacyLotus
 ```
 
 The scenario starts **when the spike is planted**. The player is the Something/Yoru

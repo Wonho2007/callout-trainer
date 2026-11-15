@@ -29,17 +29,19 @@ Open PowerShell. Close any older voice-host console, then paste:
 
 ```powershell
 cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
-.\validation\run_voice_game.ps1 -Lotus
+.\validation\run_voice_game.ps1
 ```
 
 Hold **V** to talk, **F** to restart at the plant, **Esc** to release the mouse.
-WASD moves, LMB fires, R reloads and B dashes in voice scenes. V only talks. Enemies first arrive at +23s. Omit `-Lotus` to run
-the earlier three-region integration map, which remains unchanged. Running the root
+WASD moves, LMB fires, R reloads and B dashes. V only talks. Enemies arrive at +23s.
+The default uses Person 3's seven-zone map, including circular Pit and the zone
+minimap. `-Lotus` also selects this new default; `-LegacyRoom` / `-LegacyLotus`
+explicitly select the older profiles. Running the root
 Godot project directly still opens the original scaffold, not the voice-enabled scenario.
 
 Use **Godot 4.4.1 stable**. The launcher uses the installed local Python environment,
 cached Whisper weights and Ollama. Setup and limits: [voice setup](bots/LIVE_VOICE.md),
-[voice/game bridge](bots/VOICE_GAME.md), [scenario details](bots/LOTUS_SCENARIO.md).
+[voice/game bridge](bots/VOICE_GAME.md), [scenario details](bots/SITE_SCENARIO.md).
 
 ## Current implementation
 
@@ -49,7 +51,7 @@ cached Whisper weights and Ollama. Setup and limits: [voice setup](bots/LIVE_VOI
   LLM goal generation missed the context budget and is opt-in, not accepted for the demo.
 - Copied delayed perception, evidence IDs, smoke/flash restrictions, shared navigation,
   rifle/combat, command lifecycle, an authored reactive branch and round/reset handling.
-- A separate seven-region greybox, late enemy registration and first-known spawn checks.
+- Imported seven-zone B site map, circular-region precedence, late enemy registration and first-known spawn checks.
 - Local transcripts, exact model inputs/outputs and delivery/decision telemetry.
 
 ## Evidence and remaining work

@@ -1,6 +1,6 @@
 # Current Person 2 continuation handoff
 
-Updated 2026-11-15 with local annotation-baseline/flash/death changes after gameplay checkpoint **608cae7**. This replaces the old
+Updated 2026-11-15 after checkpoint **86a54aa** and teammate-map merge **513b2e9**. This replaces the old
 accumulated handoff. Read [project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
 and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not below.
 
@@ -10,6 +10,9 @@ and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not
 - Branch/upstream: `person-2/model-capability-spike` / `origin/person-2/model-capability-spike`.
 - Gameplay checkpoints: `2a33eda` GPU + live mic; `156c581` voice/game bridge;
   `608cae7` plant-start seven-region adaptation with first-known enemy arrivals.
+- User-authorized map integration: main fetched at `8712f7d` (already included);
+  actual new map was `person-3/greybox-b-site` at `76b8eaa`, merged at `513b2e9`.
+  Existing edits were checkpointed first at `86a54aa`. No merge into main.
 - Newer documentation commits may follow. Inspect status/log before acting. The
   implementation checkpoint was clean and pushed; never assume a new window is clean.
 - PR #4 is already merged. This current branch is not merged into main. Do not resume
@@ -41,8 +44,12 @@ final-sprint handoff's capability-driven fallback. Full LLM goal tests missed th
 two-second context window and remain unaccepted. `-ModelGoals` is experimental. Do not
 claim it works, silently enable it, relax expiry or turn its failing fixture into a pass.
 
-**Scenario:** `validation/run_voice_game.ps1 -Lotus` selects the separate authored
-seven-region approximation. Original three-region map/root scaffold remain unchanged.
+**Scenario:** `validation/run_voice_game.ps1` now defaults to Person 3's seven-zone
+`world/maps/b_site.json` at `76b8eaa`. `-Lotus` is a compatibility alias for the
+new default, not the old geometry. `-LegacyRoom` and `-LegacyLotus` retain old
+profiles. `world/site_builder.gd` preserves source geometry/zones and adapts only
+plant/spawn metadata; `scenarios/site_coverage.json` supplies new physical anchors.
+Circular Pit and Upper precedence match the imported minimap and coordinate HUD.
 The player takes Something/Yoru's role; ally takes f0rsakeN/Omen's role; PRX holds the
 plant. Unknown FNC starts have no actor/collider/weapon at t0. At +23s/tick 1380:
 
@@ -78,12 +85,12 @@ approximations. HP+armor is a simplified shared pool.
 | Live setup / launch | `validation/run_live_voice.ps1`, `validation/run_voice_game.ps1`, `bots/live_voice.py`, `bots/voice_host.py` |
 | Bridge / scene | `scenes/bots/voice_bridge.gd`, `voice_playtest.gd`, `lotus_playtest.gd` and matching scenes |
 | Runtime / fair sensing | `bots/teammate_runtime.gd`, planner/motion/combat modules; `perception/scene_sensor.gd`, inbox/kernel |
-| New world | `world/lotus_builder.gd`, `world/maps/lotus_b_adaptation.json` |
+| Current world | `world/site_builder.gd`, `world/maps/b_site.json`, `scenarios/site_coverage.json`, `scenes/bots/site_playtest.gd` |
 | Source/runtime data | `scenarios/fnc_prx_lotus_toronto2024_gf.json`, `lotus_b_coverage.json`, `first_known_spawns.gd` |
 | Adapted policy | `bots/annotation_policy.gd`, `bots/annotation_executor.gd`, `bots/retake_policy.gd` (policy uses copied delayed evidence/own state; executor owns physical utility) |
 | Checks | `validation/run_person2_tests.py`, `check_lotus.py`, `run_voice_model_smoke.py`, `audit_voice_run.py`, `tests/person2/` |
 
-Component guides: [scenario](../bots/LOTUS_SCENARIO.md), [bridge](../bots/VOICE_GAME.md),
+Component guides: [current scenario](../bots/SITE_SCENARIO.md), [legacy baseline detail](../bots/LOTUS_SCENARIO.md), [bridge](../bots/VOICE_GAME.md),
 [standalone mic](../bots/LIVE_VOICE.md), [spike results](CAPABILITY_SPIKE.md),
 [perception](../perception/README.md). No shared comms/observation/belief schema was
 silently changed by the bridge/scenario work. New registration/scenario-policy/transport
@@ -102,8 +109,9 @@ seams are internal Person 2 integration APIs.
   deleting a field. Fully accept valid player testimony without credibility/history.
 - Person 3's Python headless pipeline applies at future ticks immediately for fixtures;
   do not use that mirror as a live clock. Godot owns actual receipt/delivery timing.
-- Launcher freezes shared game source **8712f7d** and overlays owned integration plus
-  the previously approved local shared wave/player correction. It prints dependency refs.
+- Default launcher freezes map/shared game source **76b8eaa**, keeps belief **57f809d**,
+  and overlays local bot integration and approved mechanics. Legacy profiles retain
+  shared source **8712f7d**. Dependency refs are printed; do not advance belief alone.
 
 ## Installed tools and commands
 
@@ -115,11 +123,11 @@ PowerShell launch (close any earlier voice-host console first):
 
 ```powershell
 cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
-.\validation\run_voice_game.ps1 -Lotus
+.\validation\run_voice_game.ps1
 ```
 
-F restarts at plant, V talks, Esc releases the mouse. Original profile:
-omit `-Lotus`. Do not replace this launcher with running root `project.godot` directly;
+F restarts at plant, V talks, B dashes, Esc releases the mouse. Legacy profiles:
+pass `-LegacyRoom` or `-LegacyLotus`. Do not replace this launcher with running root `project.godot` directly;
 its main scene is still the original scaffold, not the integrated voice scenario.
 
 Validation variables:
@@ -133,8 +141,8 @@ $sourceRoot = "$env:TEMP\callout-voice-integration-b84cc93\source"
 git diff --check
 & $pythonExe validation/check_lotus.py
 & $voicePython -m pytest tests/person2/test_lotus_authoring.py tests/person2/test_voice_host.py -q
-& $pythonExe validation/run_person2_tests.py --godot $godotExe --person1-ref 8712f7d --person3-ref 57f809d
-& $pythonExe validation/run_person2_tests.py --godot $godotExe --lotus-smoke --person1-ref 8712f7d --person3-ref 57f809d
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --person1-ref 76b8eaa --person3-ref 57f809d
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --site-smoke --person3-ref 57f809d
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --perception-smoke --person1-ref 8712f7d --person3-ref 57f809d
 ```
 
@@ -144,6 +152,16 @@ For real-model bridge regression, use `validation/run_voice_model_smoke.py` with
 unaccepted full-goal experiment, not an ordinary passing regression. Keep its failures honest.
 
 ## Actual evidence and limits
+
+- Imported-map integration: **23 functional checks** pass on `76b8eaa` / belief
+  `57f809d`; **24 rendered checks** pass including screenshot save. Capture inspected.
+  Source walls/zones, seven navigation anchors, circular Pit/Upper precedence,
+  real staged smoke, first-known arrivals, flash/no-fire/head circle, death/reset pass.
+  Required bot regression also passes **575** with shared source **76b8eaa** and
+  belief **57f809d**; seven Python tests and PowerShell launcher syntax pass.
+  The map uses a four-second utility staging grace
+  for physical scale; model/message expiries are unchanged. This is not human voice
+  acceptance. Prior 53-check custom-Lotus results below are the legacy profile.
 
 - Five standalone human microphone calls confirmed: all five semantic results correct,
   cue -> queue spelling error, median STT 0.138s / after-release total 0.718s.
@@ -178,7 +196,7 @@ waits real time. A guarded test health pool is fixture-only and resets to normal
 ## Next work, in order
 
 1. Inspect current code/status and any new Person 3 updates without overwriting work.
-   Validate the current spoken voice-to-Lotus path on the actual PC and record results.
+   Validate the current spoken voice-to-new-site path on the actual PC and record results.
    Do not redo the completed model download/standalone five-call test unless needed.
 2. Coordinate the paired belief/planner schema removal and full player-report acceptance;
    test both consumers. Preserve valid uncertainty and actual delivery clocks.

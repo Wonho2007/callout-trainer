@@ -14,9 +14,10 @@ Later grading/debrief should explain information gaps; that is deferred work.
 
 ## The current experience
 
-Use `validation/run_voice_game.ps1 -Lotus`. This launches a separate authored seven-region
-greybox: `b_main`, `b_cubby`, `b_heaven`, `b_upper`, `b_pit`, `c_link`, `a_link`.
-The original three-region map and root scaffold remain available and unchanged.
+Use `validation/run_voice_game.ps1`. This launches Person 3's imported seven-zone
+B site greybox (`76b8eaa`): `b_main`, `b_cubby`, `b_heaven`, `b_upper`, `b_pit`, `c_link`, `a_link`.
+The previous room and custom Lotus profiles remain explicit legacy options; neither
+is the default. Root Godot launch remains the map authoring scaffold.
 
 The source-role adaptation puts the player in Something/Yoru's role and the teammate
 in f0rsakeN/Omen's role. PRX holds the plant against an FNC retake. At t0 the spike has

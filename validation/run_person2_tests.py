@@ -65,6 +65,9 @@ def main():
     mode.add_argument("--voice-smoke", action="store_true", help="Real TCP voice delivery/goal/reset regression")
     mode.add_argument("--lotus-playtest", action="store_true", help="Seven-region plant-start adaptation; enemies arrive at first known positions")
     mode.add_argument("--lotus-smoke", action="store_true", help="Seven-region geometry/nav and late enemy spawning regression")
+    mode.add_argument("--site-playtest", action="store_true", help="Plant-hold voice game on Person 3 seven-zone B site map")
+    mode.add_argument("--site-smoke", action="store_true", help="Seven-zone B site scenario and source-map integration checks")
+    parser.add_argument("--site-capture", type=Path, help="Optional rendered B site capture from --site-smoke")
     parser.add_argument("--voice-port", type=int, default=8765)
     parser.add_argument("--voice-headless", action="store_true", help="Developer external-host fixture, no window")
     parser.add_argument("--voice-interpret-only", action="store_true", help="External fixture requires LLM interpretation with scripted goals")
@@ -82,8 +85,11 @@ def main():
         parser.error("--hud-capture requires --hud-smoke")
     if args.lotus_capture and not args.lotus_smoke:
         parser.error("--lotus-capture requires --lotus-smoke")
+    if args.site_capture and not args.site_smoke:
+        parser.error("--site-capture requires --site-smoke")
     action_mode = args.action_playtest or args.action_smoke
-    lotus_mode = args.lotus_playtest or args.lotus_smoke
+    site_mode = args.site_playtest or args.site_smoke
+    lotus_mode = args.lotus_playtest or args.lotus_smoke or site_mode
     if lotus_mode:
         from check_lotus import validate_files
         authoring_errors = validate_files()
@@ -94,7 +100,7 @@ def main():
     first_person = args.first_person or args.first_person_smoke or args.perception_smoke or args.hud_smoke or action_mode or voice_mode
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
-        args.person1_ref = args.person1_ref or ("origin/main" if first_person else "0fd1285")
+        args.person1_ref = args.person1_ref or ("76b8eaa" if site_mode else "origin/main" if first_person else "0fd1285")
         if not (args.person3_root or args.person3_ref):
             args.person3_ref = "57f809d" if first_person else "ff2a6d7"
     if args.person1_ref and not (args.person3_root or args.person3_ref):
@@ -188,6 +194,13 @@ def main():
                         target = project / relative
                         target.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(ROOT / relative, target)
+            if site_mode:
+                for relative in ["world/site_builder.gd", "scenarios/site_coverage.json",
+                                 "scenes/bots/site_playtest.gd", "scenes/bots/site_playtest.tscn",
+                                 "tests/person2/site_smoke.gd"]:
+                    target = project / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(ROOT / relative, target)
             if visual:
                 for relative in ["scenes/bots/motion_visual_demo.gd", "scenes/bots/motion_visual_demo.tscn"]:
                     target = project / relative
@@ -196,7 +209,7 @@ def main():
             if first_person:
                 settings = (project / "project.godot").read_text(encoding="utf-8")
                 settings = settings.replace('run/main_scene="res://scenes/main.tscn"',
-                                            'run/main_scene="res://scenes/bots/lotus_playtest.tscn"' if lotus_mode else 'run/main_scene="res://scenes/bots/voice_playtest.tscn"' if voice_mode else 'run/main_scene="res://scenes/bots/action_playtest.tscn"' if action_mode
+                                            'run/main_scene="res://scenes/bots/site_playtest.tscn"' if site_mode else 'run/main_scene="res://scenes/bots/lotus_playtest.tscn"' if lotus_mode else 'run/main_scene="res://scenes/bots/voice_playtest.tscn"' if voice_mode else 'run/main_scene="res://scenes/bots/action_playtest.tscn"' if action_mode
                                             else 'run/main_scene="res://scenes/bots/first_person.tscn"')
                 (project / "project.godot").write_text(settings, encoding="utf-8")
             else:
@@ -235,22 +248,24 @@ def main():
                     return 1
                 print("PERSON2_SHARED_IMPORT_PASS (temporary project only)")
                 scripts.append(("motion_integration.gd", "PERSON2_MOTION_INTEGRATION_PASS"))
-            if args.visual_demo or args.first_person or args.action_playtest or args.voice_playtest or args.lotus_playtest:
+            if args.visual_demo or args.first_person or args.action_playtest or args.voice_playtest or args.lotus_playtest or args.site_playtest:
                 print("Opening synthetic first-person voice bridge. Close the window to return." if args.voice_playtest else "Opening first-person scene (voice backend not connected). Close the window to return."
                       if args.first_person or args.action_playtest else "Opening overhead motion test. Close window or press Esc to return.", flush=True)
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
-                return subprocess.run([godot, *(["--headless"] if args.voice_headless else []), "--path", str(project), *(["--", "--voice-port=" + str(args.voice_port), *(["--voice-interpret-fixture" if args.voice_interpret_only else "--voice-model-fixture"] if args.voice_headless else [])] if args.voice_playtest or args.lotus_playtest else [])], check=False).returncode
-            if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke or args.voice_smoke or args.lotus_smoke:
-                smoke_mode = "--lotus-smoke" if args.lotus_smoke else "--voice-smoke" if args.voice_smoke else "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
-                marker = "PERSON2_LOTUS_PASS" if args.lotus_smoke else "PERSON2_VOICE_SMOKE_PASS" if args.voice_smoke else "PERSON2_ACTION_PASS" if args.action_smoke else ("PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"))
-                command = [godot, *([] if args.hud_capture or args.lotus_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
+                return subprocess.run([godot, *(["--headless"] if args.voice_headless else []), "--path", str(project), *(["--", "--voice-port=" + str(args.voice_port), *(["--voice-interpret-fixture" if args.voice_interpret_only else "--voice-model-fixture"] if args.voice_headless else [])] if args.voice_playtest or args.lotus_playtest or args.site_playtest else [])], check=False).returncode
+            if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke or args.voice_smoke or args.lotus_smoke or args.site_smoke:
+                smoke_mode = "--site-smoke" if args.site_smoke else "--lotus-smoke" if args.lotus_smoke else "--voice-smoke" if args.voice_smoke else "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
+                marker = "PERSON2_SITE_PASS" if args.site_smoke else "PERSON2_LOTUS_PASS" if args.lotus_smoke else "PERSON2_VOICE_SMOKE_PASS" if args.voice_smoke else "PERSON2_ACTION_PASS" if args.action_smoke else ("PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"))
+                command = [godot, *([] if args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
                 if args.hud_capture:
                     command.append("--hud-capture=" + str(args.hud_capture.resolve()))
-                if args.voice_smoke or args.lotus_smoke:
+                if args.voice_smoke or args.lotus_smoke or args.site_smoke:
                     command.append("--voice-port=0")
                 if args.lotus_capture:
                     command.append("--lotus-capture=" + str(args.lotus_capture.resolve()))
+                if args.site_capture:
+                    command.append("--site-capture=" + str(args.site_capture.resolve()))
                 result = subprocess.run(
                     command,
                     capture_output=True, text=True, timeout=45,
@@ -278,6 +293,10 @@ def main():
                 if result.returncode or marker not in output or "SCRIPT ERROR" in output or "ERROR:" in output:
                     return 1
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        if isinstance(exc, subprocess.TimeoutExpired):
+            for captured in (exc.stdout, exc.stderr):
+                if captured:
+                    print(captured.decode("utf-8", errors="replace") if isinstance(captured, bytes) else captured, end="")
         print("Person 2 checks failed: " + str(exc), file=sys.stderr)
         traceback.print_exc()
         return 1

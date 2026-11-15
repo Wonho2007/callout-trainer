@@ -10,11 +10,11 @@ Repository: https://github.com/Wonho2007/callout-trainer
 
 Read AGENTS.md, README.md, docs/PROJECT_DESCRIPTION.md,
 docs/PERSON2_HANDOFF.md, docs/DECISIONS.md, docs/TEAM.md and docs/CONTRACTS.md.
-Then read bots/LOTUS_SCENARIO.md and bots/VOICE_GAME.md for implementation details.
+Then read bots/SITE_SCENARIO.md and bots/VOICE_GAME.md for implementation details.
 Inspect git status, current branch/log and source before changing anything.
 
-Current work branch is person-2/model-capability-spike. Last gameplay checkpoint
-is 608cae7 (newer documentation commits may follow). Previous checkpoints are
+Current work branch is person-2/model-capability-spike. Bot checkpoint is 86a54aa;
+map branch merged at 513b2e9. Newer integration commits may follow. Previous checkpoints are
 156c581 (voice/game bridge) and 2a33eda (GPU/live mic). PR #4 is already merged.
 Do not reset/clean, switch to the obsolete person-2/bot-perception branch, blindly
 merge main, overwrite teammate changes or merge this branch into main.
@@ -40,13 +40,22 @@ Boaster in B Main at +23s. Boaster's earlier remote smoke does not locate him.
 His first-localized death position is used for an explicitly labeled alive
 continuation; do not force the source kills or result. Keep unknown starts unknown.
 
-The new seven-region greybox is a SEPARATE authored approximation. The original
-three-region map is unchanged. Metric geometry/within-region coordinates and
-continuations are authored; source metadata is pending review. The player takes
-Something/Yoru's role, ally f0rsakeN/Omen's role. Player reference movement must never
-be automated. Annotated bot movement/utility baseline and evidence-driven deviations are implemented;
-exact agent kits/continuous trajectories remain approximate. Flashed enemies cannot shoot,
-show a white head circle, and dead bots disappear with collision disabled.
+The default voice game now uses Person 3's seven-zone B site map from
+person-3/greybox-b-site at 76b8eaa, merged at 513b2e9 after preserving local work
+at 86a54aa. Main was fetched but still at 8712f7d; the map was on that teammate
+branch. Do not switch back to the custom Lotus approximation. Source geometry
+and zones are unchanged; world/site_builder.gd adapts plant/spawn metadata and
+scenarios/site_coverage.json supplies new bot anchors. Circular Pit uses radius
+and Upper wins their deliberate overlap. Player starts Heaven, ally/spike Pit;
+unknown enemies still arrive only at +23s. Metric placements remain authored.
+
+run_voice_game.ps1 defaults to this new map. -Lotus is a compatibility alias;
+-LegacyRoom and -LegacyLotus explicitly select old profiles. V talks and B dashes.
+Annotated movement/utility baseline and evidence-driven deviations are implemented;
+exact agent kits/continuous trajectories remain approximate. The larger map has
+four seconds of physical utility staging grace; model/message expiry is unchanged.
+Flashed enemies cannot shoot, show a white head circle, and dead bots disappear.
+Player control and unforced kills/results remain required.
 
 Models/policy get only copied delivered observations, own allowed state, local
 beliefs and static authored affordances. No hidden target transforms, scene refs,
@@ -73,20 +82,21 @@ or train unnecessarily. Launchers recreate the read-only Person 3 snapshot if ne
 
 Launch from PowerShell after closing any older voice-host console:
 cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
-.\validation\run_voice_game.ps1 -Lotus
+.\validation\run_voice_game.ps1
 V talks, F restarts at plant, Esc releases the mouse. Running root
 project.godot directly is not the current voice-enabled scenario entry point.
 
 Evidence already recorded: five standalone human mic calls semantically correct
 (one cue/queue spelling error); real-model typed engine report/delay/movement;
-575 default/cross-lane assertions, 139 live-perception, 53 scenario checks and seven
-Python authoring/voice-boundary tests; rendered capture inspected. Exact commands
-and scopes are in the current handoff. New human voice-to-Lotus acceptance, export/
+575 default/cross-lane assertions; prior legacy 139 live-perception/53 scenario
+checks; seven Python authoring/voice-boundary tests. Current imported-map checks:
+23 functional / 24 rendered, capture inspected. Exact commands
+and scopes are in the current handoff. New human voice-to-current-site acceptance, export/
 offline acceptance, backup video and full-game fairness remain unconfirmed.
 Do not present historical totals or typed/rendered tests as fresh human results.
 
 Continue with useful work, not another plan-only response:
-1. Verify the current spoken voice-to-Lotus loop on this PC and record actual results.
+1. Verify the current spoken voice-to-current-site loop on this PC and record actual results.
 2. Coordinate/test paired belief/planner changes and full report acceptance.
 3. Human-check the implemented baseline/utility and deviation behavior, preserving first-known spawns,
    physical feasibility, player control or evidence guards.

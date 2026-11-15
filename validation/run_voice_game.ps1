@@ -1,4 +1,4 @@
-param([switch]$ModelGoals, [switch]$Lotus)
+param([switch]$ModelGoals, [switch]$Lotus, [switch]$LegacyRoom, [switch]$LegacyLotus)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $pythonExe = Join-Path $env:USERPROFILE '.cache\callout-voice-venv\Scripts\python.exe'
@@ -28,10 +28,13 @@ try {
     New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
     $gameLog = Join-Path $runRoot 'game.log'
     $gameErrors = Join-Path $runRoot 'game-errors.log'
-    $sceneMode = '--lotus-playtest'
-    if (-not $Lotus) { $sceneMode = '--voice-playtest' }
+    # Seven-zone teammate map is now the default. -Lotus remains a compatibility alias.
+    $sceneMode = '--site-playtest'
+    $sharedRef = '76b8eaa'
+    if ($LegacyRoom) { $sceneMode = '--voice-playtest'; $sharedRef = '8712f7d' }
+    if ($LegacyLotus) { $sceneMode = '--lotus-playtest'; $sharedRef = '8712f7d' }
     $gameArgs = @('-u', "`"$(Join-Path $PSScriptRoot 'run_person2_tests.py')`"", '--godot', "`"$godotExe`"",
-        $sceneMode, '--voice-port', $voicePort, '--person1-ref', '8712f7d', '--person3-ref', '57f809d')
+        $sceneMode, '--voice-port', $voicePort, '--person1-ref', $sharedRef, '--person3-ref', '57f809d')
     $gameProcess = Start-Process -FilePath $pythonExe -ArgumentList $gameArgs -WorkingDirectory $repoRoot -WindowStyle Hidden -RedirectStandardOutput $gameLog -RedirectStandardError $gameErrors -PassThru
     $ready = $false
     $readyDeadline = (Get-Date).AddSeconds(30)
