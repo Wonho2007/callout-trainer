@@ -26,7 +26,7 @@ Changed `bots/motion_controller.gd`, `tests/person2/motion_tests.gd`,
   the existing path-endpoint tolerance and is a conservative synthetic floor
   approximation, not a validated multi-floor movement design. Small floor
   settling inside these bounds remains a hold and never trips a stuck timer.
-- Added seven regressions for the already-correct player-entry discriminator and
+- Added nine regressions for the already-correct player-entry discriminator and
   actual delayed release with cited evidence. The executor's outer dispatcher
   already enforced `type=player_entry`; no executor behavior was changed.
 
@@ -66,15 +66,16 @@ $godotExe = 'C:\Users\Isoto\Downloads\callout-godot-4.4.1\Godot_v4.4.1-stable_wi
 git diff --check
 ```
 
-- Default runner: command assertions report `PERSON2_TESTS_PASS checks=181`,
+- Default runner: command assertions report `PERSON2_TESTS_PASS checks=183`,
   then strict runner exits 1 on `ERROR: Failed to read the root certificate store`.
   Remaining default suites are not reached by that invocation.
 - Focused motion invocation: copied the existing runner's `FILES` unchanged to
   a disposable project, ran `res://tests/person2/motion_tests.gd` with the same
   engine. It reports `PERSON2_MOTION_PASS checks=77`, then the same certificate
   error. Strict focused check exits 1. Assertion success is not a clean engine
-  or full-suite pass. Focused command invocation likewise reports 181 assertions
-  followed by the certificate error.
+  or full-suite pass. The earlier focused command invocation reported 181
+  assertions followed by the certificate error; the final default invocation
+  includes two additional coordination regressions (183 total).
 - FPS runner resolves read-only Person 1 `487ad73` / Person 3 `57f809d`, then
   exits 1 during temporary editor import on the certificate error. FPS assertions
   are not reached. No error filtering or runner/sensor patch was applied.
@@ -86,15 +87,25 @@ the Windows certificate store. This session cannot request sandbox escalation.
 GitHub PR inspection also failed on sandbox network access; remote PR draft
 status was not freshly verified or changed.
 
+Publication: action implementation committed locally as `3c6085d`. Attempted
+`git push origin person-2/bot-perception`; it failed connecting to GitHub port
+443. The later coordination agreement/test additions are a separate local
+follow-up. Only this session's explicit paths were committed; concurrent
+perception/HUD edits remain untouched.
+
 ## Coordination dependencies
 
-Live follow-player release already expects delayed copied content
-`{type: "player_entry", actor_id: "player", entry_id: "entry"}` from `seen` or
-`heard`, per `docs/PERSON2_EXECUTOR.md`. Event time must be at/after readiness;
-actual delivery controls when it may release. The user was asked to relay this
-existing interface to the perception session. Until that producer is agreed and
-wired, only synthetic entry/cue fixtures establish action behavior. No global
-player transform is an acceptable substitute.
+The perception session agreed through the user to produce delayed **seen**
+observations with exactly
+`{type: "player_entry", actor_id: "player", entry_id: "entry"}` from
+actual player movement into the entry, requiring fair FOV, LOS, smoke and blind
+checks. It owns sensor/runtime wiring. The legacy executor contract also permits
+identified `heard` entry observations, but the current producer will not generate
+them: anonymous footsteps carry no player identity, especially through walls.
+New tests retain that boundary and reject a different entry. Event time must be
+at/after readiness; actual delivery controls release. Until wiring is tested,
+only synthetic entry/cue fixtures establish this behavior. No global player
+transform enters policy.
 
 Combat remains blocked on agreement for a separate delayed last-observed aim
 payload: observation ID, bot ID, event/availability ticks, opponent ID, copied

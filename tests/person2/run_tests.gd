@@ -331,6 +331,12 @@ func test_edge_cases() -> void:
 	for discriminator in ["enemy_seen", "sound_heard", "", 7, null]:
 		executor.enqueue(observation("wrong_event:" + str(discriminator), {"type": discriminator, "actor_id": "player", "entry_id": "entry"}, executor.inbox.current_tick() + 1, "seen", 5))
 		expect(executor.step(executor.inbox.current_tick() + 1, actor.snapshot()).intents.is_empty(), "non-entry event cannot release coordinated swing: " + str(discriminator))
+	var ignored_tick: int = executor.inbox.current_tick() + 1
+	executor.enqueue(observation("anonymous_footstep", {"type": "sound_heard", "sound_kind": "footstep_run", "distance_class": "near"}, ignored_tick, "heard", ignored_tick - 1))
+	expect(executor.step(ignored_tick, actor.snapshot()).intents.is_empty(), "anonymous footsteps cannot identify player or release swing")
+	ignored_tick += 1
+	executor.enqueue(observation("other_entry", {"type": "player_entry", "actor_id": "player", "entry_id": "other_entry"}, ignored_tick, "seen", ignored_tick - 1))
+	expect(executor.step(ignored_tick, actor.snapshot()).intents.is_empty(), "seen player movement into a different entry cannot release swing")
 	var release_tick: int = executor.inbox.current_tick() + 2
 	executor.enqueue(observation("valid_entry", {"type": "player_entry", "actor_id": "player", "entry_id": "entry"}, release_tick, "seen", release_tick - 1))
 	expect(executor.step(release_tick - 1, actor.snapshot()).intents.is_empty(), "entry release respects actual observation delay")
