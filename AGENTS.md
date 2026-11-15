@@ -13,8 +13,8 @@ Use Godot 4. Do not reopen engine choice. Exact editor version must be pinned by
 Know which lane the user assigned. If no lane is assigned, inspect open issues and make safe independent progress; clarify before making cross-lane implementation choices. Do not overwrite others' edits.
 
 - Person 1 owns world/, actors/, weapons/, utility/, scenes/maps/, scenes/player/, main scene, project.godot and export settings.
-- Person 2 owns perception/, bots/, scenarios/, validation/, scenes/bots/ and bot/perception tests.
-- Person 3 owns comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schemas and belief/log tests.
+- Person 2 owns perception/ (including hearing and reaction delay), bots/ (behavior and the intent executor), scenarios/ (executable scenario data and enemy pro-line + branches), validation/, scenes/bots/ and bot/perception tests.
+- Person 3 owns comms/ (voice transcript input and the grounded LLM interpreter/decision core), belief/, recording/ (including the non-deterministic decision log), ui/, grading/ and evaluation/ (deferred), annotations/ (VOD notes), shared schemas and belief/log tests.
 - Shared contracts and fixture changes require explaining the change to both consumers in the PR and updating docs/examples together. Do not treat proposed examples as already frozen APIs.
 
 Use short-lived lane branches and small reviewable PRs. Keep shared root settings/main scene edits under Person 1's coordination. GitHub issues track work; docs/HANDOFFS.md records current integration facts.
@@ -33,13 +33,13 @@ Policy receives copied, delayed observations, its own state, local beliefs and e
 
 Perception and privileged physics/evaluator/replay code may access the world; their truth must not leak into policy. Policy uses target IDs and last observed data. Fallback bots obey the same restrictions.
 
-Write the leak-test fixture before bot intelligence. Verify evidence IDs existed and were available at the decision tick; also check forbidden dependencies and unseen-state perturbation. A grep alone is not a complete proof. Never mark the fairness gate passing just because the documentation checker passes.
+Write the leak-test fixture before bot intelligence. Verify evidence IDs existed and were available at the decision tick; also check forbidden dependencies and unseen-state perturbation. A grep alone is not a complete proof. Never mark the fairness gate passing just because the documentation checker passes. Because the LLM is non-deterministic, prove fairness against the **recorded decision log** (every input the model was given, its prompt and output) rather than by re-running to the same result: the logged inputs must be a subset of what the bot could observe by that tick, and must contain no hidden truth.
 
 ## Product constraints
 
-Build one compact first-person scenario with useful callouts and explainable bot adaptation. A state machine/behavior tree is sufficient; no mandatory LLM or trained model. Quick-call menu is required; speech is stretch.
+Build one compact first-person scenario with useful comms and explainable bot adaptation. Player input is **voice**; there is no quick-call menu (the menu code is retained only as a deterministic test/fallback helper). Teammate bots are driven by a **local LLM that interprets comms and makes decisions non-deterministically**, using only information the bot is allowed to have. The LLM is grounded in the game's vocabulary at runtime, not trained or fine-tuned, and must be free/local with no paid service. A deterministic policy/behavior-tree fallback is required as the circuit breaker when the model is unavailable or produces an illegal intent (hierarchical control: the model interprets and sets goals, a deterministic executor carries them out).
 
-Do not remove the brief's never-cut features without an explicit product decision. Core counterfactual is belief-only replay on fixed observations, not a promise of changed combat outcomes. Entropy reduction does not establish accuracy. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence.
+Do not remove the brief's never-cut features without an explicit product decision. Post-round grading and the belief-only counterfactual are **deferred** by a product decision (build after the core voice→LLM→reaction loop works); they are not cut. Entropy reduction does not establish accuracy. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence.
 
 Use synthetic fixtures for unresolved map/clip details and label them. No client access, ripped assets, replay-file scraping, secrets or paid required services. Keep the demo offline-capable.
 

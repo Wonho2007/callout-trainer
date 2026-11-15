@@ -26,8 +26,8 @@ Committed decisions (`docs/DECISIONS.md`):
   need hand-written VALORANT examples, plus GPU time, for a likely worse result. Those are
   recorded as the fallback/justification only. See `docs/DECISIONS.md`.)
 - **No trust model.** A comm is believed by its hedge (sure/think/unsure → 0.9/0.7/0.4).
-- **No paid API, local/free only.** LLM + speech run on the **Dell G16 7630** (discrete
-  NVIDIA GPU). Model files copy to the LG Gram / HP Aero but run slower there.
+- **No paid API, local/free only.** LLM + speech run on a capable PC with a discrete GPU
+  (specific machine TBD). Model files copy to the thinner laptops but run slower there.
 - **Grading/debrief deferred.** Do not build it until the core works.
 - **Reference round:** FNC vs PRX, Masters Toronto 2024 Grand Final, Lotus, final round,
   from the bomb plant. **You annotate it from the VOD.** Do not invent any pro fact.
@@ -53,11 +53,11 @@ is the voice → LLM-grounded interpretation → belief/goal path, plus logging.
 
 ## 3. The capability spike — DO THIS FIRST (step zero)
 
-Before building anything on the LLM, prove the non-negotiables are runnable on the Dell G16.
+Before building anything on the LLM, prove the non-negotiables are runnable on the target GPU PC.
 Budget 30–60 min. This gates every time estimate.
 
-1. Install a local LLM runtime on the Dell G16: **Ollama** (easiest) or llama.cpp / LM Studio.
-2. Pull a small instruct model that fits the G16's VRAM (e.g. an 7–8B instruct model
+1. Install a local LLM runtime on the GPU PC: **Ollama** (easiest) or llama.cpp / LM Studio.
+2. Pull a small instruct model that fits that machine's VRAM (e.g. a 7–8B instruct model
    quantized, or smaller). Confirm the model's license is free for your use.
 3. Measure: give it a fixed VALORANT-comms prompt (section 5) and time the response. You need
    responses fast enough to react in a round. Record tokens/sec and latency.
@@ -67,7 +67,7 @@ Budget 30–60 min. This gates every time estimate.
 
 A model file (e.g. GGUF) is portable: train nothing, copy the same file to the other laptops,
 run with the same runtime. It just runs slower without the discrete GPU. Do the LLM work on
-the Dell.
+the GPU PC.
 
 ## 4. Annotate the reference round — the walkthrough you asked for
 
@@ -154,7 +154,7 @@ runtime; keep truth in a separate stream the model never sees.
 
 1. Read `callout_trainer_brief.md`, `AGENTS.md`, `docs/TEAM.md`, `docs/DECISIONS.md`,
    `docs/COMMANDS.md`, `docs/VIDEO_ANNOTATION.md`, this file, and the Antigravity handoff.
-2. **Capability spike** (section 3) on the Dell G16.
+2. **Capability spike** (section 3) on the target GPU PC.
 3. Freeze three seams with the team (section 7).
 4. Annotate the round starting state + rough timeline (section 4); hand to Person 2.
 5. Build the grounding vocabulary + interpreter against **typed text** (section 5.1–5.2).
@@ -191,14 +191,14 @@ Everything parallel depends on these. Write them down before parallel work start
 
 - Fairness: the model sees only copied delayed observations, own state, local beliefs, allowed
   public signals. Log everything it saw. No truth, no scene, no spectator info.
-- No paid API; local/free only; offline-capable; model runs on the Dell G16.
+- No paid API; local/free only; offline-capable; model runs on the GPU PC.
 - Do not invent pro facts — annotate from the VOD, mark unknowns, reference by URL/timestamp.
 - Do not edit Person 1's or Person 2's files without coordinating in a PR.
 - Keep the deterministic fallback working — it is the required circuit breaker.
 
 ## 10. Honest scope note
 
-With your parallel setup (Kiro + Antigravity, Dell for the LLM) this is roughly **10–14 hours
+With your parallel setup (Kiro + Antigravity, the GPU PC for the LLM) this is roughly **10–14 hours
 wall-clock** for a working vertical slice: one annotated scenario, voice/typed comm → grounded
 interpretation → teammate reacts, local model, full logging. Grading, multiple scenarios,
 enemy pro-mimicry polish and the debrief are later. The LLM-makes-decisions piece is the long

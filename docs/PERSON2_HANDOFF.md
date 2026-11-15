@@ -22,8 +22,8 @@ Key product decisions (see `docs/DECISIONS.md`) that affect you:
 - **No trust model.** A callout is believed and acted on by its hedge strength alone; a
   wrong call gets the bot caught out. The consequence is a bad in-round outcome, which
   **plays out in your lane** (the bot commits and can die).
-- **No paid APIs. Everything local/free.** The LLM and speech run on the **Dell G16 7630**
-  (the only machine with a discrete GPU). Model files copy to the other laptops.
+- **No paid APIs. Everything local/free.** The LLM and speech run on a capable PC with a
+  discrete GPU (specific machine TBD). Model files copy to the other laptops.
 - **Grading/debrief is deferred.** Do not build it yet.
 - **Reference round:** FNC vs PRX, Masters Toronto 2024 Grand Final, Lotus, the final
   round, starting from the bomb plant. Person 3 annotates it from the VOD.

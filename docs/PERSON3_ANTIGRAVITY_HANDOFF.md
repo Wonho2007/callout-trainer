@@ -15,7 +15,8 @@ facts, pro positions or data; do not edit other people's files.** The heavy LLM/
 work and the VOD annotation are done by the human in Kiro — **not your tracks.** You do two
 contained pieces only.
 
-The machine that runs heavy models is the **Dell G16 7630** (discrete NVIDIA GPU). Models and
+The machine that runs heavy models is a capable PC with a discrete GPU (specific machine TBD).
+Models and
 STT should target that machine; they are portable files, so copy to other laptops later.
 
 ---
@@ -43,7 +44,7 @@ interpreter — just produce clean text).
 
 - Speak 5–10 short VALORANT-style comms ("they're on heaven", "flash short", "I'm swinging
   B main"). Report the transcript accuracy and the end-to-end latency (speak → text) on the
-  Dell G16. Note failure cases (fast speech, slang, overlapping words).
+  the GPU PC. Note failure cases (fast speech, slang, overlapping words).
 - No network calls during transcription (verify offline).
 
 **Do NOT:** interpret meaning, map to regions, or produce structured comms — that is the Kiro

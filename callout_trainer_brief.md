@@ -2,9 +2,16 @@
 
 A hand-off document for the three-person team and AI collaborators. Updated for the user-confirmed **Godot** path after reading all seven pages of advice.pdf and the single page of prompt.pdf in Downloads.
 
-**Confirmed:** Godot; three developers; a playable first-person scenario with interactive bots. **Planning defaults:** one greyboxed site and its approaches, a 30-45 second post-plant segment, player plus two teammate bots versus two enemies, one rifle, smoke and flash, quick-call input, offline desktop build. The 24-hour budget comes from the earlier brief; confirm the actual deadline. Map, clip, team names, and judging hardware remain open.
+**Confirmed:** Godot; three developers; a playable first-person scenario with interactive bots. **Planning defaults:** one greyboxed site and its approaches, a 30-45 second post-plant segment, player plus two teammate bots versus two enemies, one rifle, smoke and flash, voice comm input, offline desktop build. The 24-hour budget comes from the earlier brief; confirm the actual deadline. Map, clip, team names, and judging hardware remain open.
 
 **Product:** a callout practice teammate. Reconstruct a pro round's starting situation and baseline plan; let the player take over one role; show how communication changes teammate beliefs and decisions. After player intervention, the continuation is an approximate tactical simulation, not a prediction of what the actual professionals would do. Read the whole document before writing code.
+
+> **Direction update (2026-11-14), authoritative — see `docs/DECISIONS.md`.** The product is a **VALORANT comms coach**. Several planning defaults below are superseded; where this note and a later section conflict, this note and `docs/DECISIONS.md` win:
+> - **Input is voice only.** There is no quick-call menu for the player; the menu code is kept only as a deterministic test/fallback helper. Treat every "quick-call" mention below as "voice comm (menu retained as fallback)".
+> - **Teammate bots are driven by a local LLM that interprets comms and makes decisions non-deterministically**, using only information the bot may have. It is **grounded** in the game vocabulary at runtime, not trained; free/local only; with a deterministic policy fallback as the required circuit breaker. This supersedes "no mandatory LLM" language below.
+> - **The trust model is removed** (§6.7 no longer applies); a comm is believed by its hedge alone and a wrong call gets the bot caught out in-round.
+> - **Post-round grading and the belief-only counterfactual are deferred** until the core voice→LLM→reaction loop works; they are not cut.
+> - **Scenario source:** one real round hand-annotated from a public VOD (FNC vs PRX, Masters Toronto 2024 GF, Lotus, final round, from the plant); GRID Open Access gives schedules/pre-post-match only, not positions.
 
 ---
 
@@ -56,7 +63,7 @@ Some factual claims in the mentor deck (engine versions, a specific on-device mo
 
 ## 2. The pitch
 
-> **A practice teammate for callouts.** It only knows what it saw, heard, or was told. It learns how much to trust you. And it shows you exactly what your comms did to the team's picture of the round.
+> **A practice teammate for callouts.** It only knows what it saw, heard, or was told. You talk to it, and it shows you exactly what your comms did to the team's picture of the round.
 
 ### 2.1 One-paragraph description
 
@@ -548,7 +555,7 @@ Package an offline desktop build, controls README, scenario/annotation notes, mo
 - **UI/logging:** Godot Control and 2D drawing; JSON scenarios, JSONL logs. No database.
 - **Testing/pilot:** minimal Godot headless runner for pure belief/comms fixtures and replay; scene-based geometry/perception/utility validation. Failed checks exit nonzero; use the same editor locally and in CI.
 - **Data:** manual public VOD annotation and documented community catalog data; cache permissible metadata for offline use. Reference footage/images remain authoring aids.
-- **Input:** required quick-call menu; optional local speech or model parser after core gates pass, with deterministic fallback.
+- **Input:** voice comms (push-to-talk) as the only player input, interpreted by a grounded local LLM; the quick-call menu is retained only as a deterministic test/fallback helper. No paid service; deterministic fallback required.
 - **Delivery/assets:** zipped desktop build and backup video; self-made geometry or free assets with verified redistribution terms, credits and non-affiliation notice.
 
 Official Godot implementation references (pin version-specific pages when selecting the editor):
