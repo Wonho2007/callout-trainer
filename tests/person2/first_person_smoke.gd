@@ -24,36 +24,56 @@ func run(scene: Node3D) -> void:
 	runtime.comm_result.connect(func(result: Dictionary): results.append(result))
 	await wait_tick(runtime, 2)
 	var player: Node3D = scene.get("_player")
+	var builder: Node3D = scene.get("builder")
+	expect(builder.map_path == "res://world/maps/b_site.json" and builder.map_data.id == "b_site_box", "launch uses Person 1's current map, not the old test room")
+	expect(builder.map_data.bounds.min[2] < -6 and not builder.map_data.get("divots", []).is_empty(), "latest deeper room and divot data are loaded")
+	var region_ids: Array = []
+	for region in builder.map_data.regions:
+		region_ids.append(region.id)
+	region_ids.sort()
+	expect(region_ids == ["corridor", "entry", "room"], "bot vocabulary matches the new map's actual region IDs")
 	expect(get_viewport().get_camera_3d() == player.camera, "active camera belongs to shared first-person player")
-	expect(scene.teammate.is_alive and scene.teammate.global_position.x < -4, "real teammate spawns at authored marker")
+	var start: Vector3 = scene.teammate.global_position
+	var home: Vector3 = Vector3(-2, 0, 11.5)
+	var cover: Vector3 = Vector3(0, 0, 3)
+	expect(scene.teammate.is_alive and start.distance_to(home) < 0.3, "real teammate spawns at the new authored corridor position")
+	expect(builder.get_spawn("teammate") == null, "owned scenario adds teammate placement without mutating Person 1's map registry")
+	expect(builder.query_path(start, cover).size() > 2, "new bot route uses the corridor/hallway navigation path")
 	# Exercise shared input/movement code, not a replacement player controller.
 	var before: Vector3 = player.global_position
 	Input.action_press("move_forward")
 	player._physics_process(1.0 / 60.0)
 	Input.action_release("move_forward")
 	expect(player.global_position.distance_to(before) > 0.01, "shared first-person controller physically moves")
-	var report: Dictionary = message(runtime, "report", "report", {"action": "report_enemy", "region_id": "region_b", "count": 1, "hedge": "sure"})
+	var report: Dictionary = message(runtime, "report", "report", {"action": "report_enemy", "region_id": "room", "count": 1, "hedge": "sure"})
 	expect(runtime.submit_comm(report).ok, "voice host seam accepts normalized comm")
 	var issued: int = report.issued_tick
 	await wait_tick(runtime, issued + 17)
-	expect(scene.teammate.global_position.x < -4.9, "comm cannot move bot before delay")
+	expect(scene.teammate.global_position.distance_to(start) < 0.1, "comm cannot move bot before delay")
 	await wait_tick(runtime, issued + 55)
-	expect(scene.teammate.global_position.x > -3, "accepted delayed report moves real teammate in first-person scene")
-	var bad: Dictionary = message(runtime, "foreign", "report", {"action": "report_enemy", "region_id": "region_a", "count": 1, "hedge": "sure"})
+	expect(scene.teammate.global_position.distance_to(start) > 2 and scene.teammate.global_position.z < start.z - 1, "room report moves teammate from corridor through the hallway")
+	await wait_tick(runtime, issued + 155)
+	expect(scene.teammate.global_position.distance_to(cover) < 0.35 and runtime.snapshot().physical.state == "holding", "shared physics reaches the new room coverage marker without getting stuck")
+	var bad: Dictionary = message(runtime, "foreign", "report", {"action": "report_enemy", "region_id": "entry", "count": 1, "hedge": "sure"})
 	bad.recipient_id = "other"
 	runtime.submit_comm(bad)
-	await wait_tick(runtime, issued + 95)
+	runtime.submit_comm(message(runtime, "old_map", "report", {"action": "report_enemy", "region_id": "region_b", "count": 1, "hedge": "sure"}))
+	await wait_tick(runtime, issued + 185)
+	var old_rejected: bool = false
+	for result in results:
+		old_rejected = old_rejected or (result.message_id == "old_map" and result.status == "rejected" and result.reason_code == "unknown_target")
+	expect(old_rejected, "old test-room region names are rejected by the current-map catalog")
 	var clean: bool = not contexts.is_empty()
 	for frame in contexts:
 		for observation in frame.observations:
-			clean = clean and observation.available_tick <= frame.tick and observation.content.message.message_id != "foreign"
+			clean = clean and observation.available_tick <= frame.tick and observation.content.message.message_id not in ["foreign", "old_map"]
 	expect(clean, "model contexts omit future and rejected raw testimony")
 	var frame: Dictionary = contexts[-1]
 	var intent: Dictionary = {"context_id": frame.context_id, "decision_id": "model:1", "bot_id": "ally",
-		"goal": "reposition", "target_id": "home", "watch_region_id": "region_a", "evidence_ids": []}
+		"goal": "reposition", "target_id": "home", "watch_region_id": "entry", "evidence_ids": []}
 	expect(runtime.submit_intent(intent).ok, "recorded-context model goal passes intent seam")
 	await wait_tick(runtime, runtime.current_tick() + 3)
-	expect(runtime.snapshot().plan.decision.target_id == "home" and scene.teammate.move_dir.x < 0, "validated model intent physically overrides fallback coverage")
+	expect(runtime.snapshot().plan.decision.target_id == "home" and (home - scene.teammate.global_position).dot(scene.teammate.move_dir) > 0, "validated model intent physically overrides fallback coverage")
 	var swing: Dictionary = message(runtime, "swing", "command", {"action": "swing_together", "target_id": "entry", "timing": {"mode": "on_cue"}})
 	runtime.submit_comm(swing)
 	await wait_tick(runtime, int(swing.issued_tick) + 20)
@@ -67,7 +87,7 @@ func run(scene: Node3D) -> void:
 	expect(runtime.snapshot().plan.decision.target_id == "cover", "invalid model output/cancel recover to safe fallback")
 	player.apply_damage(100)
 	expect(scene.get("_round_state") == "active", "player death leaves surviving teammate/voice round active")
-	runtime.submit_comm(message(runtime, "after_death", "report", {"action": "report_enemy", "region_id": "region_a", "count": null, "hedge": "think"}))
+	runtime.submit_comm(message(runtime, "after_death", "report", {"action": "report_enemy", "region_id": "entry", "count": null, "hedge": "think"}))
 	await wait_tick(runtime, runtime.current_tick() + 22)
 	var delivered: bool = false
 	for result in results:
@@ -85,6 +105,7 @@ func run(scene: Node3D) -> void:
 	while scene.get("_restart_pending"):
 		await get_tree().physics_frame
 	expect(scene.runtime != runtime and scene.teammate.is_alive and player.is_alive, "restart creates fresh runtime and revives both actors")
+	expect(scene.teammate.global_position.distance_to(home) < 0.3 and builder.map_data.id == "b_site_box", "restart retains new map and corridor teammate spawn")
 	intent.context_id = old_context.context_id
 	intent.target_id = "home"
 	intent.decision_id = "old_round"

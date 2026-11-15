@@ -1,0 +1,25 @@
+{
+  "schema_version": "person2.coverage.v1",
+  "synthetic": true,
+  "note": "Person 2-authored teammate spawn and coverage affordances for Person 1's synthetic b_site_box map. Not pro annotations or a reconstructed round. Coordinates are static authored destinations, never hidden opponent positions.",
+  "map_id": "b_site_box",
+  "teammate_spawn": {"position": [-2, 0, 11.5], "facing_deg": 0},
+  "planner": {
+    "regions": ["room", "entry", "corridor"],
+    "markers": [
+      {"id": "home", "watch_regions": ["entry"], "roles": ["hold"], "objectives": ["none"]},
+      {"id": "cover", "watch_regions": ["room"], "roles": ["hold"], "objectives": ["none"]}
+    ],
+    "baseline_marker_id": "home",
+    "baseline_watch_region": "entry",
+    "threat_threshold": 0.55,
+    "freshness_ticks": 600,
+    "heartbeat_ticks": 30,
+    "switch_margin": 0.1
+  },
+  "motion_markers": {
+    "home": {"position": [-2, 0, 11.5], "watch_points": {"entry": [0, 1.6, 8]}},
+    "cover": {"position": [0, 0, 3], "watch_points": {"room": [0, 1.6, -2.5]}}
+  },
+  "entries": {"entry": {"stage_marker_id": "home", "route_marker_ids": ["cover"]}}
+}

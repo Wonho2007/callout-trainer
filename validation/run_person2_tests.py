@@ -61,7 +61,7 @@ def main():
     first_person = args.first_person or args.first_person_smoke
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
-        args.person1_ref = args.person1_ref or ("233e092" if first_person else "0fd1285")
+        args.person1_ref = args.person1_ref or ("origin/main" if first_person else "0fd1285")
         if not (args.person3_root or args.person3_ref):
             args.person3_ref = "57f809d" if first_person else "ff2a6d7"
     if args.person1_ref and not (args.person3_root or args.person3_ref):
@@ -71,6 +71,15 @@ def main():
         version = subprocess.run([godot, "--version"], capture_output=True, text=True, timeout=15, check=True)
         if not version.stdout.strip().startswith("4.4.1.stable"):
             raise RuntimeError("Expected Person 1's Godot 4.4.1 stable; got " + version.stdout.strip())
+        # Freeze each selected ref once per run so a simultaneous fetch cannot
+        # mix source versions. FPS defaults follow the latest locally fetched
+        # main rather than remaining pinned to an old Person 1 map revision.
+        for field in ["person1_ref", "person3_ref"]:
+            selected = getattr(args, field)
+            if selected:
+                revision = git_read(["rev-parse", "--verify", selected + "^{commit}"], text=True).strip()
+                setattr(args, field, revision)
+                print("PERSON2_DEPENDENCY " + field + "=" + revision)
         with tempfile.TemporaryDirectory(prefix="callout-person2-") as temporary:
             project = Path(temporary)
             files = FILES + (["tests/person2/demo.gd"] if args.demo else [])
@@ -110,6 +119,7 @@ def main():
                     copy_ref(args.person1_ref, relative)
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "scenes/bots/first_person.gd", "scenes/bots/first_person.tscn",
+                                 "scenarios/b_site_coverage.json",
                                  "tests/person2/first_person_smoke.gd"]:
                     target = project / relative
                     target.parent.mkdir(parents=True, exist_ok=True)

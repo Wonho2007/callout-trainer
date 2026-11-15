@@ -5,6 +5,3 @@
 
 [node name="FirstPersonBotIntegration" instance=ExtResource("1")]
 script = ExtResource("2")
-
-[node name="SandboxBuilder" parent="." index="0"]
-map_path = "res://world/maps/test_room.json"
