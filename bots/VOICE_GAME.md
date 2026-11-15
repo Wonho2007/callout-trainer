@@ -7,7 +7,7 @@ Run from this checkout in PowerShell:
 ```
 
 The launcher warms Llama 3.1 8B, starts Godot 4.4.1 and opens the default microphone
-host. Hold **Right Ctrl**, speak, release. **F** restarts the round. Close the game and
+host. Hold **V**, speak, release. **F** restarts the round. Close the game and
 voice console when done. Microphone audio stays in memory; transcripts, exact model
 prompts/outputs, actual delivery events and changed decisions are in ignored
 `runs/voice-game-<timestamp>/`. The new bounded capture loop also exits on game

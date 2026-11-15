@@ -43,7 +43,7 @@ try {
     $hostArgs = @('-u', (Join-Path $repoRoot 'bots\voice_host.py'), '--source-root', $sourceRoot,
         '--model-path', $modelPath.Trim(), '--port', $voicePort, '--output', $runRoot)
     if ($ModelGoals) { $hostArgs += '--model-goals' }
-    Write-Host 'Voice game ready. F restarts the round. Hold Right Ctrl to speak.'
+    Write-Host 'Voice game ready. F restarts the round. Hold V to speak.'
     & $pythonExe @hostArgs
 } finally {
     Pop-Location

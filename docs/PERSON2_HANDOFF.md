@@ -1,6 +1,6 @@
 # Current Person 2 continuation handoff
 
-Updated 2026-11-15 after gameplay checkpoint **608cae7**. This replaces the old
+Updated 2026-11-15 with local annotation-baseline/flash/death changes after gameplay checkpoint **608cae7**. This replaces the old
 accumulated handoff. Read [project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
 and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not below.
 
@@ -23,10 +23,16 @@ their first known annotation positions.
 
 ## What works now
 
+User-requested rifle tuning: 40 body damage, 160 head damage (4x multiplier),
+shared by player and bots. The integration runner overlays local `weapons/weapon.gd`
+so the pinned shared-source snapshot uses these values too.
+Sandboxed Godot startup cannot read the Windows certificate store; the same existing
+runner succeeds with approved execution outside that sandbox. Keep strict error checks.
+
 **Voice path:** Windows default Razer microphone -> local Whisper small.en CUDA/float16
 -> Person 3 grounded Llama 3.1 8B interpreter -> localhost proposal -> Godot-stamped
 receipt tick -> existing 18-tick delayed inbox -> beliefs/planner -> shared physics.
-Right Ctrl is PTT; raw mic audio stays in memory. Logs are local under `runs/`.
+V is PTT and B is dash in voice scenes (no overlapping V/dash binding); raw mic audio stays in memory. Logs are local under `runs/`.
 Go/cancel fast path retains readiness/delivery validation. Round sessions reject stale
 speech/model replies; retries deduplicate; disconnect/invalid goals retain safe control.
 
@@ -55,8 +61,15 @@ Person 3 source title/channel/event/year/named annotator/team review are still u
 Late sensor registration emits no testimony and preserves pending evidence. Shared
 movement/rifles/damage/utility/defuse execute ordinary physics; player cannot self-defuse
 the PRX plant. A delayed own sight in Heaven can trigger the authored A-Link flank.
-Round elimination/defuse/detonation and restart are implemented. Exact ally/utility/
-cooldown baseline reenactment is **not** complete. HP+armor is a simplified shared pool.
+Round elimination/defuse/detonation and restart are implemented. The annotated bot
+baseline now runs through `bots/annotation_policy.gd` and
+`bots/annotation_executor.gd`: ally movement/smokes, remote Boaster smoke, private
+crashies recon and kaajak grenade adaptation. Delivered player calls/accepted
+commands, own damage or delivered off-baseline sightings hand control to the
+reactive planner. See `bots/LOTUS_SCENARIO.md` for physical timing and kit limits.
+Enemies cannot shoot while blind, show a white head circle, and all dead bots
+disappear with collision disabled. Exact agent kits/continuous reenactment remain
+approximations. HP+armor is a simplified shared pool.
 
 ## Important files
 
@@ -67,7 +80,7 @@ cooldown baseline reenactment is **not** complete. HP+armor is a simplified shar
 | Runtime / fair sensing | `bots/teammate_runtime.gd`, planner/motion/combat modules; `perception/scene_sensor.gd`, inbox/kernel |
 | New world | `world/lotus_builder.gd`, `world/maps/lotus_b_adaptation.json` |
 | Source/runtime data | `scenarios/fnc_prx_lotus_toronto2024_gf.json`, `lotus_b_coverage.json`, `first_known_spawns.gd` |
-| Adapted policy | `bots/retake_policy.gd` (copied delayed evidence and own state only) |
+| Adapted policy | `bots/annotation_policy.gd`, `bots/annotation_executor.gd`, `bots/retake_policy.gd` (policy uses copied delayed evidence/own state; executor owns physical utility) |
 | Checks | `validation/run_person2_tests.py`, `check_lotus.py`, `run_voice_model_smoke.py`, `audit_voice_run.py`, `tests/person2/` |
 
 Component guides: [scenario](../bots/LOTUS_SCENARIO.md), [bridge](../bots/VOICE_GAME.md),
@@ -105,7 +118,7 @@ cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
 .\validation\run_voice_game.ps1 -Lotus
 ```
 
-F restarts at plant, Right Ctrl talks, Esc releases the mouse. Original profile:
+F restarts at plant, V talks, Esc releases the mouse. Original profile:
 omit `-Lotus`. Do not replace this launcher with running root `project.godot` directly;
 its main scene is still the original scaffold, not the integrated voice scenario.
 
@@ -140,10 +153,20 @@ unaccepted full-goal experiment, not an ordinary passing regression. Keep its fa
 - Real-model typed three-region engine fixture passes interpretation, actual delayed
   report and physical movement. That run's interpretation took 2.282s under engine load.
   Scoped audit passes 33 contexts, 28 changed decisions, 157 deliveries, one model record.
-- 552 default/cross-lane assertions; 139 live-perception; 31 new functional scenario;
-  seven Python tests. Person 3 structural scenario validation passes with expected unknowns.
-- Earlier rendered scenario run: 28 functional checks + PNG save; captured layout inspected.
-  The final 31-check functional suite additionally covers guarded elimination/HUD/reset.
+- Current local bot continuation: **575 default/cross-lane assertions** pass,
+  including 21 annotation-baseline and 46 combat checks; **139 live-perception**
+  checks and **seven Python** authoring/voice-boundary tests pass.
+- Final **53-check Lotus scene** passes: physical ally smokes/staging, enemy private
+  recon, grenade ignition/landing in Pit, recon wall/smoke guards, no fire during a
+  real flash, head-circle visibility/expiry, dead bot hiding/collision removal,
+  elimination/reset and V/dash separation. The scenario clock is fast-forwarded
+  for beat checks; this is not a human real-time playthrough.
+- Rendered **46-check** intermediate run passed; inspected the saved white head
+  circle. It preceded the added recon/grenade boundary and V/dash assertions.
+  Captures are local temporary artifacts, not committed assets.
+- Navigation-bake and ObjectDB-at-exit warnings remain in the scene fixture;
+  strict script/engine ERROR checks pass. Sandboxed startup's certificate-store
+  error is avoided by approved test execution outside the sandbox, not by filtering it.
 - Existing FPS and TCP checkpoints: 41 and 22 checks respectively. Do not sum historical
   runs into a fresh claim. Known navigation-bake GPU readback warning remains.
 
@@ -159,8 +182,9 @@ waits real time. A guarded test health pool is fixture-only and resets to normal
    Do not redo the completed model download/standalone five-call test unless needed.
 2. Coordinate the paired belief/planner schema removal and full player-report acceptance;
    test both consumers. Preserve valid uncertainty and actual delivery clocks.
-3. Implement the remaining ally/utility baseline from notes with physical feasibility
-   and observation guards. Keep player movement human-controlled and kills unforced.
+3. Human-check the implemented annotation baseline and reactive transitions,
+   especially spoken call overrides, physical staging and generic utility mappings.
+   Keep player movement human-controlled and kills unforced.
    Preserve the user-selected first-known spawn rule and original map.
 4. Close real acceptance gaps: fairness/safety coverage, offline/export test, backup
    video and demo rehearsal. Do not prioritize deferred grading/debrief/evaluation.

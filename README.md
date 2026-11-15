@@ -32,8 +32,8 @@ cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
 .\validation\run_voice_game.ps1 -Lotus
 ```
 
-Hold **Right Ctrl** to talk, **F** to restart at the plant, **Esc** to release the mouse.
-WASD moves, LMB fires and R reloads. Enemies first arrive at +23s. Omit `-Lotus` to run
+Hold **V** to talk, **F** to restart at the plant, **Esc** to release the mouse.
+WASD moves, LMB fires, R reloads and B dashes in voice scenes. V only talks. Enemies first arrive at +23s. Omit `-Lotus` to run
 the earlier three-region integration map, which remains unchanged. Running the root
 Godot project directly still opens the original scaffold, not the voice-enabled scenario.
 

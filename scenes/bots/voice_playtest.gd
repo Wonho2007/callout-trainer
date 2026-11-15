@@ -5,6 +5,15 @@ var voice_mode_status: Label
 
 func _ready() -> void:
 	await super._ready()
+	# V belongs to push-to-talk in voice scenes. Keep speaking from also
+	# triggering the inherited sandbox dash binding.
+	for event in InputMap.action_get_events("dash"):
+		if event is InputEventKey and event.physical_keycode == KEY_V:
+			InputMap.action_erase_event("dash", event)
+	var dash_key := InputEventKey.new()
+	dash_key.physical_keycode = KEY_B
+	InputMap.action_add_event("dash", dash_key)
+	$HUD/Hints.text = $HUD/Hints.text.replace("V dash", "B dash") + " | V talk"
 	voice_mode_status = Label.new()
 	voice_mode_status.position = Vector2(12, 236)
 	voice_mode_status.text = "Voice: waiting | Goals: safe scripted planner"
@@ -21,7 +30,7 @@ func _ready() -> void:
 		return
 	teammate_ready.connect(voice_bridge.attach)
 	voice_bridge.attach(runtime)
-	_comm_status = "Voice host waiting. Hold Right Ctrl once connected."
+	_comm_status = "Voice host waiting. Hold V once connected."
 	print("PERSON2_VOICE_READY port=", voice_bridge.server.get_local_port())
 	if OS.get_cmdline_user_args().has("--voice-smoke"):
 		var smoke = load("res://tests/person2/voice_bridge_smoke.gd").new()
@@ -53,4 +62,4 @@ func _model_fixture() -> void:
 func _restart() -> void:
 	await super._restart()
 	if is_instance_valid(voice_bridge):
-		_comm_status = "Voice connected. Hold Right Ctrl to speak." if voice_bridge.peer != null else "Voice host waiting. Hold Right Ctrl once connected."
+		_comm_status = "Voice connected. Hold V to speak." if voice_bridge.peer != null else "Voice host waiting. Hold V once connected."

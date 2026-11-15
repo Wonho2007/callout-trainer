@@ -36,6 +36,34 @@ var _loss_rng := RandomNumberGenerator.new()
 var _loss_serial: int = 0
 var _delay_min: int
 var _delay_max: int
+var _recon_serial: int = 0
+var _pending_recon: Array = []
+
+func scan_recon(origin: Vector3) -> void:
+	# Privileged independent sensor at the actual orb detonation. Emits only
+	# delayed region testimony; no live aim, target nodes or player HUD marks.
+	if not _actor.is_alive:
+		return
+	for id in _opponents:
+		var target: CharacterBody3D = _opponents[id]
+		if not is_instance_valid(target) or not target.is_alive:
+			continue
+		var point: Vector3 = target.global_position + Vector3.UP
+		if origin.distance_to(point) > 14.0:
+			continue
+		if _utility != null and _utility.segment_blocked_by_smoke(origin, point):
+			continue
+		var query := PhysicsRayQueryParameters3D.create(origin, point, 1)
+		if not _actor.get_world_3d().direct_space_state.intersect_ray(query).is_empty():
+			continue
+		var region: String = _region(point)
+		if region.is_empty():
+			continue
+		_recon_serial += 1
+		var event: int = _clock + 1
+		_pending_recon.append({"id": _round_prefix + "recon:" + str(_recon_serial), "bot_id": _bot_id,
+			"event_tick": event, "available_tick": event + _delay_max, "source": "seen", "speaker_id": "sensor",
+			"content": {"type": "enemy_seen", "enemy_id": id, "region_id": region}})
 
 func _init(bot_id: String, actor: CharacterBody3D, navigation: Node3D,
 		utility: Node3D, opponents: Dictionary, settings: Dictionary, seed_value: int,
@@ -120,6 +148,7 @@ func dispose() -> void:
 	_audio_actors.clear()
 	_opponents.clear()
 	_pending_audio.clear()
+	_pending_recon.clear()
 	_player = null
 
 func register_opponent(id: String, actor: CharacterBody3D) -> bool:
@@ -343,6 +372,8 @@ func sample(tick: int) -> Dictionary:
 	output.errors.append_array(aim_output.errors)
 	if aim_output.ok:
 		output.observations.append_array(aim_output.observations)
+	output.observations.append_array(_pending_recon)
+	_pending_recon.clear()
 	return output
 
 func own_status() -> Dictionary:

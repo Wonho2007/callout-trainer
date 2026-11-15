@@ -28,6 +28,8 @@ FILES = [
     "tests/person2/flash_tests.gd",
     "bots/combat_policy.gd", "bots/combat_controller.gd",
     "tests/person2/combat_tests.gd",
+    "bots/annotation_policy.gd", "bots/retake_policy.gd",
+    "scenarios/fnc_prx_lotus_toronto2024_gf.json", "tests/person2/annotation_tests.gd",
 ]
 
 
@@ -148,11 +150,11 @@ def main():
                 )
                 for relative in listing.splitlines():
                     copy_ref(args.person1_ref, relative)
-                # User-approved shared wave behavior fix: exercise and launch
-                # these local shared scripts until Person 1 adopts them upstream.
-                for relative in ["utility/blind_wave.gd", "scenes/player/player.gd"]:
+                # User-requested shared mechanics: use the current wave/player,
+                # rifle damage, utility attribution and round cleanup scripts.
+                for relative in ["utility/blind_wave.gd", "utility/utility_system.gd", "scenes/player/player.gd", "weapons/weapon.gd"]:
                     shutil.copy2(ROOT / relative, project / relative)
-                print("PERSON2_SHARED_OVERLAY utility/blind_wave.gd scenes/player/player.gd (user-requested passing-wave fix)")
+                print("PERSON2_SHARED_OVERLAY utility/blind_wave.gd utility/utility_system.gd scenes/player/player.gd weapons/weapon.gd (user-requested mechanics)")
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "perception/scene_sensor.gd",
                                  "scenes/bots/teammate_info_panel.gd",
@@ -179,6 +181,8 @@ def main():
                 if lotus_mode:
                     for relative in ["world/lotus_builder.gd", "world/maps/lotus_b_adaptation.json",
                                      "scenarios/lotus_b_coverage.json", "scenarios/first_known_spawns.gd",
+                                     "scenarios/fnc_prx_lotus_toronto2024_gf.json",
+                                     "bots/annotation_policy.gd", "bots/annotation_executor.gd",
                                      "bots/retake_policy.gd", "scenes/bots/lotus_playtest.gd",
                                      "scenes/bots/lotus_playtest.tscn", "tests/person2/lotus_smoke.gd"]:
                         target = project / relative
@@ -213,6 +217,7 @@ def main():
                 ("intent_gate_tests.gd", "PERSON2_INTENT_GATE_PASS"),
                 ("flash_tests.gd", "PERSON2_FLASH_PASS"),
                 ("combat_tests.gd", "PERSON2_COMBAT_PASS"),
+                ("annotation_tests.gd", "PERSON2_ANNOTATION_PASS"),
             ]
             if args.person3_root or args.person3_ref:
                 scripts.append(("planner_belief_integration.gd", "PERSON2_BELIEF_INTEGRATION_PASS"))

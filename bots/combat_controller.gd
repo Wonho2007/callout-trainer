@@ -42,6 +42,11 @@ func step(tick: int, decision: Dictionary) -> Dictionary:
 		return {"ok": false, "halt_movement": true, "reason": "invalid_combat_decision"}
 	if not is_instance_valid(_actor) or not is_instance_valid(_weapon) or not _actor.is_alive:
 		return _status(false, "actor_or_weapon_unavailable")
+	# Physical safety check as well as the policy's own-vision gate. A stale
+	# engage request must never fire during the actor's current blackout.
+	if _actor.get_meta("bot_blinded", false):
+		_target = ""
+		return _status(false, "blinded")
 	if decision.action == "idle":
 		_target = ""
 		return _status(false, decision.reason)

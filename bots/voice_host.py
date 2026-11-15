@@ -83,15 +83,15 @@ def capture_for_game(host):
     import keyboard
     import numpy as np
     import sounddevice as sd
-    print('Hold RIGHT CTRL to speak...', flush=True)
-    while not keyboard.is_pressed('right ctrl'):
+    print('Hold V to speak...', flush=True)
+    while not keyboard.is_pressed('v'):
         if host.closed.wait(0.02):
             return None
     session = host.hello['session']
     frames = []
     started = time.monotonic()
     with sd.InputStream(samplerate=16000, channels=1, dtype='float32') as stream:
-        while keyboard.is_pressed('right ctrl') and not host.closed.is_set() and time.monotonic() - started < 15:
+        while keyboard.is_pressed('v') and not host.closed.is_set() and time.monotonic() - started < 15:
             chunk, overflowed = stream.read(800)
             if overflowed:
                 print('Microphone overflow; please repeat this call.', flush=True)
@@ -309,7 +309,7 @@ def main():
         host.transcript(args.text, host.hello['session'])
         host.closed.wait(args.seconds)
     else:
-        print('Hold RIGHT CTRL to speak. Calls: ' + ', '.join(host.hello['regions']) + '. Ctrl+C exits.', flush=True)
+        print('Hold V to speak. Calls: ' + ', '.join(host.hello['regions']) + '. Ctrl+C exits.', flush=True)
         while not host.closed.is_set():
             captured = capture_for_game(host)
             if captured is None:

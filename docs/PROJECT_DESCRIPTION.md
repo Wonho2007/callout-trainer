@@ -33,13 +33,14 @@ unverified. All metric geometry and within-region coordinates are authored appro
 The player can move, shoot and talk; cannot defuse their own plant. Retakers use shared
 movement, rifles/damage and defuse interaction. A delivered sight can trigger an authored
 flank branch. Elimination, detonation or defuse resolves the scenario; F restarts at plant.
-Exact utility/cooldown reenactment and the teammate's complete annotated baseline remain
-unfinished. Health/armor are currently simplified into shared health pools.
+Annotated bot movement/utility beats form the baseline until delivered evidence or
+player calls cause a deviation. Utility uses approximate shared primitives; exact kits
+and continuous reenactment remain outside the current implementation. Health/armor are currently simplified into shared health pools.
 
 ## Communication and decisions
 
 ```text
-Right Ctrl + microphone
+V + microphone
   -> local Whisper transcription
   -> grounded local Llama interpretation
   -> proposal over localhost TCP
@@ -88,15 +89,14 @@ and exported-build acceptance are not yet established.
 | Evidence | Scope |
 |---|---|
 | Five standalone human mic calls interpreted correctly | One cue/queue spelling error; median after-release time 0.718s on that test |
-| 552 default/cross-lane assertions | Command/planner/sensor/motion/intent/flash/combat and optional integrations |
+| 575 default/cross-lane assertions | Command/planner/sensor/motion/intent/flash/combat and optional integrations |
 | 139 live-perception checks | Inherited three-region scene, including smoke/blindness and causal delayed evidence |
-| 31 new scenario checks | Plant start, +23s arrivals, physical traversal/combat, guarded elimination and reset |
+| 53 current scenario checks | Plant/arrivals, annotated utility, private recon guards, flash/no-fire, disappearing bots and reset |
 | Seven Python tests | Authoring consistency and voice/model boundary checks |
 | Real-model typed engine fixture + recorded-boundary audit | Delayed report, actual movement; audit of 33 contexts/28 changed decisions/157 deliveries |
 | Rendered captures inspected | Visual/layout evidence, not human gameplay or spoken scenario acceptance |
 
-Still required: human voice-to-scenario acceptance; source review; exact ally/utility
-baseline; coordinated belief/schema alignment; complete safety/fairness coverage;
+Still required: human voice-to-scenario acceptance; source review; human validation of the annotated baseline and utility approximations; coordinated belief/schema alignment; complete safety/fairness coverage;
 offline/export acceptance; backup video and demo rehearsal. Grading, truth/belief debrief,
 belief-only counterfactual and evaluation comparisons remain deferred product goals.
 

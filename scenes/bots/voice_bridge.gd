@@ -55,7 +55,7 @@ func _process(_delta: float) -> void:
 		peer.set_no_delay(true)
 		last_contact_ms = Time.get_ticks_msec()
 		_hello()
-		scene._comm_status = "Voice connected. Hold Right Ctrl to speak."
+		scene._comm_status = "Voice connected. Hold V to speak."
 	if peer == null:
 		return
 	peer.poll()

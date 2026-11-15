@@ -4,7 +4,7 @@ Updated 2026-11-15. This is a current index, not an append-only journal.
 
 | Work area | Implemented / evidence | Next or unresolved |
 |---|---|---|
-| Person 2 / PC | Local model and mic setup; five standalone spoken calls confirmed; delayed voice/game bridge; separate seven-region plant adaptation; physical late-spawn combat/navigation/reset checks | Human voice-to-Lotus acceptance, exact ally/utility baseline, coordinated belief changes and final delivery |
+| Person 2 / PC | Local model and mic setup; five standalone spoken calls confirmed; delayed voice/game bridge; seven-region plant adaptation; annotated movement/utility baseline with observation-based deviations; flash firing gate/head icon; dead bots disappear | Human voice-to-Lotus/baseline acceptance, exact-kit fidelity, coordinated belief changes and final delivery |
 | Person 3 supplied code | Interpreter/vocabulary/log/pipeline/audit and first-pass annotation at `b84cc93`; consumed read-only. Scene still uses belief `57f809d` | Source review, working-belief acceptance and paired snapshot/planner field-removal integration |
 | Inherited Person 1 work | Existing world, player, shared weapons/utility/navigation and root scaffold reused. Person 1 is no longer active | Person 2 owns remaining engine/world/export work; no dependency on Person 1 returning |
 
@@ -13,6 +13,9 @@ Previous checkpoints `156c581` (voice/game bridge) and `2a33eda` (GPU/live mic).
 PR #4 was already merged before this branch; no current-main merge is claimed.
 
 ## Read next
+
+Current local rifle tuning is 40 body / 160 head damage for player and bots;
+the integration runner overlays the shared weapon script onto its pinned source.
 
 - [Project description](PROJECT_DESCRIPTION.md): product, current scope and deferred work.
 - [Person 2 handoff](PERSON2_HANDOFF.md): authoritative continuation state, exact tools,
@@ -24,7 +27,7 @@ PR #4 was already merged before this branch; no current-main merge is claimed.
 
 ## Evidence to preserve
 
-552 default/cross-lane assertions; 139 live-perception checks; 31 new functional scenario
+575 current default/cross-lane assertions; 139 live-perception checks; 53 current functional scenario
 checks; seven Python authoring/voice-boundary tests; Person 3 schema validation with
 expected unknowns; real-model typed engine response/movement and a scoped recorded-
 boundary audit. Rendered captures were inspected. Five standalone human mic calls were

@@ -20,7 +20,7 @@ product requirements from current implementation and acceptance evidence.
 | Boaster adaptation | First localized by a recorded death; materialized alive at that location as a labeled authored continuation. No source kill/outcome is forced |
 | Map | New separate seven-region authored approximation; original three-region map remains unchanged. Metric coordinates/sightlines are not verified source geometry |
 | Source | Person 3 annotation at `b84cc93`; event/year/title/channel/named annotator/team review unresolved. Legacy scenario filename is not verification |
-| Physics | Shared movement/rifle/damage/utility/defuse; HP+armor currently one simplified pool. Exact utility/cooldown and ally baseline reenactment unfinished |
+| Physics | Shared movement/rifle/damage/utility/defuse; HP+armor currently one simplified pool. Annotated movement/utility baseline implemented with physical staging and evidence-based deviations; utility/continuous trajectories remain approximate |
 | Human acceptance | Five standalone spoken calls confirmed. New voice-to-Lotus gameplay acceptance is unconfirmed; rendered/headless checks cannot stand in for it |
 | Evidence | Exact model prompts/outputs, delayed delivery and changed decisions logged outside Git; recorded-boundary audit is scoped, not full-game fairness |
 | Delivery | Offline-capable intent; OS-network-disabled, exported-build acceptance and backup video remain open |

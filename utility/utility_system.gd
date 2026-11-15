@@ -49,7 +49,7 @@ func _load_defs(path: String) -> void:
 ## Deploy a smoke aimed at world point `at`. The smoke stays where it is aimed;
 ## if the aimed point is floating in open air, it falls straight down until it
 ## lands on the ground. Returns the Smoke, or null if undefined.
-func throw_smoke(at: Vector3) -> Smoke:
+func throw_smoke(at: Vector3, thrower_id: String = "player") -> Smoke:
 	if not _defs.has("smoke"):
 		return null
 	var smoke: Smoke = SmokeScript.new()
@@ -67,7 +67,7 @@ func throw_smoke(at: Vector3) -> Smoke:
 	smoke.deploy(start_center, settle_center)
 	_smokes.append(smoke)
 	smoke.expired.connect(func(): _smokes.erase(smoke))
-	deployed.emit("smoke", "player", settle_center)
+	deployed.emit("smoke", thrower_id, settle_center)
 	return smoke
 
 
@@ -102,7 +102,7 @@ func throw_flash(from: Vector3, velocity: Vector3) -> Flash:
 ## Toss a molly (area_damage) projectile from `from` with an initial `velocity`.
 ## It arcs, bounces, and ignites a damaging ground zone where it rests. Returns
 ## the Molly, or null if undefined.
-func throw_molly(from: Vector3, velocity: Vector3) -> Molly:
+func throw_molly(from: Vector3, velocity: Vector3, thrower_id: String = "player") -> Molly:
 	if not _defs.has("molly"):
 		return null
 	var molly: Molly = MollyScript.new()
@@ -111,7 +111,7 @@ func throw_molly(from: Vector3, velocity: Vector3) -> Molly:
 	molly.throw(from, velocity)
 	_mollies.append(molly)
 	molly.expired.connect(func(): _mollies.erase(molly))
-	molly.ignited.connect(func(pos): deployed.emit("molly", "player", pos))
+	molly.ignited.connect(func(pos): deployed.emit("molly", thrower_id, pos))
 	return molly
 
 
@@ -197,3 +197,14 @@ func active_smokes() -> Array[Smoke]:
 
 func active_flashes() -> Array[Flash]:
 	return _flashes
+
+
+func clear_effects() -> void:
+	# Round restart: remove prior-round blockers/projectiles and private marks.
+	for effect in get_children():
+		effect.queue_free()
+	_smokes.clear()
+	_flashes.clear()
+	_mollies.clear()
+	_blind_waves.clear()
+	_recon_marks.clear()

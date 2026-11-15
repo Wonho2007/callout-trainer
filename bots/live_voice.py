@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--model-path', type=Path, required=True)
     parser.add_argument('--llm-model', default='llama3.1:8b')
     parser.add_argument('--host', default='http://127.0.0.1:11434')
-    parser.add_argument('--key', default='right ctrl')
+    parser.add_argument('--key', default='v')
     parser.add_argument('--loops', type=int, default=5)
     parser.add_argument('--file', type=Path)
     parser.add_argument('--preflight', action='store_true')

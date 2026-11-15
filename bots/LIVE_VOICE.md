@@ -14,7 +14,7 @@ From the repo in PowerShell:
 .\validation\run_live_voice.ps1 -Loops 5
 ```
 
-Hold **Right Ctrl**, speak one callout, then release. Read the transcript and interpreted
+Hold **V**, speak one callout, then release. Read the transcript and interpreted
 result before the next call. Ctrl+C exits. Audio is recorded only while the key is held;
 raw audio stays in memory. Local transcript, exact prompt/raw output and timing records
 are written to gitignored `runs/live-voice.jsonl`. These diagnostic sequence numbers are

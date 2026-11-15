@@ -12,7 +12,7 @@ cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
 .\validation\run_voice_game.ps1 -Lotus
 ```
 
-Right Ctrl talks, F restarts at plant, Esc releases the mouse. Omit `-Lotus` for the
+V talks, F restarts at plant, Esc releases the mouse. Omit `-Lotus` for the
 older three-region integration profile. [Scenario guide](../bots/LOTUS_SCENARIO.md),
 [voice setup](../bots/LIVE_VOICE.md) and [bridge guide](../bots/VOICE_GAME.md) explain
 the installed environment and measured limits.

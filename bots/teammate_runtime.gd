@@ -48,6 +48,7 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 		utility: Node3D = null, flash_targets: Dictionary = {}, flash_charges: int = 0) -> void:
 	_bot_id = bot_id
 	_actor = actor
+	_actor.died.connect(_on_actor_died)
 	_nav = navigation
 	_belief = belief
 	_round_id = round_id
@@ -65,6 +66,15 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 		affordances[marker] = markers[marker].watch_points.keys()
 	_gate = Gate.new(bot_id, affordances)
 	_configured = true
+
+func _on_actor_died() -> void:
+	# Keep the record for round logic and sensor registries, remove its physical
+	# presence immediately. The player never uses this bot runtime.
+	_actor.hide()
+	_actor.set_deferred("collision_layer", 0)
+	_actor.set_deferred("collision_mask", 0)
+	_actor.set_physics_process(false)
+	finish_round("actor_dead")
 
 func enable_combat(utility: Node3D) -> bool:
 	# Trusted scene opt-in only. configure() leaves combat disabled so sensory
@@ -134,6 +144,20 @@ func snapshot() -> Dictionary:
 		"observations": _policy_observations(), "flash_count": _flash.remaining(),
 		"combat": {"enabled": _combat_adapter != null, "decision": _combat_decision.duplicate(true), "physical": _motion.combat_status()},
 		"own_perception": _sensing.own_status() if _sensing != null else {}}
+
+func scenario_snapshot() -> Dictionary:
+	return _scenario_policy.snapshot() if _scenario_policy != null and _scenario_policy.has_method("snapshot") else {}
+
+func set_scenario_tick(tick: int) -> void:
+	if _scenario_policy != null and _scenario_policy.has_method("set_scenario_tick"):
+		_scenario_policy.set_scenario_tick(tick)
+
+func take_scenario_utility() -> Array:
+	return _scenario_policy.take_utility() if _scenario_policy != null and _scenario_policy.has_method("take_utility") else []
+
+func scan_scenario_recon(origin: Vector3) -> void:
+	if _configured and _sensing != null:
+		_sensing.scan_recon(origin)
 
 func _own_state() -> Dictionary:
 	var marker_id: String = ""
@@ -205,10 +229,24 @@ func _physics_process(_delta: float) -> void:
 				continue
 		_promote(observation.id)
 	var active: Dictionary = _executor.active_command_snapshot()
+	var own_vision: Dictionary = _sensing.own_status() if _sensing != null else {}
+	var blinded: bool = int(own_vision.get("blind_until_tick", _tick + 1)) > _tick
+	_actor.set_meta("bot_blinded", blinded)
+	if _combat_policy != null:
+		own_vision["alive"] = own.alive
+		_combat_decision = _combat_policy.decide(_tick, _policy_observations(), own_vision)
 	var plan: Dictionary = _planner.decide(_tick, _belief.snapshot(), own, _executor.inbox, active)
-	if _scenario_policy != null and active.is_empty():
-		plan = {"ok": true, "errors": [], "replanned": true,
-			"decision": _scenario_policy.decide(_tick, _policy_observations(), own)}
+	if _scenario_policy != null:
+		if _scenario_policy.has_method("consider_player_plan"):
+			_scenario_policy.consider_player_plan(active)
+		if active.is_empty():
+			var scenario_own: Dictionary = own.duplicate(true)
+			scenario_own["hp"] = _actor.health.hp
+			scenario_own["blinded"] = blinded
+			scenario_own["engaged"] = _combat_decision.get("action") == "engage"
+			var scenario_decision: Dictionary = _scenario_policy.decide(_tick, _policy_observations(), scenario_own)
+			if not scenario_decision.is_empty():
+				plan = {"ok": true, "errors": [], "replanned": true, "decision": scenario_decision}
 	var model: Dictionary = _gate.decision(_tick, _executor.inbox)
 	var policy: String = "scripted_fallback"
 	if not model.is_empty() and active.is_empty() and own.alive:
@@ -217,10 +255,6 @@ func _physics_process(_delta: float) -> void:
 	elif not active.is_empty():
 		policy = "accepted_player_command"
 	_last_plan = plan.duplicate(true)
-	if _combat_policy != null:
-		var own_vision: Dictionary = _sensing.own_status() if _sensing != null else {}
-		own_vision["alive"] = own.alive
-		_combat_decision = _combat_policy.decide(_tick, _policy_observations(), own_vision)
 	_status = _motion.step(_tick, plan, output, active, _executor.inbox, _combat_decision)
 	decision_recorded.emit({"tick": _tick, "bot_id": _bot_id, "policy": policy,
 		"plan": plan.duplicate(true), "physical": _status.duplicate(true), "model_record": _gate.active_record(),

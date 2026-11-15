@@ -1,8 +1,14 @@
 extends "res://scenes/bots/voice_playtest.gd"
 const SpawnSchedule = preload("res://scenarios/first_known_spawns.gd")
 const RetakePolicy = preload("res://bots/retake_policy.gd")
+const AnnotationPolicy = preload("res://bots/annotation_policy.gd")
+const AnnotationExecutor = preload("res://bots/annotation_executor.gd")
 var enemies: Dictionary = {}
 var enemy_runtimes: Dictionary = {}
+var _annotation: Dictionary = {}
+var _utility_executors: Dictionary = {}
+var _remote_smoke_done: bool = false
+var _flash_indicators: Dictionary = {}
 var schedule: RefCounted
 var scenario_tick: int = -1
 var _plant_active: bool = false
@@ -18,7 +24,7 @@ func _ready() -> void:
 	_add_region_labels()
 	_info_panel.set_test_tools_enabled(false)
 	_info_panel.position.y = 315
-	$HUD/Hints.text = "WASD | LMB fire | R reload | Right Ctrl talk | F restart | Esc mouse"
+	$HUD/Hints.text = "WASD | LMB fire | R reload | B dash | V talk | F restart | Esc mouse"
 	_begin_plant()
 	if OS.get_cmdline_user_args().has("--lotus-smoke"):
 		var smoke = load("res://tests/person2/lotus_smoke.gd").new()
@@ -55,6 +61,9 @@ func _belief_enemy_ids() -> Array:
 
 func _spawn_teammate() -> void:
 	super._spawn_teammate()
+	_annotation = JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/fnc_prx_lotus_toronto2024_gf.json"))
+	runtime.attach_scenario_policy(AnnotationPolicy.new("ally", _annotation.timeline))
+	_utility_executors["ally"] = AnnotationExecutor.new("ally", teammate, runtime, utility, _scenario.motion_markers)
 	teammate.health.max_hp = float(_scenario.ally_hp)
 	teammate.health.reset()
 	if not OS.get_cmdline_user_args().has("--lotus-smoke"):
@@ -64,6 +73,7 @@ func _begin_plant() -> void:
 	schedule = SpawnSchedule.new(_scenario.spawn_schedule)
 	scenario_tick = -1
 	_plant_active = true
+	_remote_smoke_done = false
 	_spike.reset()
 	_player.health.max_hp = float(_scenario.player_hp)
 	_player.health.reset()
@@ -76,6 +86,19 @@ func _physics_process(delta: float) -> void:
 	scenario_tick += 1
 	for spec in schedule.due(scenario_tick):
 		_materialize(spec)
+	# This remote smoke is an observed effect with unknown caster position.
+	# It never creates a Boaster actor or injects location evidence.
+	if scenario_tick >= 960 and not _remote_smoke_done:
+		_remote_smoke_done = true
+		var main: Array = _scenario.motion_markers.b_main.position
+		utility.throw_smoke(Vector3(main[0] + 1.0, main[1], main[2]), "boaster")
+	runtime.set_scenario_tick(scenario_tick)
+	_execute_annotation_utility("ally", runtime)
+	for id in enemy_runtimes:
+		enemy_runtimes[id].set_scenario_tick(scenario_tick)
+		_execute_annotation_utility(id, enemy_runtimes[id])
+		var indicator: Label3D = _flash_indicators[id]
+		indicator.visible = enemies[id].is_alive and enemies[id].get_meta("bot_blinded", false)
 	var defusing: bool = false
 	for id in enemy_runtimes:
 		var actor: ActorBase = enemies[id]
@@ -126,22 +149,42 @@ func _materialize(spec: Dictionary) -> void:
 	enemy_runtime.configure(spec.actor_id, actor, builder, belief, configuration, _scenario.motion_markers, {}, _round_serial, utility)
 	enemy_runtime.attach_perception(SceneSensor.new(spec.actor_id, actor, builder, utility,
 		{"player": _player, "ally": teammate}, _scenario.perception, int(_scenario.perception_seed) + enemies.size(), _round_serial))
-	var baseline: String = "b_upper" if spec.actor_id == "chronicle" else ("b_heaven" if spec.actor_id == "crashies" else "b_pit")
-	enemy_runtime.attach_scenario_policy(RetakePolicy.new(spec.actor_id, baseline))
+	enemy_runtime.attach_scenario_policy(AnnotationPolicy.new(spec.actor_id, _annotation.timeline, int(spec.first_known_tick)))
 	if not OS.get_cmdline_user_args().has("--lotus-smoke"):
 		enemy_runtime.enable_combat(utility)
 	runtime.register_opponent(spec.actor_id, actor)
 	enemy_runtimes[spec.actor_id] = enemy_runtime
+	actor.died.connect(_wire_all_minimap)
+	_utility_executors[spec.actor_id] = AnnotationExecutor.new(spec.actor_id, actor, enemy_runtime, utility, _scenario.motion_markers)
+	var indicator := Label3D.new()
+	indicator.name = "FlashIndicator"
+	indicator.text = "●"
+	indicator.font_size = 64
+	indicator.pixel_size = 0.006
+	indicator.position.y = 1.95
+	indicator.modulate = Color.WHITE
+	indicator.outline_size = 0
+	indicator.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	indicator.no_depth_test = false
+	indicator.visible = false
+	actor.add_child(indicator)
+	_flash_indicators[spec.actor_id] = indicator
 	_wire_all_minimap()
 	print("PERSON2_ANNOTATED_ARRIVAL actor=", spec.actor_id, " tick=", scenario_tick, " region=", spec.region_id)
 
+func _execute_annotation_utility(id: String, bot_runtime: Node) -> void:
+	for beat in bot_runtime.take_scenario_utility():
+		var released: bool = _utility_executors[id].execute(beat)
+		print("PERSON2_ANNOTATED_UTILITY actor=", id, " action=", beat.action, " region=", beat.region, " tick=", scenario_tick, " released=", released)
+
 func _wire_all_minimap() -> void:
-	_player.scan_targets = enemies.values()
+	var living: Array = enemies.values().filter(func(actor: ActorBase): return actor.is_alive)
+	_player.scan_targets = living
 	var minimap: Node = get_node_or_null("HUD/Minimap")
 	if minimap != null:
 		minimap.builder = builder
 		minimap.player = _player
-		minimap.enemies = enemies.values()
+		minimap.enemies = living
 		minimap.utility = utility
 		minimap.refresh()
 
@@ -191,7 +234,12 @@ func _on_teammate_died() -> void:
 		_stop_enemies("team_eliminated")
 
 func _restart() -> void:
+	if _restart_pending:
+		return
 	_plant_active = false
+	utility.clear_effects()
+	_utility_executors.clear()
+	_flash_indicators.clear()
 	for enemy_runtime in enemy_runtimes.values():
 		enemy_runtime.free()
 	enemy_runtimes.clear()

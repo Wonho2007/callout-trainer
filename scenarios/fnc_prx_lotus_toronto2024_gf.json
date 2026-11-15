@@ -187,7 +187,7 @@
       "region": "b_main",
       "evidence_source": "Person 3 annotation section 5",
       "certainty": "confirmed",
-      "note": "Observed smoke; recharge is not currently reenacted."
+      "note": "Baseline uses the initial +18s smoke readiness; exact placement remains approximate."
     },
     {
       "tick": 1380,
@@ -233,6 +233,15 @@
       "evidence_source": "Person 3 annotation section 5",
       "certainty": "confirmed",
       "note": "No recorded kill is forced."
+    },
+    {
+      "tick": 1380,
+      "actor_id": "crashies",
+      "action": "reference_recon",
+      "region": "b_heaven",
+      "evidence_source": "Person 3 annotation section 5; +23s Eye",
+      "certainty": "confirmed",
+      "note": "Shared scan-orb adaptation; private delayed enemy region sightings, not player HUD marks."
     },
     {
       "tick": 1560,
@@ -309,5 +318,5 @@
     }
   ],
   "branch_weights_source": "authored single branch, not empirical probability",
-  "note": "Pending-review source annotation converted without inventing unknown enemy starts. All four unknown enemies remain absent until first known +23s position. Boaster appears alive at his first-localized recorded-death position as explicit adaptation. World coordinates and all continuation outcomes are authored; no professional outcome is forced. Player reference beats are never input automation. Exact utility reenactment remains unfinished."
+  "note": "Pending-review source annotation converted without inventing unknown enemy starts. All four unknown enemies remain absent until first known +23s position. Boaster appears alive at his first-localized recorded-death position as explicit adaptation. World coordinates and all continuation outcomes are authored; no professional outcome is forced. Player reference beats are never input automation. Annotated bot movement and generic utility beats now form the baseline until an evidence-driven deviation; exact agent kits and continuous trajectories remain approximate."
 }

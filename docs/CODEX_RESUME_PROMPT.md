@@ -44,7 +44,9 @@ The new seven-region greybox is a SEPARATE authored approximation. The original
 three-region map is unchanged. Metric geometry/within-region coordinates and
 continuations are authored; source metadata is pending review. The player takes
 Something/Yoru's role, ally f0rsakeN/Omen's role. Player reference movement must never
-be automated. Exact ally/utility baseline reenactment is unfinished.
+be automated. Annotated bot movement/utility baseline and evidence-driven deviations are implemented;
+exact agent kits/continuous trajectories remain approximate. Flashed enemies cannot shoot,
+show a white head circle, and dead bots disappear with collision disabled.
 
 Models/policy get only copied delivered observations, own allowed state, local
 beliefs and static authored affordances. No hidden target transforms, scene refs,
@@ -72,12 +74,12 @@ or train unnecessarily. Launchers recreate the read-only Person 3 snapshot if ne
 Launch from PowerShell after closing any older voice-host console:
 cd "C:\Users\Isoto\Documents\GitHub\callout-trainer"
 .\validation\run_voice_game.ps1 -Lotus
-Right Ctrl talks, F restarts at plant, Esc releases the mouse. Running root
+V talks, F restarts at plant, Esc releases the mouse. Running root
 project.godot directly is not the current voice-enabled scenario entry point.
 
 Evidence already recorded: five standalone human mic calls semantically correct
 (one cue/queue spelling error); real-model typed engine report/delay/movement;
-552 default/cross-lane assertions, 139 live-perception, 31 scenario checks and seven
+575 default/cross-lane assertions, 139 live-perception, 53 scenario checks and seven
 Python authoring/voice-boundary tests; rendered capture inspected. Exact commands
 and scopes are in the current handoff. New human voice-to-Lotus acceptance, export/
 offline acceptance, backup video and full-game fairness remain unconfirmed.
@@ -86,7 +88,7 @@ Do not present historical totals or typed/rendered tests as fresh human results.
 Continue with useful work, not another plan-only response:
 1. Verify the current spoken voice-to-Lotus loop on this PC and record actual results.
 2. Coordinate/test paired belief/planner changes and full report acceptance.
-3. Finish remaining ally/utility baseline without violating first-known spawns,
+3. Human-check the implemented baseline/utility and deviation behavior, preserving first-known spawns,
    physical feasibility, player control or evidence guards.
 4. Prioritize final safety/fairness, offline/export, backup video and rehearsal.
 Grading/debrief/counterfactual/evaluation remain deferred; don't build them first.

@@ -29,8 +29,8 @@ var occluder: Object = null
 
 ## Placeholder rifle stats. Replace with sourced values only if obtained from a
 ## permitted source and documented; otherwise these stay as tuned placeholders.
-@export var damage_body: float = 30.0
-@export var damage_head_multiplier: float = 2.0
+@export var damage_body: float = 40.0
+@export var damage_head_multiplier: float = 4.0
 @export var rounds_per_second: float = 8.0
 @export var magazine_size: int = 25
 @export var reserve_ammo: int = 75
