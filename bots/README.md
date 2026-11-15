@@ -37,10 +37,10 @@ The planner consumes the existing snapshot shape inspected at Person 3 commit 7a
 
 ~~~text
 {bot_id, tick, enemies: {enemy_id: {region_id: probability}},
- trust: {speaker_id: reliability}, evidence_ids}
+ trust: {}, evidence_ids}
 ~~~
 
-It does not modify probabilities, trust or grading. Distributions must contain the configured region IDs and be finite/nonnegative/normalized. Every evidence ID must already belong to this bot's inbox and have actually been delivered by the snapshot's tick. A snapshot tick of -1 with no evidence permits the initial prior.
+It does not modify probabilities or grading. The empty `trust` key is unused compatibility metadata, not a feature. Teammates must fully accept player comms; the imported Person 3 hedge-weighted belief update still needs alignment with that latest rule. Distributions must contain the configured region IDs and be finite/nonnegative/normalized. Every evidence ID must already belong to this bot's inbox and have actually been delivered by the snapshot's tick. A snapshot tick of -1 with no evidence permits the initial prior.
 
 Current scoring averages per-enemy marginal region probabilities. It is NOT the probability that any enemy is there, a count model, a win probability or a learned tactical value. This avoids assuming independence between Person 3's exchangeable enemy slots.
 

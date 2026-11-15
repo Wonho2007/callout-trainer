@@ -9,7 +9,7 @@ A hand-off document for the three-person team and AI collaborators. Updated for 
 > **Authoritative direction update, confirmed by the user in this session (November 14, 2026):** adopt the newer Person 2/3 handoffs from Person 3's `b078210`. These decisions supersede conflicting older requirements throughout this brief:
 > - Player communication is **voice only**. Quick-call code remains a deterministic test/fallback helper, not the player UI.
 > - A free, local, pretrained LLM interprets speech and chooses teammate goals using only copied, available bot-local information. Ground it in the agreed vocabulary; do not train a model. Person 3 owns this core. Person 2 validates/physically executes goals, with the existing deterministic planner as the required circuit breaker.
-> - **No speaker trust model:** use hedge-only testimony strength. Preserve the existing empty `trust: {}` snapshot key until a coordinated contract change.
+> - **Teammates always fully trust player comms.** Accept valid, delivered player statements as working information even when they are wrong. No credibility score, history penalty, corroboration prerequisite or numeric credibility discount based on a hedge. Preserve what the player actually said (including uncertainty); clarification, delivery delay and physical feasibility still apply. An existing empty `trust: {}` field is compatibility metadata only, not a feature to build.
 > - Grading/debrief and belief-only counterfactual are **deferred**, not cut, until voice-to-reaction works. Do not prioritize their older milestone order over the playable comms loop.
 > - Person 3 supplies verified VOD notes; Person 2 converts them to executable scenarios. The proposed FNC/PRX Lotus source label in the new handoffs still needs an exact verified VOD/year/round/timestamp before any pro reconstruction. Continue synthetic integration meanwhile.
 > - The model machine is a capable PC with a discrete GPU, specific machine **TBD**. Record actual latency and model configuration; do not assume hardware from an older handoff.
@@ -76,7 +76,7 @@ The bots are not the product. The measurable improvement in the player's communi
 ### 2.2 Why this fits the rubric
 
 - **Unmet need and workflow change:** practicing comms today means scrims or watching VODs. Neither gives instant, graded feedback on callout quality.
-- **Beyond NPC chat:** the novelty is grading, trust modeling, a communication budget, and counterfactual replay, not talking.
+- **Beyond NPC chat:** the teammate acts on player information and exposes the in-round consequences; later grading and counterfactual replay explain communication mistakes.
 - **Credible evidence:** a VOD-only arm (the current workflow, which doubles as a holdout), silent bots, chatty bots, and the full system, plus a transfer test with a human teammate.
 
 ---
@@ -86,7 +86,6 @@ The bots are not the product. The measurable improvement in the player's communi
 All of these are preprints or reports from other domains. Frame them as inspiration and say so. Verify details before citing in a pitch.
 
 - **Dialogue is not free.** A May 2026 preprint (arXiv 2605.12920) added a dialogue channel for partially observing embodied agents. Dialogue reduced action conflicts but lowered task success compared with silent coordination. Domain: household robotics. This motivates the comm budget and the silent-bot arm.
-- **Agents trust badly.** Epistemic Context Learning (arXiv 2601.21742) reports that multi-agent LLM systems tend to blindly conform to misleading peers, and that history-aware trust helps. A study on trust under pressure (SSRN abstract 6759863, May 2026) reports "trust scarring": agents keep verifying or excluding a partner long after the partner becomes reliable. This motivates the asymmetric trust model, which is a **hypothesis** for human learners, not a proven benefit.
 - **Auditable beliefs.** A paper on auditable belief updates (arXiv 2610.38869) frames belief as evidence-based commitments guiding action and argues for auditing how they update. This motivates provenance-tagged beliefs and the leak test.
 - **Discretized pro-data simulators work.** DECOY (arXiv 2509.06355) simulates CS:GO using only movement decisions as tactical positioning, without modeling aiming or shooting, and reports replays that closely match real games. This motivated an earlier 2D design. The team has since chosen full 3D, so DECOY now informs only the callout-region belief graph, not the game itself.
 - **Imitation of pro movement.** "Learning to Move Like Professional Counter-Strike Players" (arXiv 2408.13934) and "Human-like Bots for Tactical Shooters Using Compute-Efficient Sensors" (arXiv 2501.00078, a VALORANT-like 2v2 game) show imitation-based human-like bots and evaluation recipes (human evaluation, Jensen-Shannon divergence between bot and human behavior distributions).
@@ -130,9 +129,9 @@ Everything must be buildable and demoable for free. No paid APIs are required. O
         |  Per-bot observation log  [saw | heard | told], timestamped, provenance      |
         |        |                                                                     |
         |        v                                                                     |
-        |  Per-bot belief over enemy positions  <---- Trust model (tau per speaker)    |
-        |        |                                       ^                             |
-        |        v                                       |                             |
+        |  Per-bot working beliefs <---- accepted player comms (delayed)               |
+        |        |                                                                     |
+        |        v                                                                     |
         |  Planner (slow, event-driven) -> Controller (fast)       Callout parser <-- speech/text
         |        |                                                  (say again? if unsure)
         |        v                                                                     |
@@ -164,7 +163,7 @@ Use one shared **Godot 4 desktop project**. Pin the same stable editor version a
 | Callout regions | Named Area3D volumes, shared registry, travel-time graph and unknown fallback | Person 1 |
 | Perception | Physics ray queries, FOV, smoke intersections, flash status, sound events and reaction delay | Person 2 |
 | Bot behavior | Event-driven state machine or small behavior tree; slow planner and fast controller | Person 2 |
-| Communication/debrief | Control UI, structured callouts, beliefs/trust, grader, timeline/heatmaps and trace | Person 3 |
+| Communication/debrief | Voice/LLM, accepted player comms and working beliefs; grading/debrief deferred | Person 3 |
 | Logs | Tick-indexed JSONL events and snapshots in user://runs/; private truth separate from bot observations | Person 3 defines; all emit |
 
 **Reconstruction workflow:**
@@ -282,13 +281,11 @@ Observation likelihoods:
 
 - **Seen** enemy at `x`: near-deterministic (a small noise term).
 - **Heard** at distance class `d`: a likelihood concentrated around regions consistent with that sound.
-- **Told** a report `r` from a speaker with trust `tau`:
-
-$$P(r \mid x) \;=\; \tau\,\mathbb{1}[r = x] + (1-\tau)\,\frac{1}{|X|}$$
+- **Told by the player:** accept the reported content as the bot's working information after valid delivery. Do not lower its credibility because the player previously made a mistake, the bot did not see it, or the player used uncertain wording. Preserve explicit uncertainty and unknown identity/count as content; do not invent precision. Person 3 owns the concrete report-to-working-belief representation and corrections; it must implement this full-acceptance rule rather than the older numeric hedge weights.
 
 **Negative evidence.** For every region a bot is currently watching (inside its view cone, with a clear line per the baked visibility table, and not smoked), if it sees no enemy there, belief in that region is multiplied by a factor below 1 (the chance it would have spotted an enemy there, a PLACEHOLDER) and then renormalized. Absence of a sighting is evidence.
 
-A callout is **testimony, not ground truth**. It moves belief in proportion to trust and never sets it directly.
+A player callout is fully accepted testimony, while simulator truth remains private and separate. A wrong report can lead the bot to cover the wrong angle; the bot cannot consult hidden truth to reject it. Later legitimately available observations, player corrections and ordinary last-known-information aging may update the working picture without changing how much it trusts the player.
 
 ### 6.6 Comms in: natural language, commands and clarification
 
@@ -300,18 +297,15 @@ A callout is **testimony, not ground truth**. It moves belief in proportion to t
 4. **Timing:** follow_player uses permitted nearby movement observations; now still respects reaction delay; on_cue stages and waits for a ready acknowledgment and explicit go cue. Do not wait for an LLM on the final countdown release path or claim retrospective synchronization from a completed transcript.
 5. **Clarification:** ambiguous "that smoke" or entry references require a question, never guessed coordinates. Interpretation receives conversation/static vocabulary and permitted observations, never hidden ground truth.
 6. **Lifecycle:** validate recipient, IDs, expiry, reachability, actor state and utility. Emit accepted/ready/executing/completed or a specific rejection/failure. New feasible commands can supersede interruptible ones; committed throws cannot be undone; repeated IDs cannot repeat actions. Continue consuming reports during actions.
-7. **Fairness and measurement:** messages become delayed told observations, and decisions cite available evidence. Language understanding is separate from trust in reports. Keep transcripts, normalized messages, status/results and timing for evaluation without feeding private logs into policy.
+7. **Fairness and measurement:** messages become delayed told observations, and decisions cite available evidence. Parser ambiguity is a reason to clarify what was said, not to assign player credibility. Keep transcripts, normalized messages, status/results and timing for evaluation without feeding private logs into policy.
 
-### 6.7 Trust model
+### 6.7 Player communication is authoritative
 
-Each bot keeps `tau` for the player (and optionally for teammate bots). After each callout is confirmed or refuted by that bot's later available observations within an explicit expiry window (otherwise leave it unresolved; an enemy moving away does not prove a call false):
+Teammates always fully trust player comms. There is no per-speaker reliability state, learning/scarring/recovery rule, corroboration requirement or confidence-based credibility penalty. Wrong but valid information is acted on; its tactical consequences are part of the practice experience.
 
-$$\tau_{t+1} = \tau_t + \eta\,(a_t - \tau_t), \qquad \eta = \begin{cases} \eta_+ & a_t = 1 \\ \eta_- & a_t = 0 \end{cases}, \qquad \eta_- > \eta_+$$
+Full trust does not bypass message validation, clarification, delivery/reaction delay, command lifecycle or physical limitations. A dead actor, unavailable utility, an unknown/ambiguous target or an unreachable path still receives the appropriate failure/clarification. Preserve "I think", "unknown" and "last seen" as the player's meaning rather than inventing certainty or assigning a numerical distrust weight. Do not penalize later calls because an earlier call was wrong.
 
-where `a_t = 1` means the callout was confirmed correct. Wrong calls cost trust quickly and trust returns slowly ("scarring").
-
-- PLACEHOLDERS: `tau_0 = 0.7`, `eta_+ = 0.1`, `eta_- = 0.4`. Tune in the scripted-player pilot (section 7.3).
-- **Control condition:** symmetric trust (`eta_+ = eta_-`). The asymmetric version is a hypothesis and must be tested against it.
+Implementation status: Person 3's currently imported belief module still uses numeric hedge weights. Aligning that module and its LLM prompts with this updated rule is a Person 3 dependency, coordinated through the shared interface; this documentation change does not claim that runtime behavior has already changed.
 
 ### 6.8 Bot decisions (hierarchical)
 
@@ -403,7 +397,7 @@ Be honest about scale: with a handful of friends this is a **pilot**. Do not cla
 | A. VOD-only | Participant watches the pro VOD and an annotated explanation | Current workflow, and the holdout |
 | B. Silent bots | Bots use player comms but never speak | Tests whether bot talk helps at all |
 | C. Chatty bots | Bots report everything they see, no budget | Tests the comm budget |
-| D. Full system | Comm budget, asymmetric trust, debrief with counterfactuals | The product |
+| D. Full system (later) | Comm budget and deferred debrief/counterfactuals; player comms fully accepted | The product |
 
 ### 7.2 Protocol (per participant)
 
@@ -414,11 +408,10 @@ Be honest about scale: with a handful of friends this is a **pilot**. Do not cla
 
 ### 7.3 Cheap pilot first: headless comms simulation
 
-Running the full 3D game thousands of times is not realistic. Instead, record the ground-truth traces and observation logs from a few full runs (the team can play them), then run the **comms and belief layer headless** on those logs. A script generates synthetic callouts from the true positions with a controllable error rate, miss rate, and delay (a scripted noisy player), feeds them through the structured-callout path, and recomputes beliefs, trust, information gain, and comm budget decisions. Use it to:
+Running the full 3D game thousands of times is not realistic. Instead, record the ground-truth traces and observation logs from a few full runs (the team can play them), then run the **comms and belief layer headless** on those logs. A script generates synthetic callouts from the true positions with a controllable error rate, miss rate, and delay (a scripted noisy player), feeds them through the structured-callout path, and recomputes working beliefs, information gain, and comm budget decisions. Use it to:
 
 - Compare silent vs. chatty vs. budgeted bots by belief entropy and message counts.
-- Compare symmetric vs. asymmetric trust.
-- Tune `lambda`, `eta_+`, `eta_-`, `tau_0`.
+- Tune communication budget `lambda` and evidence timing; do not tune player credibility.
 
 This tests the comms and belief layer, not combat or movement, and it evaluates bot speech by information gain and message rate, not by round outcomes. It produces results even if recruiting humans fails.
 
@@ -435,7 +428,6 @@ This tests the comms and belief layer, not combat or movement, and it evaluates 
 ### 7.5 Known weaknesses and how to address them
 
 - **Circular metric.** Information gain is computed with the team's own belief model, so a judge can say players are graded against the bots. Check it: report the correlation between per-run gain and actual retake success, and compare with the human-receiver marks (7.2) and a human teammate's ratings of callout usefulness.
-- **Trust asymmetry is untested for humans.** Present it as a tested hypothesis with a symmetric control, not as a finding.
 - **Comm budget motivation is one robotics preprint.** Present as a tested design choice.
 - **Ground truth is simulation truth, not pro truth.** Callouts are graded against the simulator, and enemy bots deviate from the annotated line.
 - **Small sample.** See the pilot framing above.
@@ -501,8 +493,8 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 
 1. Own video annotation: watch the selected public retake segment and record source timestamps, initial actor regions/state, visible actions/utility, uncertainty and communication opportunities in annotations/<scenario_id>.md. Provide early notes to Person 1 for the blockout and Person 2 for scenario scripting. Verify agent-assisted notes manually; never invent off-screen facts or unavailable team comms. Follow docs/VIDEO_ANNOTATION.md in the repository.
 2. Define copied-value observation, callout, decision, run and snapshot schemas. Create a fake run and evidence-ID/time checks with Person 2 before bots.
-3. Implement per-enemy region beliefs, movement prediction, observation updates, trust/expiry and quick-call UI. Keyword parsing follows only if the core works; speech is stretch.
-4. Add silent/chatty/budgeted message modes and symmetric/asymmetric trust settings; keep perception/combat identical across modes. Bot templates speak only from observations.
+3. Implement working enemy-region beliefs, observation aging/corrections and full acceptance of player reports. Voice/STT and the local interpreter/model host are the current input path; keep menu code only as a test helper.
+4. After the core works, add silent/chatty/budgeted message modes; keep perception/combat and full player-comm acceptance identical across modes. Bot templates speak only from available observations.
 5. Implement precision, recall, latency, entropy change and belief accuracy against truth. Track message counts, fallback events and time/attempts to criterion. Undefined metrics are unavailable, not zero.
 6. Record truth separately from observations; build a scrubbable top-down truth-versus-belief timeline, callout markers and evidence-to-action inspector.
 7. Add core belief-only counterfactual replay from fixed observation logs; label it explicitly as not recomputing combat outcomes.
@@ -511,7 +503,7 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 
 **Done when:** structured callouts change beliefs and behavior; the debrief explains why; all four comparison arms exist; repeatable pilot results are saved; no transfer claim exceeds the evidence.
 
-**Handoffs:** early verified clip notes/starting state for Persons 1/2 alongside hour 2 schemas/fixtures; hour 6 belief/trust/grading on fake logs; hour 8 quick-call and live belief adapter; hour 12 real run recording and basic score end screen. Debrief and counterfactual follow integration.
+**Handoffs:** early verified clip notes/starting state for Persons 1/2 alongside hour 2 schemas/fixtures; hour 6 working-belief integration on fake logs; hour 8 quick-call and live belief adapter; hour 12 real run recording and basic score end screen. Debrief and counterfactual follow integration.
 
 ### 9.4 Shared contracts and integration gates
 
@@ -523,7 +515,7 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 | Gameplay event | Person 1 -> perception/private recorder | ID, tick/time, type, actor, position, payload; privileged stream not exposed to policy |
 | Observation | Person 2 -> belief/policy | ID, bot ID, event/availability ticks, seen/heard/told, copied content, confidence, speaker/provenance |
 | Callout | Person 3 -> delayed comms delivery | ID, speaker, type, region, count, hedge, time; menu/parser/fixture share schema |
-| Belief query | Person 3 -> Person 2 | Bot-local enemy-region probabilities, trust and available evidence IDs; no world nodes |
+| Belief query | Person 3 -> Person 2 | Bot-local working enemy-region beliefs and available evidence IDs; no world nodes |
 | Actor command | Person 2 -> Person 1 | Bot ID, movement/aim and fire/reload/utility/defuse intent; executor resolves physics |
 | Decision trace | Person 2 -> Person 3 | Tick, bot ID, goal/action, evidence IDs, reason, branch/fallback status |
 | Run archive | All -> Person 3 | Schema/build/scenario versions, config/seed, inputs/events, snapshots, private truth and per-bot observations |
@@ -533,7 +525,7 @@ Use signals and narrow adapters, with restricted bot subscriptions. A global eve
 | Hours | Person 1 | Person 2 | Person 3 | Acceptance gate |
 |---|---|---|---|---|
 | 0-2 | Project/export/test room; actor stub | Policy boundary/leak fixture | Schemas/fake log/audit fixture | Contracts frozen; forbidden data path fails a test |
-| 2-6 | Blockout/collision/regions/navigation | Perception/delay/hold-shoot | Beliefs/trust/grader/recorder | Modules use the same fixtures |
+| 2-6 | Blockout/collision/regions/navigation | Perception/delay/hold-shoot | Working beliefs and comm/model logs | Modules use the same fixtures |
 | 6-8 | Rifle/smoke/flash/spike | Baseline and reactive branch | Quick-call/live belief adapter/modes | Callout changes a bot goal in-engine |
 | 8-12 | Round/restart and event integration | Integrate combat/navigation; leak checks | Capture real run; score end screen | Full retake playable; leak checks pass |
 | 12-16 | Utility tests; map overlay data | Validator/visibility bake/fallbacks | Debrief/trace/belief counterfactual | Bot -> scenario -> trace demo works |
@@ -557,7 +549,7 @@ Merge small changes at hours 2, 6, 8, 12 and 16. Separate scene ownership avoids
 
 1. **Bot:** explain the practice need and the teammate's limited knowledge.
 2. **Scenario:** identify the source clip and simplified starting situation. Player calls an enemy hidden from a teammate; teammate changes belief and covers the route. A changed entry or smoke demonstrates adaptation.
-3. **Behavior trace:** inspect the sighting/callout, availability delay, trust, belief update, chosen action and evidence IDs. Show truth separately and the belief-only counterfactual.
+3. **Behavior trace:** inspect the sighting/callout, availability delay, accepted report, working-belief update, chosen action and evidence IDs. Show truth separately and the belief-only counterfactual.
 4. Show invalid-scenario rejection or forced stuck fallback and a passing leak report.
 5. Show actual pilot metrics and comparison settings. VOD-only human comparisons require participants: if unrun, label them unrun. Report time/attempt savings only if measured.
 
@@ -588,7 +580,7 @@ Official Godot implementation references (pin version-specific pages when select
 - The 3D first-person scope is the main schedule risk. Say openly that the map is a greybox recreation of layout and sight lines, and that bots, weapons, and abilities are approximations.
 - Do not claim to be first, or that no similar tool exists. Say what was and was not found.
 - Do not cite the research in section 3 as proof for Valorant. It is motivation from other domains.
-- State the reaction-delay distribution, trust parameters, and sound radii as the placeholders they are.
+- State the reaction-delay distribution and sound radii as the placeholders they are.
 - Do not present the simulator's ground truth as pro ground truth.
 - If a component misbehaves, show the circuit breaker in the demo instead of hiding it. That is a feature the mentor asked for.
 
@@ -614,8 +606,6 @@ Use clearly synthetic fixtures for unresolved content and continue independent s
 ## 13. References
 
 - arXiv 2605.12920, Embodied Multi-Agent Coordination by Aligning World Models Through Dialogue (May 2026).
-- arXiv 2601.21742, Epistemic Context Learning: Building Trust the Right Way in LLM-Based Multi-Agent Systems.
-- SSRN abstract 6759863, Trust under Fire: How LLM Agents Build, Lose, and Recover Trust in High-Stakes Multi-Agent Coordination (May 2026).
 - arXiv 2610.38869, Auditable Belief Updates as a Missing Safety Layer for LLM-Powered Multi-Agent Systems.
 - arXiv 2509.06355, A Data-Driven Discretized CS:GO Simulation Environment to Facilitate Strategic Multi-Agent Planning Research (DECOY).
 - arXiv 2408.13934, Learning to Move Like Professional Counter-Strike Players.

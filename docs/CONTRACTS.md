@@ -12,13 +12,15 @@ Proposed coordinates: meters, Y up, Godot Vector3 serialized as [x, y, z]. Integ
 
 Copy values into policy inputs; never pass live nodes or global truth dictionaries. Private recording access and bot subscription access are separate.
 
+**Latest user rule:** teammates always fully trust valid, delivered player comms. No credibility/history score, corroboration prerequisite or numeric hedge-based credibility discount is part of the product. Preserve explicit uncertainty as content and retain delay, validation, physical constraints and evidence provenance. Person 3 owns aligning its working-belief/model implementation. The existing empty `trust: {}` snapshot field is inert compatibility metadata; this documentation change does not remove it or change a schema.
+
 | Contract | Producer -> consumer | Required concepts |
 |---|---|---|
 | Region registry/graph | Person 1 -> Persons 2/3 | ID/name, bounds/center, neighbors, travel times, unknown fallback and version |
 | Gameplay event (privileged) | Person 1 -> perception/private recorder | ID/tick/type, actor, position, payload |
 | Observation (bot-local) | Person 2 -> beliefs/policy | ID, bot, event/availability tick, source, copied content, confidence, speaker/provenance |
 | Callout | Person 3 -> delayed delivery | ID, speaker, type, region, count, hedge, event tick |
-| Belief query | Person 3 -> Person 2 | Bot-local enemy-region probabilities, trust, available evidence IDs |
+| Belief query | Person 3 -> Person 2 | Bot-local working enemy-region beliefs and available evidence IDs; inert legacy field retained for compatibility |
 | Actor intent | Person 2 -> Person 1 | Actor, movement/aim/fire/reload/utility/defuse intent; no hidden target tracking |
 | Decision record | Person 2 -> Person 3 | Tick, bot, goal/action, evidence IDs, reason, branch/fallback |
 | Archive (privileged) | All -> Person 3 | Version/config/seed, inputs, snapshots, truth and per-bot observations |

@@ -1,186 +1,93 @@
-# Person 2 handoff — perception, bot behavior, scenario runtime
+# Person 2 handoff - perception, bot behavior, scenario runtime
 
-**Adoption/integration update:** the user explicitly confirmed this direction as authoritative after reviewing Person 3's `b078210`. The original work list below describes the state when written. Person 2 now has an inherited first-person scene, reusable bot spawning, delayed comm/physical runtime and a proposed model-context/goal seam. See [current implementation and launch steps](../bots/FIRST_PERSON.md) and [actual lane results](../bots/PERSON2_HANDOFF.md). Person 3 has since published local STT scaffolding at `57f809d`; target measurements and the interpreter/model service/game bridge remain dependencies. Full spoken reactions are not implemented by this change.
+This is the current Person 2 work plan, refreshed after the user confirmed the correct map and visible teammate. Use it with [the project brief](../callout_trainer_brief.md), [decisions](DECISIONS.md), [ownership](TEAM.md) and [actual implementation records](../bots/PERSON2_HANDOFF.md). Older appended handoff records describe their original implementation snapshots.
 
-**Audience: assume zero prior knowledge.** Read this top to bottom before touching code.
-You are **Person 2 (Wonho2007)**. This document tells you what the project now is, what
-your lane owns, what already exists, and every file you need to create or change. It does
-not change any code itself — it is instructions.
+## Current product rules
 
-## 1. What the project is now (read this, it changed)
+- The player controls a character in first person and communicates by voice. No player comm menu; existing menu helpers remain test/fallback code.
+- Person 3's free/local grounded LLM interprets speech and sets teammate goals. No training is required. Person 2 validates and physically executes those goals.
+- **The teammate always fully trusts valid, delivered player comms, including wrong calls.** No credibility score, history penalty, corroboration prerequisite or numeric hedge-based credibility discount. Preserve the player's explicit uncertainty/last-seen meaning rather than inventing precision. Clarification, delivery delay, provenance, command lifecycle and physical feasibility still apply. Wrong information can lead to a bad tactical outcome; it does not reduce acceptance of later calls.
+- An empty `trust: {}` field may remain for snapshot compatibility. It has no behavior or scoring meaning; removing it is not a priority or a reason to change the shared schema.
+- Grading/debrief and counterfactual are deferred until the core voice-to-reaction loop works.
+- Continue with synthetic data until Person 3 supplies verified VOD/year/round/timestamps and actor notes. Do not invent pro positions or actions.
 
-The product is a **VALORANT comms coach**. The player controls one character in first
-person inside a VALORANT-like sandbox (Person 1 is building it). Bots play every other
-teammate and every enemy. The player talks **out loud**; their **voice comms** are the
-only input (no menu). AI teammates **hear, interpret, and react** to those comms. Enemies
-move like the pros did in a real reference round and adapt when the world diverges.
+**Implementation gap:** Person 3's currently imported belief module at `57f809d` still uses numeric hedge strengths. Person 3 must align its belief/interpreter/model behavior with full acceptance. This requirement/documentation update does not edit that lane's source or claim the behavior has already changed. Keep explicit uncertainty as content, not a player-credibility penalty.
 
-Key product decisions (see `docs/DECISIONS.md`) that affect you:
+## Ownership
 
-- **Voice is the only player input.** There is no quick-call menu anymore.
-- **Teammate decisions are made by a local LLM and are non-deterministic.** The LLM uses
-  only information the bot is allowed to have (delayed observations, its own state, local
-  beliefs, public round signals). It must never read hidden truth.
-- **No trust model.** A callout is believed and acted on by its hedge strength alone; a
-  wrong call gets the bot caught out. The consequence is a bad in-round outcome, which
-  **plays out in your lane** (the bot commits and can die).
-- **No paid APIs. Everything local/free.** The LLM and speech run on a capable PC with a
-  discrete GPU (specific machine TBD). Model files copy to the other laptops.
-- **Grading/debrief is deferred.** Do not build it yet.
-- **Reference round:** FNC vs PRX, Masters Toronto 2024 Grand Final, Lotus, the final
-  round, starting from the bomb plant. Person 3 annotates it from the VOD.
+- **Person 2:** perception/hearing/reaction delay; bot scenes/spawning; physical intent execution; deterministic fallback; executable scenario data/enemy baseline/reactive branches; physical feasibility and fairness/safety checks.
+- **Person 1:** shared player/actor/weapon/utility mechanics, map geometry/regions/navigation, shared main scene/settings and export.
+- **Person 3:** microphone/STT, interpretation, local LLM goals, working beliefs/full acceptance, exact prompt/output logging, annotations, shared schemas and structural scenario helpers. Grading/evaluation are later.
 
-## 2. Your lane (ownership)
+Stay on `person-2/bot-perception`. Preserve teammate edits; do not edit another lane's source to work around an integration dependency. The separate owned FPS scene inherits Person 1's main rather than replacing it.
 
-You own: `perception/`, `bots/`, `scenarios/`, `validation/`, `scenes/bots/`, and
-bot/perception tests. In one line: **everything the AIs physically do, and the runtime that
-runs a scenario.** You do **not** own voice, LLM interpretation, belief, or the annotation
-notes — those are Person 3.
+## What exists now
 
-The clean split with Person 3:
+- Person 1's current synthetic `b_site.json`: corridor, entry hallway/arch, deeper room and divot. It is not a verified real-site reconstruction. Current region IDs: `room`, `entry`, `corridor`.
+- Person 2's [inherited first-person scene](../scenes/bots/first_person.tscn), reusable [bot actor](../scenes/bots/bot.tscn) and [owned coverage/spawn data](../scenarios/b_site_coverage.json). The launcher follows latest locally fetched main and prints immutable source revisions.
+- Actual shared actor movement/health, coverage navigation and watched angles; delayed comm inbox/executor, command stage/swing/cancel/expiry, copied model-context/intent gate and deterministic fallback.
+- A separately tested physics/navigation [perception kernel](../perception/README.md). It is **not yet connected to the live first-person opponent/utility/audio registry**.
+- Person 3's fetched branch `57f809d` contains STT scaffolding, belief helpers and a structural scenario schema/validator/coordinate helper. STT target-machine results are unfilled; the grounded interpreter/model host and game bridge remain dependencies.
+- The latest prior automated run passed 494 assertions (465 default/cross-lane + 29 FPS). These are historical results for that implementation, not a fresh voice/manual test.
+- **Manual evidence:** the user confirms the current map is correct and a teammate is visible. Movement feel, all bot interactions, utilities, real speech/model latency and exported-build behavior are not established by that report.
 
-- **Person 3** turns the player's voice into a structured comm and into a bot's belief/goal,
-  and runs the LLM that decides the teammate's intent. Person 3 also writes the annotation
-  notes (`annotations/`).
-- **You** provide perception (what a bot can see/**hear** + reaction delay), execute the
-  intent the LLM/planner produces (move, hold, peek, trade, throw, defuse), drive the enemy
-  bots along the annotated pro line with adaptation, and convert Person 3's verified notes
-  into executable `scenarios/` JSON.
+## Your next steps, in order
 
-## 3. What already exists (Person 1, `main` branch)
+### 1. Wire live perception into the current FPS runtime
 
-Person 1 pushed a working sandbox to `main`. It has:
+This is the next independent Person 2 coding task while Person 3 finishes voice/model work. Reuse `perception/perception_sensor.gd`; extend `bots/teammate_runtime.gd` and the owned scene adapters.
 
-- A code-generated room from `world/maps/test_room.json` via `world/sandbox_builder.gd`.
-  **It is a synthetic test room, NOT Lotus B yet.** Region IDs are placeholders
-  (`region_a`, `region_b`, `region_mid`).
-- A first-person player controller: `scenes/player/player.gd`, `scenes/player/player.tscn`.
-- Actor base + health: `actors/actor_base.gd`, `actors/health.gd`.
-- Weapons: `weapons/weapon.gd`, tracers.
-- A full utility system: `utility/utility_system.gd` plus `smoke.gd`, `flash.gd`,
-  `molly.gd`, `blind_wave.gd`, `scan_orb.gd`, `recon_outline.gd`, and `utility/abilities.json`.
-- A spike: `world/spike.gd`. Minimap: `ui/minimap.gd`. Event log: `recording/game_events.gd`.
-- `docs/VIDEO_ANNOTATION.md` — the agreed annotation ownership (Person 3 annotates,
-  **you** convert notes to scenario JSON, Person 1 maps regions/markers).
+- Register the real opponent(s) only inside the privileged sensing adapter. Query live positions/collision/utility there, never in the planner/model context.
+- Feed copied, delayed sight/hearing observations into the existing inbox. Forward supported due observations to the working-belief module, preserving IDs and actual delivery ticks.
+- Connect smoke occlusion and flash/blind state through Person 1's shared utility interfaces. Do not claim full-region-clear evidence from partial visibility.
+- Consume actual sound events through a restricted adapter. Preserve navigation-path hearing and quiet walk/crouch behavior; do not invent source identity or an exact unseen location.
+- Keep player testimony fully accepted independently of whether the bot also saw the report. Lack of corroboration is not a credibility filter.
 
-**Two things you depend on do not exist yet:**
+**Acceptance:** a visible enemy yields a delayed sighting; a wall/smoke/blind prevents it; an unseen enemy move cannot change allowed policy inputs. A player report still changes coverage after delay even if the teammate cannot see the enemy. Decisions cite only evidence actually available at that tick. Keep the in-engine scene test separate from the human playtest.
 
-1. **No bot spawning of any kind.** There are `spawn_enemy_1` / `spawn_teammate_1` markers
-   in the map JSON, but nothing spawns or controls a bot.
-2. **No Lotus B region names.** The sandbox is still the generic test room.
+### 2. Connect the voice/LLM loop with Person 3 in parallel
 
-Both are blockers for full in-engine integration. Coordinate with Person 1 on who adds bot
-spawning and the Lotus B geometry/regions; until then, build against fixtures (section 6).
+The [existing seam and exact payload shapes](../bots/FIRST_PERSON.md) are ready for consumer review:
 
-## 4. The communication path you plug into (already designed)
+1. The scene emits `teammate_ready(runtime)` on each spawn/reset.
+2. Person 3 captures/transcribes speech and interprets it; the trusted host sends a validated comms.v1 envelope through `submit_comm`.
+3. Person 3 receives `policy_context_ready`, records the exact context/prompt/raw output and returns a parsed goal through `submit_intent`.
+4. Person 2 executes through shared mechanics and emits `comm_result` / `decision_recorded`.
 
-A player comm becomes a **delayed "told" observation** delivered to one bot's inbox. Person
-3's existing code already models this world-independently and has passed on Godot 4.4.1:
+Review full-acceptance behavior with Person 3 along with the region vocabulary and proposed intent/log seam. Do not build a competing STT/LLM interpreter in Person 2's lane. No hidden truth, scene references or player-only scan/minimap data may enter model context. Model failures/illegal goals retain the deterministic fallback.
 
-- `comms/report_adapter.gd`, `comms/quick_call.gd` — build/validate `comms.v1` messages.
-  (The quick-call file stays as a deterministic fallback/test helper even though the player
-  uses voice; do not delete it.)
-- `belief/region_belief.gd` — per-bot enemy-position beliefs; a comm updates belief by its
-  hedge (sure/think/unsure → 0.9/0.7/0.4). No trust.
-- `perception/observation_inbox.gd` (yours, already written) — holds observations and
-  releases them at their available tick (the reaction delay). The LLM/policy reads only
-  released observations.
+**Acceptance:** speaking a report such as "enemy in the room" changes the teammate's working picture and movement after actual delivery; a deliberately wrong but valid call is still accepted, and previous wrong calls do not reduce later acceptance. Explicit uncertainty is preserved. Ambiguous words produce clarification rather than guessed coordinates. Test command/cue timing, timeout/invalid-output fallback, post-death speech and reset on the actual model machine. Record measured latency and results, not estimates.
 
-The shared message contract is `docs/COMMANDS.md` + `schemas/comms_v1.schema.json`
-(report / command / cue / cancel). Do not silently change these; coordinate in a PR.
+### 3. Complete physical actions through Person 1's shared mechanics
 
-## 5. Files you need to create or change
+The current actor supports hold/coverage movement and authored swing staging/routes. Next add bot flash execution with atomic inventory/launch/completion, permitted follow-player swing release, defuse, and shared rifle/aim/reload behavior based on delayed last-observed data. Keep one movement owner. Report actual completion/failure; do not convert a report into a forced push or claim a throw from merely issuing an intent.
 
-Nothing here is written for you yet — this is the work list. Create under your owned dirs.
+**Acceptance:** supported commands complete once; duplicate IDs cannot repeat an action. Death, expiry, cancellation, unavailable utility and unreachable/stuck paths stop or recover with a recorded reason. Bot combat uses the same physical rules as the player and does not track hidden live targets. Full acceptance does not make impossible commands executable.
 
-### 5.1 Bot spawning and the teammate/enemy actor (`scenes/bots/`, `bots/`)
+### 4. Build enemy/scenario runtime from verified notes
 
-- `scenes/bots/bot.tscn` + script: a bot built from Person 1's actor components
-  (`actors/actor_base.gd`), spawned at a map `spawn` marker. One scene reused for
-  teammates and enemies; role is a parameter.
-- A spawner that reads the scenario's actor list and instances bots at the right markers.
-  Coordinate with Person 1 on whether the spawner lives in the main scene (his) or a bot
-  manager (yours) — do not edit his main scene without asking.
+Person 3 supplies source notes; Person 2 creates executable `scenarios/` data. Consume Person 3's structural schema/coordinate helper rather than duplicating it. Add physical navigation-time/LOS/utility/baseline validation, one observation-driven reactive branch, and conservative stuck/off-nav/OOD fallback. Keep authored alternatives distinct from observed pro actions. Use synthetic cases until real annotations arrive.
 
-### 5.2 Perception, including hearing (`perception/`)
+**Acceptance:** valid baseline/branch dry runs complete; an invalid scenario fails with a concrete reason. Hidden truth never drives a branch or fallback. Do not wait for source annotation to build independent physical tests.
 
-- Sight: physics ray queries from the bot's eye, FOV, smoke occlusion, flash blindness.
-- **Hearing:** this is the half of "the teammate hears comms" that is yours. Decide whether
-  a bot is in range to receive a comm / sound event, apply the **reaction delay**, and emit
-  a delayed observation into `observation_inbox.gd`. Person 3 does the interpretation; you
-  do the "could this bot hear it, and when does it arrive" gate.
-- Negative evidence / region coverage for the belief model's `region_clear`.
-- Keep `plain_data.gd` (yours) as the copied-value boundary; never hand policy a live node.
+## Current interfaces and constraints
 
-### 5.3 The intent executor (`bots/`)
+- Existing comms.v1 shapes in [COMMANDS.md](COMMANDS.md) are unchanged. The `hedge` field can remain as explicit player wording; it must not be treated as a numeric player-credibility penalty.
+- Current local model-goal seam supports hold/cover/reposition/stop on authored markers only. Broader goals need coordinated validation/execution support; do not silently assume trade/flash/defuse already work.
+- Current addressed radio-style fixture delivery is 18 ticks; the local acoustic/team-radio range rule still needs agreement.
+- Person 1's navigation map/bake cell alignment is accommodated only in the owned integration; the shared production fix remains coordination work.
+- Shared schema/fixture changes need explaining to both consumers. Preserve copied-value boundaries and evidence IDs. An evaluator's truth is not a policy input.
 
-- You already have `bots/command_executor.gd` and `bots/knowledge_planner.gd`. Under the new
-  direction, the **LLM (Person 3) produces the teammate's goal/intent** non-deterministically.
-  Your planner/executor's job shifts to **executing** that intent fairly and physically:
-  move along nav to the goal region, hold/peek/trade, throw the called utility, defuse.
-- **Important contract change to coordinate with Person 3:** the belief snapshot no longer
-  contains a meaningful `trust` value. Person 3 kept a `trust: {}` empty dict so your
-  `knowledge_planner._valid_belief` `keys_exact` check still passes. You may drop `trust`
-  from that validation in a coordinated change. Do not assume trust exists.
-- The fallback deterministic planner stays as the circuit-breaker path (brief §6.10): if the
-  LLM is unavailable, errors, or produces an invalid/illegal intent, fall back to a simple
-  scripted policy inside the same information boundary. This is required, not optional.
+## Run and record results
 
-### 5.4 Enemy pro-line behavior (`bots/`, `scenarios/`)
+Use official Godot 4.4.1 stable. [FIRST_PERSON.md](../bots/FIRST_PERSON.md) has the exact installed paths and launch command. Automated commands:
 
-- Enemies follow the annotated pro line from the scenario until the observed world diverges
-  (player does something different, util blocks them). Then pick an authored reactive branch,
-  else a simple heuristic. This is the only "prediction" in the system and it is a prior, not
-  a claim about what the real pros would do. Label adaptations "pro-inspired adaptation."
+~~~powershell
+python tools/check_repo.py
+python validation/run_person2_tests.py --godot <Godot4.4.1_console>
+python validation/run_person2_tests.py --godot <Godot4.4.1_console> --first-person-smoke
+~~~
 
-### 5.5 Scenario runtime and data (`scenarios/`, `validation/`)
+Record exact command/version/result and what was tested. For nondeterministic model decisions, audit actual recorded model context/prompt/output rather than demanding identical reruns; keep deterministic perturbation/dependency/availability checks as additional tests. Human records include tester, build/scene, spoken words/actions and observed behavior. Never turn a headless pass into a manual or voice pass.
 
-- `scenarios/<scenario_id>.json`: the executable scenario. **You** author this from Person
-  3's verified `annotations/<scenario_id>.md` notes (per `VIDEO_ANNOTATION.md`). Extend the
-  shape Person 1 used in `world/maps/test_room.json` (regions, spawns, spike) with: schema
-  version, map, side, round context (time left, spike state, economy, per-actor weapon/util),
-  per-actor start region, and a baseline action timeline + at least one reactive branch.
-- `validation/`: a scenario validator (reachability, region IDs real, util references exist,
-  branch weights sum to 1, baseline dry run). Keep `validation/comms_validator.gd`.
-- The fairness/leak checks remain yours to own with Person 3 (brief §6.12): evidence the bot
-  used must be a subset of what it could have observed by that tick; moving an unseen enemy
-  with all allowed inputs fixed must not change the decision. **With a non-deterministic LLM,
-  you prove this against the recorded prompt/decision log Person 3 produces, not by
-  re-running** (you cannot replay a non-deterministic model to the same output).
-
-## 6. Build against fixtures first (because bots/regions do not exist yet)
-
-Do not wait for Lotus B. The brief and your existing tests already use synthetic fixtures.
-Build perception, executor and enemy behavior against the synthetic coverage fixture you
-already have (`scenarios/synthetic_coverage.json` on your branch) and Person 3's
-`examples/person3_fake_run.json`. Integrate with the real sandbox when Person 1's Lotus B
-regions and the bot spawner land.
-
-## 7. What to do first (ordered)
-
-1. Read `callout_trainer_brief.md`, `AGENTS.md`, `docs/TEAM.md`, `docs/DECISIONS.md`,
-   `docs/COMMANDS.md`, `docs/VIDEO_ANNOTATION.md`, and this file.
-2. Agree with Person 1: who adds **bot spawning** and the **Lotus B regions/markers**, and
-   the exact region IDs. Freeze those IDs with Person 3 too (the LLM needs the same names).
-3. Confirm with Person 3 the **intent contract**: what the LLM emits as a teammate goal, and
-   the **decision-log format** (you need it for the fairness proof).
-4. Build the bot scene + spawner and the intent executor against fixtures.
-5. Add perception + hearing + reaction delay feeding `observation_inbox.gd`.
-6. Add the enemy pro-line + one reactive branch once Person 3 delivers the annotated notes.
-7. Keep the deterministic fallback planner as the circuit breaker.
-
-## 8. Hard rules (do not break)
-
-- Fairness boundary: policy/LLM sees only copied delayed observations, own state, local
-  beliefs, allowed public signals. No live nodes, no hidden transforms, no truth singleton.
-- No client access, no ripped assets, no replay-file scraping, no paid API, offline-capable.
-- Do not invent pro behavior, positions or facts. Reference the VOD by URL/timestamp.
-- Do not edit Person 1's main scene or Person 3's files without coordinating in a PR.
-
-## 9. Validation and handoff
-
-- Run `python tools/check_repo.py` for doc/fixture changes.
-- Run your Godot tests with the pinned editor (Godot 4.4.1 stable) and report real results;
-  mark unavailable checks honestly. Keep automated results separate from manual playtests.
-- Update your row in `docs/HANDOFFS.md` with changed paths, interface effects, real
-  commands/results, remaining dependency and next integration step.
+Update Person 2's row and append actual results/dependencies in [HANDOFFS.md](HANDOFFS.md); update [the continuation guide](../bots/PERSON2_HANDOFF.md). Keep publication on the existing Person 2 branch/draft PR; do not merge to main or overwrite teammates.

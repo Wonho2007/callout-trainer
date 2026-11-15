@@ -15,11 +15,11 @@
 | Available development time | User-reported | Approximately 11 hours at the latest scope discussion; earlier 24-hour schedule is historical planning |
 | Target/demo | Open; Person 1 | OS, hardware, export and presentation format |
 | Schemas | Mixed | New communication boundary selected: docs/COMMANDS.md, comms.v1. Other engine contracts remain proposed v0 |
-| Trust | Removed by user-confirmed updated direction, 2026-11-14 | No per-speaker reliability/scarring model; testimony uses hedge strength only. Person 3 retains empty trust: {} for snapshot compatibility until coordinated removal |
+| Player comm acceptance | Latest explicit user direction | Teammates always fully trust valid player comms, even if wrong. No credibility/history penalties or numeric hedge-based credibility discounts. Preserve explicit uncertainty as meaning. Delay, clarification, feasibility and provenance checks remain. Person 3 must align the currently hedge-weighted belief/model path; empty trust: {} is compatibility metadata only |
 | Teammate AI | User-confirmed updated direction, 2026-11-14 | Person 3's free/local pretrained LLM interprets and sets goals from copied available inputs; Person 2 validates and physically executes them; deterministic fallback required. Grounding, not training |
 | Model machine | Open | Capable PC with discrete GPU, specific machine TBD; measure latency on the actual target |
 | Scenario source | Proposed reference; verification pending | New handoffs name FNC vs PRX / Lotus / final round from plant; Person 3 must verify exact event/year/VOD/round/timestamps. No source-derived actor data is implemented from that label |
-| Evaluation | Deferred; not run | Build the core voice-to-reaction loop first; symmetric/asymmetric trust comparison is obsolete with trust removed |
+| Evaluation | Deferred; not run | Build the core voice-to-reaction loop first; do not build/tune/compare player credibility models |
 | Grading/debrief | Deferred, not cut | Build after core voice/LLM/bot integration works |
 | Core counterfactual | Deferred, not cut | Belief-only replay after core; changed combat outcome remains approximate stretch |
 | License/assets | Open | Owner chooses license; verify third-party asset redistribution before use |
@@ -30,6 +30,10 @@ Record confirmed decisions with date, context and affected interfaces. No map, a
 The PDF advice/requirements were reviewed for the brief, but PDF files are not in this repository. Brief sections 1 and 8 contain the summaries and page mapping. External papers, historical statistics and policy dates remain unverified motivation.
 
 ## Decision log
+
+### Latest user clarification - teammates fully trust player comms
+
+The user explicitly requires full acceptance of player communication and no trust feature. This overrides the earlier hedge-only numeric weighting direction. Valid reports become the bot's working information without credibility discounts or historical penalties; wrong calls can cause bad tactical outcomes. Explicit uncertainty/last-seen language is preserved as content. Clarification, reaction delay, command validation and physical feasibility still apply. Person 3 owns aligning its belief/LLM implementation; Person 2 owns physical response and fair evidence handling. The current 0.9/0.7/0.4 implementation is a documented gap, not a claim of full acceptance. No runtime/schema change is made by this documentation update.
 
 ### 2026-11-14 — newer Person 2/3 direction adopted
 

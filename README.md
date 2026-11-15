@@ -4,7 +4,7 @@ A Godot first-person practice scenario where the player communicates with inform
 
 **Current direction: first-person voice comms coach with local LLM teammates.** Person 1's synthetic first-person sandbox/mechanics and Person 2's isolated bot modules exist. Person 2 now provides a separate first-person teammate integration scene; the live Person 3 voice/LLM service is still a dependency. No end-to-end voice, pro reconstruction or training benefit is claimed. Use Godot 4.4.1 stable.
 
-The user confirmed [the newer Person 2 handoff](docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only player comms, local grounded LLM decisions, no trust model, deterministic safe fallback, and grading/debrief deferred. See the precedence note at the top of the [brief](callout_trainer_brief.md). Older planning text below is historical where it conflicts.
+The user confirmed [the newer Person 2 handoff](docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only player comms, local grounded LLM decisions, full acceptance of player comms without credibility scoring, deterministic safe fallback, and grading/debrief deferred. See the precedence note at the top of the [brief](callout_trainer_brief.md). Older planning text below is historical where it conflicts.
 
 ## Start here
 
@@ -47,7 +47,7 @@ Use short tasks: agent changes one feature -> checks -> human playtest -> specif
 |---|---|---|
 | Person 1 | World, player, shared mechanics, navigation bake, export | Test room, actor adapters, named regions |
 | Person 2 | Perception, scripts, reactive bots, validators, safety | Delayed observation interface and leak fixture |
-| Person 3 | Callouts, beliefs/trust, grading, logs, debrief, evaluation | Shared schemas, synthetic log, audit fixture |
+| Person 3 | Voice/LLM, working beliefs, logs; grading/debrief/evaluation deferred | Shared schemas, synthetic log, audit fixture |
 
 Full assignments and hour-by-hour gates are in brief section 9. The 24-hour schedule is a planning assumption, not a verified event deadline.
 

@@ -25,7 +25,7 @@ Committed decisions (`docs/DECISIONS.md`):
   sets are generic intent/slot corpora — Fluent Speech Commands, SLURP/MASSIVE — which still
   need hand-written VALORANT examples, plus GPU time, for a likely worse result. Those are
   recorded as the fallback/justification only. See `docs/DECISIONS.md`.)
-- **No trust model.** A comm is believed by its hedge (sure/think/unsure → 0.9/0.7/0.4).
+- **Latest user clarification: fully trust player comms.** No credibility/history model, corroboration gate or numeric hedge-based credibility discount. Preserve explicit uncertainty as content. Align the existing hedge-weighted belief module and model prompt with this rule; wrong valid calls must still produce tactical reactions.
 - **No paid API, local/free only.** LLM + speech run on a capable PC with a discrete GPU
   (specific machine TBD). Model files copy to the thinner laptops but run slower there.
 - **Grading/debrief deferred.** Do not build it until the core works.
@@ -42,7 +42,7 @@ interprets and decides, and the scenario annotation.**
 What already exists on your branch `person-3/comms-belief` (passed on Godot 4.4.1):
 
 - `comms/report_adapter.gd`, `comms/quick_call.gd` — build/validate `comms.v1` messages.
-- `belief/region_belief.gd` — per-bot enemy beliefs; hedge-only strength; **trust removed**;
+- `belief/region_belief.gd` — current implementation still uses hedge-only numeric strength; **full player-comm acceptance alignment pending**;
   keeps an empty `trust: {}` in the snapshot for Person 2's planner contract.
 - `belief/replay.gd`, `grading/belief_metrics.gd`, `recording/evidence_audit.gd`.
 - `ui/quick_call/` — the panel (kept as fallback, not the player path).

@@ -16,6 +16,8 @@ Initial actions: swing_together, throw_flash, report_enemy. Supporting cue/cance
 
 ## Message envelope
 
+**Player comms are fully accepted:** a valid, delivered player statement becomes the teammate's working information even if it is wrong. Do not require visual corroboration or apply a credibility/history penalty. Preserve explicit uncertainty as meaning; a hedge is not a numeric reason to distrust or ignore the player. Unknown/ambiguous references still require clarification, and command expiry, reaction delay, actor state, utility and physical reachability remain enforced. Simulator truth stays outside this path. Person 3 must align the currently hedge-weighted belief/model implementation; this requirement update does not change the schema or claim that runtime alignment is complete.
+
 See [the JSON Schema](../schemas/comms_v1.schema.json) and [synthetic examples](../examples/comms_v1.json).
 
 All fields required: schema_version ("comms.v1"), message_id, speaker_id, recipient_id, issued_tick, expires_tick, kind, payload. Each message addresses one allied bot; Person 3 expands an explicit team broadcast into separate addressed messages. No hidden-state-based recipient selection.
@@ -30,7 +32,7 @@ A trusted adapter assigns IDs, actor IDs and simulation ticks; the language mode
 | cue | command_id | Release an already-ready on_cue command |
 | cancel | command_id | Cancel that speaker's active interruptible command |
 
-A report count is a positive integer or null for unspecified; never infer "one" merely from "someone." Hedge is sure/think/unsure. Existing report fixtures remain legacy illustrative v0; adapt new reports into the same belief update path. Parser certainty and speaker reliability are separate concepts.
+A report count is a positive integer or null for unspecified; never infer "one" merely from "someone." Hedge is sure/think/unsure and preserves what the player said, not a speaker-credibility score. Existing report fixtures remain legacy illustrative v0; adapt new reports into the same working-knowledge path. Clarify parser uncertainty rather than assigning reliability to the player.
 
 ## Natural language and context
 
