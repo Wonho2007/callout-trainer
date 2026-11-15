@@ -2,7 +2,9 @@
 
 A Godot first-person practice scenario where the player communicates with information-limited bot teammates, then reviews what those callouts changed.
 
-**Status: planning and collaboration starter. No playable Godot project exists yet.** Godot and a three-person development team are confirmed. Exact editor version, map/clip, team names and hardware are still open.
+**Current direction: first-person voice comms coach with local LLM teammates.** Person 1's synthetic first-person sandbox/mechanics and Person 2's isolated bot modules exist. Person 2 now provides a separate first-person teammate integration scene; the live Person 3 voice/LLM service is still a dependency. No end-to-end voice, pro reconstruction or training benefit is claimed. Use Godot 4.4.1 stable.
+
+The user confirmed [the newer Person 2 handoff](docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only player comms, local grounded LLM decisions, full acceptance of player comms without credibility scoring, deterministic safe fallback, and grading/debrief deferred. See the precedence note at the top of the [brief](callout_trainer_brief.md). Older planning text below is historical where it conflicts.
 
 ## Start here
 
@@ -37,7 +39,7 @@ Read [the agent-led sandbox workflow](docs/AGENT_WORKFLOW.md). Person 1 builds a
 
 Agents write files and run available checks; humans mainly launch, inspect and playtest. One teammate can initially operate Godot. Learn run/stop, scene tree/Inspector, errors and debug views; advanced editor authoring is unnecessary for the first prototype. Headless success does not prove movement, visuals or bot responses are correct.
 
-Use short tasks: agent changes one feature -> checks -> human playtest -> specific feedback. The workflow document includes a first-task prompt, proposed paths and acceptance gates. These are planned implementation files; no game code is included yet.
+Use short tasks: agent changes one feature -> checks -> human playtest -> specific feedback. The workflow document includes a first-task prompt, proposed paths and acceptance gates. Map and scene construction remain planned; the Person 2 command runtime below is now implemented.
 
 ## Three lanes
 
@@ -45,9 +47,13 @@ Use short tasks: agent changes one feature -> checks -> human playtest -> specif
 |---|---|---|
 | Person 1 | World, player, shared mechanics, navigation bake, export | Test room, actor adapters, named regions |
 | Person 2 | Perception, scripts, reactive bots, validators, safety | Delayed observation interface and leak fixture |
-| Person 3 | Callouts, beliefs/trust, grading, logs, debrief, evaluation | Shared schemas, synthetic log, audit fixture |
+| Person 3 | Voice/LLM, working beliefs, logs; grading/debrief/evaluation deferred | Shared schemas, synthetic log, audit fixture |
 
 Full assignments and hour-by-hour gates are in brief section 9. The 24-hour schedule is a planning assumption, not a verified event deadline.
+
+## Natural-language commands
+
+The selected [communication contract](docs/COMMANDS.md) separates flexible speech from bot actions. Start with enemy reports, flashes and coordinated swings; paraphrases share intents, while countdown timing remains explicit. See the [schema](schemas/comms_v1.schema.json) and [synthetic examples](examples/comms_v1.json). The bot-side inbox/executor is implemented against this boundary; speech interpretation and 3D mechanics remain pending.
 
 ## Communication training objective
 
@@ -59,6 +65,17 @@ One player, one teammate and one enemy in a synthetic test room. The player sees
 
 Then extend to the planned compact retake: one site, player plus two allies versus two enemies, one rifle, smoke, flash, defuse and a reactive branch. See the brief's never-cut list before reducing scope.
 
+## Person 2 runtime
+
+See [executor setup and integration](docs/PERSON2_EXECUTOR.md) for the delayed inbox, swing/flash execution, reports, actor adapter API, tests and synthetic trace demo. Use Godot 4.4.1 stable, matching Person 1's proposed version; no root project is required for these isolated checks.
+
+~~~sh
+python validation/run_person2_tests.py --godot "/path/to/godot"
+python validation/run_person2_tests.py --godot "/path/to/godot" --demo
+~~~
+
+These checks exercise policy with fake actor feedback. Real navigation, utility effects, language interpretation and full-game integration remain separate work.
+
 ## Checks and running
 
 Documentation/fixture validation only, using Python 3.10+ (standard library):
@@ -69,7 +86,7 @@ python tools/check_repo.py
 
 The GitHub Actions workflow runs this check. It is **not** a gameplay, leak-test or engine validation report.
 
-To run Godot later: Person 1 must first add project.godot, pin an exact stable Godot 4 editor/export version in docs/DECISIONS.md, and document real launch/export commands here. Do not assume that a headless script, playable scene or export already exists.
+Person 1's main sandbox runs from `project.godot`; use [the build guide](docs/BUILD.md). For Person 2's first-person teammate scene and the current voice-service dependency, use [the first-person integration guide](bots/FIRST_PERSON.md). The overhead `--visual-demo` is a development fixture and is not the player experience.
 
 ## Project contents
 

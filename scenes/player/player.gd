@@ -31,6 +31,7 @@ var _pitch: float = 0.0
 var _mouse_captured: bool = false
 var _flash_blind_remaining: float = 0.0
 var _wave_blind_remaining: float = 0.0
+var _applied_waves: Dictionary = {}
 
 
 func _ready() -> void:
@@ -113,14 +114,19 @@ func _on_flash_detonated(source_position: Vector3) -> void:
 
 
 func _on_wave_detonated(_source_position: Vector3) -> void:
-	# The blind wave goes through walls: pass has_los = true so LOS geometry is
-	# ignored. It still only blinds if the player is within radius and facing it.
-	# The wave darkens the screen (black) and lingers ~1s longer than the flash.
+	_sample_passing_waves()
+
+func _sample_passing_waves() -> void:
+	if utility == null:
+		return
 	var eye := camera.global_position
 	var forward := -camera.global_transform.basis.z
 	for wave in utility.active_blind_waves():
-		var dur: float = wave.blind_duration_for(eye, forward, true)
+		if not is_instance_valid(wave) or _applied_waves.has(wave.get_instance_id()):
+			continue
+		var dur: float = wave.passing_blind_duration_for(eye, forward, _has_clear_los(eye, wave.global_position))
 		if dur > 0.0:
+			_applied_waves[wave.get_instance_id()] = true
 			var total := dur + 1.0  # extra second of blackout
 			if total > _wave_blind_remaining:
 				_wave_blind_remaining = total
@@ -173,6 +179,9 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# The wave affects a viewer as it passes, not only at its endpoint. The
+	# source handles wall/range/facing rules; each wave applies only once.
+	_sample_passing_waves()
 	# When dead, feed no movement input; ActorBase still applies gravity so the
 	# body rests on the floor. Input/comms channel stays alive (handled above).
 	if not is_alive:

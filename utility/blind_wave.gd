@@ -4,8 +4,8 @@ class_name BlindWave
 ## walls (Person 1, shared mechanics).
 ##
 ## Built from the generic `blind` primitive. Unlike the thrown flash, this is a
-## wave sent in a straight line from the caster; when it reaches its travel
-## distance it detonates and blinds actors facing toward it, and its blind check
+## wave sent in a straight line from the caster; it blinds nearby viewers as
+## it passes, then detonates/expires at its travel limit. Its blind check
 ## IGNORES line-of-sight geometry (it goes through walls). It still requires the
 ## viewer to be facing roughly toward the wave, so it is directional, not
 ## omniscient. This is an original ability, not a replica of any agent kit.
@@ -28,6 +28,7 @@ var is_active: bool = false
 var _dir: Vector3 = Vector3.FORWARD
 var _travelled: float = 0.0
 var _mesh: MeshInstance3D
+var _launch_origin: Vector3
 
 
 func setup(ability: Dictionary) -> void:
@@ -42,6 +43,7 @@ func setup(ability: Dictionary) -> void:
 ## Launch the wave from `from` travelling along horizontal `direction`.
 func launch(from: Vector3, direction: Vector3) -> void:
 	global_position = from
+	_launch_origin = from
 	var d := direction
 	d.y = 0.0
 	if d.length() < 0.001:
@@ -110,3 +112,11 @@ func blind_duration_for(viewer_pos: Vector3, viewer_forward: Vector3, has_los: b
 	var range_factor := 1.0 - (dist / radius_m)
 	var strength := facing * range_factor
 	return lerpf(min_blind_s, max_blind_s, clampf(strength, 0.0, 1.0))
+
+## User-requested pass-through effect. Observers sample while the wave travels,
+## once per viewer/wave. Keep the existing radius, facing and wall semantics.
+## Actors behind its launch plane (including the caster at release) are not hit.
+func passing_blind_duration_for(viewer_pos: Vector3, viewer_forward: Vector3, has_los: bool) -> float:
+	if (viewer_pos - _launch_origin).dot(_dir) < 0.0:
+		return 0.0
+	return blind_duration_for(viewer_pos, viewer_forward, has_los)

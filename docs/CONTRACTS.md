@@ -2,11 +2,17 @@
 
 **Status: proposed, not frozen.** Person 3 coordinates schema definitions; all three confirm them at kickoff. These examples are starting points, not tested engine APIs. The brief's requirements take precedence.
 
+## Selected natural-language boundary
+
+Use [communication contract v1](COMMANDS.md) and its JSON Schema for new player messages. The user selected this interface for implementation: flexible phrasing becomes a validated report, flash command or coordinated swing, with explicit timing and lifecycle results. Person 3 interprets/reports; Person 2 validates/executes; Person 1 supplies mechanics/markers. Other contracts below remain proposed; the old fixture is not silently upgraded.
+
 ## Conventions to confirm
 
 Proposed coordinates: meters, Y up, Godot Vector3 serialized as [x, y, z]. Integer ticks are authoritative; simulation timestamps can be derived from the configured rate. Use stable string IDs, schema_version and named unknown-region handling. The fixture's 60 Hz is illustrative and does not pin runtime settings.
 
 Copy values into policy inputs; never pass live nodes or global truth dictionaries. Private recording access and bot subscription access are separate.
+
+**Latest user rule:** teammates always fully trust valid, delivered player comms. No credibility/history score, corroboration prerequisite or numeric hedge-based credibility discount is part of the product. Preserve explicit uncertainty as content and retain delay, validation, physical constraints and evidence provenance. Person 3 owns aligning its working-belief/model implementation. The existing empty `trust: {}` snapshot field is inert compatibility metadata; this documentation change does not remove it or change a schema.
 
 | Contract | Producer -> consumer | Required concepts |
 |---|---|---|
@@ -14,7 +20,7 @@ Copy values into policy inputs; never pass live nodes or global truth dictionari
 | Gameplay event (privileged) | Person 1 -> perception/private recorder | ID/tick/type, actor, position, payload |
 | Observation (bot-local) | Person 2 -> beliefs/policy | ID, bot, event/availability tick, source, copied content, confidence, speaker/provenance |
 | Callout | Person 3 -> delayed delivery | ID, speaker, type, region, count, hedge, event tick |
-| Belief query | Person 3 -> Person 2 | Bot-local enemy-region probabilities, trust, available evidence IDs |
+| Belief query | Person 3 -> Person 2 | Bot-local working enemy-region beliefs and available evidence IDs; inert legacy field retained for compatibility |
 | Actor intent | Person 2 -> Person 1 | Actor, movement/aim/fire/reload/utility/defuse intent; no hidden target tracking |
 | Decision record | Person 2 -> Person 3 | Tick, bot, goal/action, evidence IDs, reason, branch/fallback |
 | Archive (privileged) | All -> Person 3 | Version/config/seed, inputs, snapshots, truth and per-bot observations |
@@ -41,4 +47,4 @@ Person 1 should expose actor movement/action execution and a map query adapter. 
 4. Smoke/flash and reaction delay suppress or delay observations for every actor.
 5. Fallback stays inside the same information boundary.
 
-None of these gameplay tests is implemented by the starter repository.
+Person 2 now tests delayed evidence, private-input boundaries and hidden-state perturbation in isolated modules; see [the runtime guide](PERSON2_EXECUTOR.md). Scene-based smoke/flash perception and full-game checks remain pending.

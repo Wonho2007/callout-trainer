@@ -1,0 +1,62 @@
+{
+  "schema_version": "person2.planner_fixture.v1",
+  "synthetic": true,
+  "note": "Standalone coverage-planner fixture only. Not a selected map, pro annotation or playable scene. Marker reachability/coverage are authored test assumptions.",
+  "planner": {
+    "regions": [
+      "entrance",
+      "logs",
+      "site"
+    ],
+    "markers": [
+      {
+        "id": "home",
+        "watch_regions": [
+          "entrance"
+        ],
+        "roles": [
+          "hold",
+          "cover"
+        ],
+        "objectives": [
+          "none",
+          "entry",
+          "defuse"
+        ]
+      },
+      {
+        "id": "logs_cover",
+        "watch_regions": [
+          "logs"
+        ],
+        "roles": [
+          "hold",
+          "cover"
+        ],
+        "objectives": [
+          "none",
+          "entry"
+        ]
+      },
+      {
+        "id": "defuse_cover",
+        "watch_regions": [
+          "logs",
+          "site"
+        ],
+        "roles": [
+          "cover"
+        ],
+        "objectives": [
+          "defuse"
+        ]
+      }
+    ],
+    "baseline_marker_id": "home",
+    "baseline_watch_region": "entrance",
+    "threat_threshold": 0.55,
+    "freshness_ticks": 10,
+    "heartbeat_ticks": 3,
+    "switch_margin": 0.1
+  }
+}

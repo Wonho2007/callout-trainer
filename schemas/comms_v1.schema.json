@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized player-to-bot messages v1",
+  "description": "Shape validation only. Runtime validates ticks, known IDs, resources, delayed delivery and command lifecycle.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "comms.v1"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipient_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "const": "command"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "swing_together"
+            },
+            "target_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "timing": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "follow_player",
+                    "now",
+                    "on_cue"
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "action",
+            "target_id",
+            "timing"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "message_id",
+        "speaker_id",
+        "recipient_id",
+        "issued_tick",
+        "expires_tick",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "comms.v1"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipient_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "const": "command"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "throw_flash"
+            },
+            "target_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "timing": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "now",
+                    "on_cue"
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "action",
+            "target_id",
+            "timing"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "message_id",
+        "speaker_id",
+        "recipient_id",
+        "issued_tick",
+        "expires_tick",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "comms.v1"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipient_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "const": "report"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "report_enemy"
+            },
+            "region_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "count": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hedge": {
+              "enum": [
+                "sure",
+                "think",
+                "unsure"
+              ]
+            }
+          },
+          "required": [
+            "action",
+            "region_id",
+            "count",
+            "hedge"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "message_id",
+        "speaker_id",
+        "recipient_id",
+        "issued_tick",
+        "expires_tick",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "comms.v1"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipient_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "const": "cue"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "command_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "command_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "message_id",
+        "speaker_id",
+        "recipient_id",
+        "issued_tick",
+        "expires_tick",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "comms.v1"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipient_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "const": "cancel"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "command_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "command_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "message_id",
+        "speaker_id",
+        "recipient_id",
+        "issued_tick",
+        "expires_tick",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

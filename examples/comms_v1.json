@@ -1,0 +1,149 @@
+{
+  "synthetic": true,
+  "description": "Authored normalization examples; not measured interpreter outputs. Cases are independent except the countdown/cancel references.",
+  "cases": [
+    {
+      "transcript": "swing with me",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_1",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "command",
+        "payload": {
+          "action": "swing_together",
+          "target_id": "entry_a",
+          "timing": {
+            "mode": "follow_player"
+          }
+        }
+      }
+    },
+    {
+      "transcript": "let's peek together",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_2",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "command",
+        "payload": {
+          "action": "swing_together",
+          "target_id": "entry_a",
+          "timing": {
+            "mode": "follow_player"
+          }
+        }
+      }
+    },
+    {
+      "transcript": "flash out the smoke",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_3",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "command",
+        "payload": {
+          "action": "throw_flash",
+          "target_id": "flash_exit_a",
+          "timing": {
+            "mode": "now"
+          }
+        }
+      }
+    },
+    {
+      "transcript": "one logs",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_4",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "report",
+        "payload": {
+          "action": "report_enemy",
+          "region_id": "logs",
+          "count": 1,
+          "hedge": "sure"
+        }
+      }
+    },
+    {
+      "transcript": "there's someone at logs",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_5",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "report",
+        "payload": {
+          "action": "report_enemy",
+          "region_id": "logs",
+          "count": null,
+          "hedge": "sure"
+        }
+      }
+    },
+    {
+      "transcript": "get ready to swing on my count",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_6",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 120,
+        "expires_tick": 480,
+        "kind": "command",
+        "payload": {
+          "action": "swing_together",
+          "target_id": "entry_a",
+          "timing": {
+            "mode": "on_cue"
+          }
+        }
+      }
+    },
+    {
+      "transcript": "three two one swing",
+      "note": "Final cue for the already-ready msg_6; not a fresh LLM-planned move.",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_7",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 240,
+        "expires_tick": 270,
+        "kind": "cue",
+        "payload": {
+          "command_id": "msg_6"
+        }
+      }
+    },
+    {
+      "transcript": "cancel that swing",
+      "message": {
+        "schema_version": "comms.v1",
+        "message_id": "msg_8",
+        "speaker_id": "player",
+        "recipient_id": "ally_1",
+        "issued_tick": 200,
+        "expires_tick": 230,
+        "kind": "cancel",
+        "payload": {
+          "command_id": "msg_6"
+        }
+      }
+    }
+  ]
+}

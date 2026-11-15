@@ -4,7 +4,7 @@
 
 Read the complete callout_trainer_brief.md, then docs/TEAM.md, docs/CONTRACTS.md, docs/DECISIONS.md and docs/HANDOFFS.md. Inspect git status and the assigned issue. User instructions take precedence. The brief is authoritative for product requirements; record conflicts rather than silently dropping requirements.
 
-This repository begins as documentation and examples only. Never claim a runnable Godot project, implemented bots, passing fairness tests or collected evaluation data until those actually exist.
+The repository began as documentation and examples. Person 2's isolated delayed inbox/command executor now has headless tests and a fake actor demo; read docs/PERSON2_EXECUTOR.md for exact scope. Do not claim a playable sandbox, speech interpreter, full-game fairness, real physics integration or evaluation data from those tests.
 
 ## Scope and ownership
 
@@ -37,15 +37,17 @@ Write the leak-test fixture before bot intelligence. Verify evidence IDs existed
 
 ## Product constraints
 
-Build one compact first-person scenario with useful callouts and explainable bot adaptation. A state machine/behavior tree is sufficient; no mandatory LLM or trained model. Quick-call menu is required; speech is stretch.
+The user confirmed the newer direction documents from Person 3's `b078210` as authoritative in this session. Read [Person 2's direction handoff](docs/PERSON2_HANDOFF.md), [Person 3's core handoff](docs/PERSON3_KIRO_HANDOFF.md) and [parallel tracks](docs/PERSON3_ANTIGRAVITY_HANDOFF.md). Their direction overrides older planning defaults below and in the brief.
 
-Do not remove the brief's never-cut features without an explicit product decision. Core counterfactual is belief-only replay on fixed observations, not a promise of changed combat outcomes. Entropy reduction does not establish accuracy. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence.
+Build a first-person comms coach with voice-only player comms and local, free LLM teammate decisions. Person 3 owns voice/grounded interpretation, model goal generation, beliefs and model prompt/output logging. Person 2 owns fair perception and physical intent execution. Keep the deterministic planner as a required safety fallback; quick-call code is a test/fallback helper, not the player input UI. No training or paid API is required. Teammates always fully trust valid, delivered player comms, even when wrong. No credibility/history score, corroboration prerequisite or numeric credibility discount based on a hedge; preserve explicit player uncertainty as content, with clarification and physical/delivery checks intact. Keep the compatibility `trust: {}` field until both consumers coordinate a schema change.
+
+Grading/debrief and the belief-only counterfactual are deferred until the core voice-to-reaction loop works, not removed from the eventual product. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence. Source clip/year/timestamps still require Person 3's verified notes. With nondeterministic model decisions, audit the exact recorded inputs/prompt/output; deterministic policy perturbation tests alone cannot establish full model fairness.
 
 Use synthetic fixtures for unresolved map/clip details and label them. No client access, ripped assets, replay-file scraping, secrets or paid required services. Keep the demo offline-capable.
 
 ## Validation and handoff
 
-Run python tools/check_repo.py for documentation/contracts/examples changes. Run meaningful Godot checks once implemented, using the pinned editor and documented commands; report unavailable checks honestly. Avoid unrelated tests or dependencies.
+Run python tools/check_repo.py for documentation/contracts/examples changes. For Person 2 runtime changes also run validation/run_person2_tests.py with --godot pointing to Godot 4.4.1 stable; see docs/PERSON2_EXECUTOR.md. Run meaningful Godot checks once implemented, using the pinned editor and documented commands; report unavailable checks honestly. Avoid unrelated tests or dependencies.
 
 Each handoff includes changed paths, interface/schema effects, real commands/results, remaining dependency and next integration step. Update the owning lane's row in docs/HANDOFFS.md. A handoff update is not permission to mark unfinished work complete.
 
