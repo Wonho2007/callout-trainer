@@ -46,9 +46,13 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	# Hold-to-defuse: while alive, in range, and holding the defuse action.
 	if _round_state != "active" or _spike == null or _player == null:
+		if _player:
+			_player.movement_locked = false
 		return
 	var holding := _player.is_alive and Input.is_action_pressed("defuse") \
 			and _spike.in_range(_player.global_position)
+	# Root the player while actively defusing (mouse-look/comms stay active).
+	_player.movement_locked = holding
 	if holding:
 		var was := _spike.defuse_progress
 		_spike.defuse_step(_player.global_position, delta)

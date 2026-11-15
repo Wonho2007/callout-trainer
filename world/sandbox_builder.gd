@@ -20,7 +20,7 @@ extends Node3D
 const LAYER_WORLD: int = 1 << 0    # layer 1 "world"
 const LAYER_REGIONS: int = 1 << 3  # layer 4 "regions"
 
-@export_file("*.json") var map_path: String = "res://world/maps/test_room.json"
+@export_file("*.json") var map_path: String = "res://world/maps/b_site.json"
 ## Build automatically when the scene is ready. Turn off to build manually.
 @export var build_on_ready: bool = true
 
@@ -309,10 +309,19 @@ func _build_lighting() -> void:
 
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-50, -30, 0)
-	sun.light_energy = 1.2
+	sun.rotation_degrees = Vector3(-55, -35, 0)
+	sun.light_energy = 1.6
 	sun.shadow_enabled = true
 	lighting.add_child(sun)
+
+	# A dimmer fill light from the opposite side so faces that point away from
+	# the sun still get some shading contrast (helps larger spaces read).
+	var fill := DirectionalLight3D.new()
+	fill.name = "Fill"
+	fill.rotation_degrees = Vector3(-30, 150, 0)
+	fill.light_energy = 0.5
+	fill.shadow_enabled = false
+	lighting.add_child(fill)
 
 	var env := WorldEnvironment.new()
 	env.name = "WorldEnvironment"
@@ -321,7 +330,7 @@ func _build_lighting() -> void:
 	e.background_color = Color(0.20, 0.22, 0.26)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color = Color(0.45, 0.48, 0.55)
-	e.ambient_light_energy = 0.25
+	e.ambient_light_energy = 0.3
 	env.environment = e
 	lighting.add_child(env)
 

@@ -182,3 +182,13 @@ User-assigned: Person 3 watches and annotates videos; Person 2 converts verified
 - Manual playtest and results: tester confirmed T throws a scanning orb that reveals an in-LOS target as a decaying yellow minimap mark and a through-wall outline, both fading after a few seconds; targets the orb cannot see are not revealed.
 - Remaining work/dependency: past the brief's first slice (trim candidate for the demo). Enemy list is the dummy target until Person 2's bots exist. Values are documented placeholders.
 - Next integration step: data-driven character/loadout system, or the region-graph/sound/actor-command backbone.
+
+### 2026-11-14 — Person 1: greybox box-room map, brighter lighting, defuse rooting
+
+- Branch/PR and owning lane: `person-1/b-site-map`; Person 1 (world/ map + lighting + player).
+- Changed files: `world/maps/b_site.json` (new, now the default map), `world/sandbox_builder.gd`, `scenes/player/player.gd`, `scenes/main.gd`.
+- Interface/schema changes and consumers: new default map `b_site.json` — a small greybox room with two corner cover boxes, a vertical entry hallway + arch, and a horizontal corridor spanning the width, fully enclosed. Built from a user-provided top-down sketch; it is a SYNTHETIC approximation, not an asset-accurate copy of any real map, and is labeled so. Builder default `map_path` now points at it (test_room.json is retained). Lighting: brighter sun + an opposite-side fill light so larger spaces read. Player gains `movement_locked` (rooted while actively defusing; mouse-look/comms stay active); main.gd sets it during a held defuse and clears it otherwise.
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally. Project loads/runs clean in Godot 4.4.1; map passes the builder's validation (unique IDs, in-bounds cover, clear spawns).
+- Manual playtest and results: tester confirmed the player spawns in the corridor, walks corridor -> hallway -> arch -> room without falling off, and is rooted in place while defusing. Map is actively being iterated.
+- Remaining work/dependency: the map is an in-progress synthetic layout, not a verified reconstruction; refine against Person 3's VOD annotation for any real-site accuracy. A validator edge case was noted: a spawn resting exactly on a surface top counts as "inside" (boundary `<=` in `_point_in_box`) — worked around by nudging spawns; relax the check later. `lower_regions` (sunken pit) is not yet rendered by the builder.
+- Next integration step: continue map iteration; then the region-graph/sound/actor-command backbone for Persons 2/3.
