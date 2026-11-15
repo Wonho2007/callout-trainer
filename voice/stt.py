@@ -37,7 +37,11 @@ DEVICE: str = os.environ.get("WHISPER_DEVICE", "auto")   # "auto" | "cuda" | "cp
 COMPUTE_TYPE: str = os.environ.get("WHISPER_COMPUTE", "default")
 # default sample rate expected by Whisper
 SAMPLE_RATE: int = 16_000
-CALLOUT_PROMPT: str = "VALORANT comms: heaven, hell, site, A main, B main, mid, garage, flash, smoke, rotate, planting, defusing, swing, short, long, CT, enemy."
+CALLOUT_PROMPT: str = (
+    "VALORANT voice comms: 2 pushing heaven, 1 B main, 3 rotating CT, "
+    "one on site, flashing short, smoking mid, swing with me, defusing, "
+    "holding angle, pushing long, one low, they're pushing."
+)
 
 
 def _load_model():
@@ -140,6 +144,7 @@ def transcribe(
         waveform,
         language=language,
         beam_size=5,
+        temperature=0.0,
         initial_prompt=CALLOUT_PROMPT,
         vad_filter=True,
         repetition_penalty=1.1,
