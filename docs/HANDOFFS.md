@@ -127,3 +127,13 @@ The user selected clear communication as the overall objective, with readiness, 
 - Manual playtest and results: tester confirmed the HUD event counter climbs with the correct `last:` type for firing (shot_fired/damage_dealt), smoke/flash (utility_deployed) and defuse (defuse_started/stopped/spike_defused), and resets on R.
 - Remaining work/dependency: records are in-memory only (no JSONL persistence to user://runs/ yet — Person 3 owns the schema/format); no perception-side observation events (Person 2); death event carries no permitted-knowledge payload yet (killer/last-seen fields pending the comms schema extension in COMMUNICATION_COACHING). Region IDs/coordinate convention still pending team freeze.
 - Next integration step: coordinate the frozen event/record schema with Person 3; optionally add JSONL run logging once the schema is agreed. Map overlay/region-polygon data for the debrief is also outstanding Person 1 work (brief §9.1 step 6).
+
+### 2026-11-14 — Person 1: top-down map overlay data for the debrief
+
+- Branch/PR and owning lane: `person-1/world-scaffold`; Person 1 (world/ map data).
+- Changed files: `world/sandbox_builder.gd`.
+- Interface/schema changes and consumers: new `get_map_overlay() -> Dictionary` for Person 3's debrief minimap. Returns plain serializable top-down (XZ) data: bounds, wall/cover rects ({id, x, z, w, d} with x/z = center, w/d = full X/Z extents), region rects (+ id/name), spawns (+ role), and spike (x/z). Static map layout is public (brief §6.4), so this is not privileged truth. Person 3 renders it with no 3D scene access.
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally.
+- Manual playtest and results: NOT separately verified in-engine this pass (the one-shot overlay dump was removed before commit). The function is a pure transformation of the already-validated map JSON (4 walls, 3 cover, 3 regions, 3 spawns, 1 spike) with no runtime dependencies; Person 3 should confirm the rendered minimap when integrating.
+- Remaining work/dependency: overlay reflects the synthetic test room; it will update automatically when the source-site blockout replaces it. Region IDs/coordinate convention still pending team freeze with Persons 2/3.
+- Next integration step: coordinate the frozen event/record and region-ID schema with Persons 2/3; optionally add JSONL run logging once schemas are agreed.

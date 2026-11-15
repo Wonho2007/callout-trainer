@@ -344,6 +344,61 @@ func get_spike_position():
 	return null
 
 
+## Top-down (XZ) map overlay as plain, serializable data for Person 3's debrief
+## minimap. Static map layout is public (brief §6.4), so this is not privileged
+## truth. All rects are {id, x, z, w, d}: x/z = center on the top-down plane,
+## w/d = full width (X) and depth (Z). Regions add name; spawns add role.
+## Person 3 renders this; it needs no 3D scene access.
+func get_map_overlay() -> Dictionary:
+	var overlay := {
+		"map_id": map_data.get("id", ""),
+		"bounds": {
+			"min": map_data.get("bounds", {}).get("min", [-10, 0, -10]),
+			"max": map_data.get("bounds", {}).get("max", [10, 4, 10]),
+		},
+		"walls": [],
+		"cover": [],
+		"regions": [],
+		"spawns": [],
+		"spike": null,
+	}
+	for wall in map_data.get("walls", []):
+		overlay["walls"].append(_rect_xz(wall))
+	for box in map_data.get("cover", []):
+		overlay["cover"].append(_rect_xz(box))
+	for region in map_data.get("regions", []):
+		var r := {
+			"id": region.get("id", ""),
+			"name": region.get("name", region.get("id", "")),
+		}
+		var c := _to_vec3(region.get("center", [0, 0, 0]))
+		var s := _to_vec3(region.get("size", [1, 1, 1]))
+		r["x"] = c.x
+		r["z"] = c.z
+		r["w"] = s.x
+		r["d"] = s.z
+		overlay["regions"].append(r)
+	for spawn in map_data.get("spawns", []):
+		var p := _to_vec3(spawn.get("position", [0, 0, 0]))
+		overlay["spawns"].append({
+			"id": spawn.get("id", ""),
+			"role": spawn.get("role", ""),
+			"x": p.x,
+			"z": p.z,
+		})
+	if map_data.has("spike"):
+		var sp := _to_vec3(map_data["spike"].get("position", [0, 0, 0]))
+		overlay["spike"] = {"x": sp.x, "z": sp.z}
+	return overlay
+
+
+## A box's top-down rect {id, x, z, w, d} from its position(center) and size.
+func _rect_xz(box: Dictionary) -> Dictionary:
+	var pos := _to_vec3(box.get("position", [0, 0, 0]))
+	var size := _to_vec3(box.get("size", [1, 1, 1]))
+	return {"id": box.get("id", ""), "x": pos.x, "z": pos.z, "w": size.x, "d": size.z}
+
+
 ## World-space center of a callout region by ID, or null if not found.
 func get_region_center(region_id: String):
 	var regions := get_node_or_null(NodePath(REGIONS_ROOT))
