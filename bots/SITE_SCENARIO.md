@@ -1,8 +1,10 @@
 # Current seven-zone B site scenario
 
-**Known blocker:** after `29ba6d7`, the user reports the flash is still not fully
-functional in play. The implementation below is not human-accepted; automated
-checks passing does not resolve that report. See the [current handoff](../docs/PERSON2_HANDOFF.md).
+**Resolved (Kiro):** the live far-zone flash failure is fixed. "Flash B heaven" issued
+while the teammate stood at Cubby used to fail with `execution_failed` without moving,
+because every B Heaven aim point was occluded or beyond 20 m from there. A far-but-
+reachable zone now walks into range and throws. A fresh human microphone playthrough
+of the fix is still unconfirmed. See the [current handoff](../docs/PERSON2_HANDOFF.md).
 
 ```powershell
 .\validation\run_voice_game.ps1
@@ -42,10 +44,11 @@ The teammate now has **one player-commanded flash per round** as a user-requeste
 prototype extension to the recorded Omen kit. ?Flash C Link? turns toward C Link,
 checks authored static points in that zone against world geometry and active smoke,
 and throws from the current location if a point is visible within 20m. A visible
-part of the region is enough; its center need not be visible. Only an occluded zone
-authorizes walking toward its static fallback marker. Visibility is checked every
-tick; the bot stops seeking a viewpoint as soon as it can throw. A visible target
-outside throw range fails honestly instead of authorizing unrelated walking.
+part of the region is enough; its center need not be visible. When it cannot yet
+throw ? the zone is occluded, or every visible point is out of range from the current
+spot ? it walks toward the zone's static fallback marker. Visibility and range are
+rechecked every tick; the bot stops seeking and throws as soon as a point becomes
+visible within range, and fails honestly only when navigation cannot get any closer.
 
 ?Flash C Link on my cue? prepares the same way and waits for ?go?. Cancel remains
 available while turning or seeking visibility; a charge is spent only on projectile
@@ -76,16 +79,17 @@ $godotExe = "$env:USERPROFILE\.cache\callout-godot-4.4.1\Godot_v4.4.1-stable_win
 & $pythonExe validation/run_person2_tests.py --godot $godotExe --site-smoke --site-capture "$env:TEMP\callout-new-site.png" --person3-ref 57f809d
 ```
 
-Actual Godot 4.4.1 results: **36 functional checks pass** after visibility-first
-flash integration. An earlier 24-check rendered map run was inspected; it preceded
-the new flash command checks. Checks cover source geometry
+Actual Godot 4.4.1 results: **40 functional checks pass** after the far-zone flash
+fix (36 before, +4 from the new far-zone regression). An earlier 24-check rendered
+map run was inspected; it preceded the new flash command checks. Checks cover source
+geometry
 preservation, circular/overlap region queries, real navigation, physical ally smoke,
 plant/arrival positions, flash/no-fire/head-circle expiry, death and reset. Fixture
 clock fast-forward is not a real-time human playthrough. Existing navigation-bake
 and ObjectDB-at-exit warnings remain; strict script/engine ERROR checks pass.
 Flash cases cover no-walk visible throws, turning before occlusion-based movement,
-release before entering the target zone, inventory depletion, cancel without charge
-loss, and on-cue release. A real local Llama typed interpretation of "flash c link"
+a far-but-reachable zone walking into range before throwing, release before entering
+the target zone, inventory depletion, cancel without charge loss, and on-cue release. A real local Llama typed interpretation of "flash c link"
 returned `throw_flash/c_link/now` (not microphone acceptance).
 The required bot suite also passes 575 assertions with shared source `76b8eaa`
 and belief `57f809d`; seven Python authoring/voice tests and launcher syntax pass.

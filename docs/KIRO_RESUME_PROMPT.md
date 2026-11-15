@@ -21,18 +21,22 @@ Use docs/PERSON2_HANDOFF.md as the single current handoff. Do not follow retired
 handoffs, restart completed setup, overwrite teammate work, reset/clean, blindly
 merge, or merge this branch into main.
 
-IMMEDIATE TASK: the user reports that the flash is STILL NOT FULLY FUNCTIONAL
-after 29ba6d7. The previous window was asked to commit/push and hand off. Reproduce
-the actual spoken-to-game failure and fix its cause. Automated passes are NOT
-human acceptance. Do not assume the bug is solved or guess the failing stage.
+IMMEDIATE TASK: the far-zone flash failure the user hit is diagnosed and fixed
+(a far-but-reachable zone now walks into range and throws instead of failing in
+place; see docs/PERSON2_HANDOFF.md). The next step is human acceptance: launch
+the game and confirm by microphone that "flash b heaven" / "flash c link" from the
+plant hold turns, approaches when needed, and throws. Automated passes are NOT
+human acceptance. If a new failure appears, trace the actual failing stage from the
+ignored runs/voice-game-* logs rather than guessing.
 
 Required: "flash c link" turns the teammate toward C Link, checks visibility,
-and throws from its current spot if visible and within physical throw limits.
-Walk ONLY when the zone is occluded after turning; stop seeking a viewpoint and
-throw as soon as visibility opens. The last implementation provides one extra
-teammate flash per round, seven authored zone targets, world/smoke LOS checks,
-20m range, static sample points, on-cue preparation and cancellation before release.
-Those limits are diagnostic candidates, not an established explanation for the bug.
+and throws from its current spot if a point is visible within physical throw limits.
+When it cannot yet throw (the zone is occluded, or every visible point is out of
+range from the current spot) it walks toward the zone and throws as soon as a point
+opens in range, failing honestly only when navigation cannot get closer. The
+implementation provides one extra teammate flash per round, seven authored zone
+targets, world/smoke LOS checks, 20m range, static sample points, on-cue preparation
+and cancellation before release.
 This extra flash is a user-requested prototype addition, not recorded Omen inventory.
 There is NO teammate molly voice command; scripted enemy grenade/molly use is separate.
 
@@ -97,16 +101,18 @@ This defaults to the imported map; -Lotus is a compatibility alias. -LegacyRoom 
 scaffold, not the integrated voice game. Installed paths and exact check commands
 are in the current handoff; use pinned Godot 4.4.1. Ollama is at 127.0.0.1:11434.
 
-Prior actual evidence: 36 synthetic current-map checks, 35 TCP voice checks and
-575 required bot assertions pass. One typed real-model "flash c link" returned
-throw_flash/c_link/now. Nevertheless, the user subsequently reported flash still
-broken. Earlier 24-check rendered map capture preceded the flash update. No fresh
-human flash acceptance, full-game fairness, offline/export acceptance or training
-benefit is established. Sandbox Godot may need approved execution outside the
-sandbox for Windows certificate-store access; never filter errors/extend timeouts.
+Actual evidence: the far-zone flash fix makes site smoke pass **40 checks** (was 36)
+on 76b8eaa / belief 57f809d; reverting the one-line controller change fails exactly
+the two new far-zone assertions. The required bot suite passes 575, flash unit tests
+12, and the 7 Python authoring/voice tests pass. The local Llama interpreter returned
+throw_flash/c_link/now and throw_flash/b_heaven/now for the logged samples;
+interpretation was never the failing stage. No fresh human flash acceptance,
+full-game fairness, offline/export acceptance or training benefit is established.
+Sandbox Godot may need approved execution outside the sandbox for Windows
+certificate-store access; never filter errors/extend timeouts.
 
-Fix the observed flash failure first, add a meaningful reproducing regression,
-run relevant checks, and update the current handoff with honest results/limits.
+Confirm the fix by human microphone play, then close the remaining acceptance gaps
+(see the handoff's Next work). Keep regressions meaningful and the handoff honest.
 Preserve the map and other work. Commit/push this branch; do not merge into main.
 Grading/debrief/evaluation remain deferred.
 ```

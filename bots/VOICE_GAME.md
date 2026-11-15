@@ -33,8 +33,9 @@ existing guards. Preparation timing adjustments are recorded in the actual submi
 event as `timing_guard: preparation_waits_for_cue`; raw model logs remain unchanged.
 The current B site supports all seven flash targets with one extra teammate flash
 per round. "Flash C Link" looks first and throws from the current position when
-visible and within range; only an occluded zone permits repositioning. "Flash C Link
-on my cue" prepares and waits. See [site details](SITE_SCENARIO.md). There is no
+visible and within range; when it cannot yet throw (occluded, or every visible point
+out of range) it walks toward the zone and throws as soon as a point opens in range.
+"Flash C Link on my cue" prepares and waits. See [site details](SITE_SCENARIO.md). There is no
 player-issued molly command; scripted enemy grenade use is separate.
 
 **Selected sprint scope:** local LLM interpretation with the deterministic knowledge

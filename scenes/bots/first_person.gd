@@ -14,6 +14,8 @@ var _restart_pending: bool = false
 var _scenario: Dictionary = {}
 var _info_panel: PanelContainer
 var _enemy_driving: bool = false
+var _player_ui_visible: bool = true
+var _teammate_ui_visible: bool = true
 signal teammate_ready(bot_runtime: Node)
 @export_file("*.json") var coverage_path: String = "res://scenarios/b_site_coverage.json"
 
@@ -139,6 +141,14 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
+			KEY_F1:
+				_toggle_player_ui()
+				get_viewport().set_input_as_handled()
+				return
+			KEY_F2:
+				_toggle_teammate_ui()
+				get_viewport().set_input_as_handled()
+				return
 			KEY_F6:
 				_test_enemy_preset("entry")
 				get_viewport().set_input_as_handled()
@@ -156,6 +166,36 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 	super._unhandled_input(event)
+
+# F1/F2 hide or show the player and teammate on-screen UI. Gameplay effect
+# overlays (flash/blind/smoke whiteouts) and the crosshair stay on so the toggle
+# cannot change what the player can actually see or aim with.
+func _player_ui_nodes() -> Array:
+	var names: Array = ["Hints", "Round", "Events", "Coords", "Status", "Disclaimer", "Minimap"]
+	var nodes: Array = []
+	for n in names:
+		var node: Node = get_node_or_null("HUD/" + n)
+		if node != null:
+			nodes.append(node)
+	return nodes
+
+func _teammate_ui_nodes() -> Array:
+	var nodes: Array = []
+	if is_instance_valid(_info_panel):
+		nodes.append(_info_panel)
+	if is_instance_valid(_bot_status):
+		nodes.append(_bot_status)
+	return nodes
+
+func _toggle_player_ui() -> void:
+	_player_ui_visible = not _player_ui_visible
+	for node in _player_ui_nodes():
+		node.visible = _player_ui_visible
+
+func _toggle_teammate_ui() -> void:
+	_teammate_ui_visible = not _teammate_ui_visible
+	for node in _teammate_ui_nodes():
+		node.visible = _teammate_ui_visible
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)

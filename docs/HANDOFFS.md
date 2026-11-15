@@ -1,8 +1,9 @@
 # Current integration status
 
-Updated 2026-11-15. **Current blocker: user reports the flash still not fully
-functional after `29ba6d7`; reproduce/debug this first. Automated passes are not
-human acceptance.** This is a current index, not an append-only journal.
+Updated 2026-11-15. **Resolved: the user-reported flash failure is diagnosed and
+fixed (far-but-reachable zones now walk into range instead of failing in place).
+A fresh human microphone playthrough of the fix is still unconfirmed; automated
+passes are not human acceptance.** This is a current index, not an append-only journal.
 
 | Work area | Implemented / evidence | Next or unresolved |
 |---|---|---|
@@ -30,9 +31,11 @@ the integration runner overlays the shared weapon script onto its pinned source.
 ## Evidence to preserve
 
 Current teammate flash: one extra charge per round, all seven region targets; turn,
-check static world/smoke LOS, throw in place if visible/in range, otherwise seek a
-viewpoint and stop once visible. Cancellation before release preserves inventory.
-There is no teammate molly voice command. This is a user-requested kit extension.
+check static world/smoke LOS, throw in place if a point is visible within range,
+otherwise walk toward the zone and throw as soon as a point opens in range — whether
+it was occluded or just too far — failing honestly only when navigation cannot get
+closer. Cancellation before release preserves inventory. There is no teammate molly
+voice command. This is a user-requested kit extension.
 
 Preparation commands now enforce `on_cue` at the engine bridge: "get ready to swing"
 waits for a separate "swing"/"go". A real TCP 35-check regression verifies a wrong

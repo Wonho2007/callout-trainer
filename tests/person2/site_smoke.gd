@@ -89,12 +89,12 @@ func run(scene: Node) -> void:
 	print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)
 
-func _flash_request(scene: Node, id: String, transcript: String) -> void:
+func _flash_request(scene: Node, id: String, transcript: String, region: String = "c_link") -> void:
 	# Deliberately model the wrong action/timing: explicit flash speech must
 	# still map to a flash, not an accidental swing toward the target region.
 	scene.voice_bridge._receive({"type": "proposal", "session": scene.voice_bridge.session,
 		"id": id, "result": "command", "transcript": transcript, "proposal": {"kind": "command",
-		"payload": {"action": "swing_together", "target_id": "c_link", "timing": {"mode": "follow_player"}}}})
+		"payload": {"action": "swing_together", "target_id": region, "timing": {"mode": "follow_player"}}}})
 
 func _reset(scene: Node) -> void:
 	scene._restart()
@@ -102,7 +102,63 @@ func _reset(scene: Node) -> void:
 		await get_tree().physics_frame
 	await get_tree().physics_frame
 
+func _flash_result_watch(scene: Node) -> Array:
+	# Returns [releases, statuses] arrays updated by live signals until disconnected.
+	var releases: Array = []
+	var statuses: Array = []
+	var cb_release := func(ability: String, _owner: String, point: Vector3):
+		if ability == "flash": releases.append(point)
+	var cb_result := func(result: Dictionary): statuses.append(result.status + "/" + result.reason_code)
+	scene.utility.deployed.connect(cb_release)
+	scene.runtime.comm_result.connect(cb_result)
+	return [releases, statuses, cb_release, cb_result]
+
+func _place_teammate(scene: Node, region: String) -> void:
+	# Deterministically stand the teammate on an authored marker so the throw
+	# geometry is fixed, independent of annotated-baseline timing.
+	var p: Array = scene._scenario.motion_markers[region].position
+	var marker := Marker3D.new()
+	scene.add_child(marker)
+	marker.global_position = Vector3(p[0], p[1], p[2])
+	scene.teammate.teleport_to(marker)
+	scene.teammate.set_move_dir(Vector3.ZERO)
+	marker.free()
+	await get_tree().physics_frame
+
+func _test_far_zone_flash_walks(scene: Node) -> void:
+	# Regression for the live playtest failure: "flash b heaven" issued while the
+	# teammate stands at Cubby. From there every B Heaven aim point is occluded or
+	# beyond the 20 m range, so the controller previously returned a terminal
+	# "visible_zone_out_of_throw_range" and the command failed with
+	# execution_failed WITHOUT moving. Required behavior is to walk toward the
+	# zone and throw as soon as an in-range visible point opens.
+	await _reset(scene)
+	await _place_teammate(scene, "b_cubby")
+	var watch: Array = _flash_result_watch(scene)
+	var releases: Array = watch[0]
+	var statuses: Array = watch[1]
+	var start: Vector3 = scene.teammate.global_position
+	var center_arr: Array = scene._scenario.motion_markers.b_heaven.position
+	var center := Vector3(center_arr[0], center_arr[1], center_arr[2])
+	_flash_request(scene, "far-b-heaven", "flash b heaven", "b_heaven")
+	var walked: float = 0.0
+	for _i in range(400):
+		walked = maxf(walked, Vector2(scene.teammate.global_position.x - start.x, scene.teammate.global_position.z - start.z).length())
+		if not releases.is_empty():
+			break
+		if scene.runtime.snapshot().active_command.is_empty() and _i > 25:
+			break
+		await get_tree().physics_frame
+	expect(releases.size() == 1 and scene.runtime.snapshot().flash_count == 0, "far occluded B Heaven walks into range and throws instead of failing in place")
+	expect("failed/execution_failed" not in statuses, "a far throwable zone does not report execution_failed without moving")
+	expect(walked > 1.0, "the teammate physically repositions toward a zone it cannot yet throw")
+	expect(scene.teammate.global_position.distance_to(center) > 2.5, "the teammate stops and throws before standing on the zone center")
+	scene.utility.deployed.disconnect(watch[2])
+	scene.runtime.comm_result.disconnect(watch[3])
+	await _reset(scene)
+
 func _test_flash_commands(scene: Node) -> void:
+	await _test_far_zone_flash_walks(scene)
 	var releases: Array = []
 	scene.utility.deployed.connect(func(ability: String, _owner: String, point: Vector3):
 		if ability == "flash": releases.append(point))

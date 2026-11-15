@@ -1,11 +1,13 @@
 # Current Person 2 continuation handoff
 
-Updated 2026-11-15 after flash checkpoint **29ba6d7**. The user reports that the
-flash is still not fully functional; fixing it is the immediate continuation task. This replaces the old
-accumulated handoff. Read [project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
+Updated 2026-11-15 in **Kiro** after diagnosing and fixing the reported flash
+failure on top of checkpoint **70fe823**. The live spoken-to-game flash failure
+was reproduced from the ignored run logs, root-caused, fixed and covered by a new
+regression. This replaces the old accumulated handoff. Read
+[project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
 and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not below.
 
-The next continuation is in **Kiro**. Use [the Kiro resume prompt](KIRO_RESUME_PROMPT.md)
+Continuation is in **Kiro**. Use [the Kiro resume prompt](KIRO_RESUME_PROMPT.md)
 and Kiro's native tools; historical Codex tool/sandbox instructions are environment-specific.
 
 ## Workspace and Git
@@ -28,42 +30,58 @@ Person 3 supplies non-GPU components/support. The six hours was the starting bud
 not a fresh timer now. Latest user rule: plant is t0; spawn unknown enemies only at
 their first known annotation positions.
 
-## Current blocker: flash still fails in human play
+## Resolved blocker: far-zone flash failed in play — diagnosed and fixed
 
-**The user explicitly reported that the flash is still not fully functional after
-29ba6d7. Do not call it fixed or accepted because automated tests pass.** The final
-request in this window is to commit/push and hand off, not continue implementing.
-The next window should reproduce and fix the real spoken-to-physical flash flow.
+**The live playtest failure is reproduced and fixed.** The user reported the flash
+still not fully functional after `29ba6d7`. Tracing the ignored
+`runs/voice-game-20261115-061835` logs showed two spoken "flash" rounds:
 
-Required behavior: ?flash c link? turns the teammate toward C Link, throws from
-its present location if it can see the zone within physical throw limits, and walks
-only if the zone is occluded after turning. Stop seeking a viewpoint and throw as
-soon as visibility opens. ?Get ready to swing? must prepare/wait; a later ?swing?
-releases it. There is no spoken teammate molly command; do not describe scripted
-enemy grenade/molly use as one.
+- Round 1, "Flash C link": model interpreted `throw_flash/c_link/now` correctly;
+  the command was accepted and completed (it walked because the ally's own scripted
+  C Link smoke, released at tick 249, legitimately occluded the zone — working as
+  designed, though the walk can surprise a player).
+- Round 2, "Flash B heaven": model interpreted `throw_flash/b_heaven/now` correctly,
+  the command was **accepted at tick 751 then `failed / execution_failed` at tick 763
+  without the teammate moving or throwing**. This is the real bug.
 
-Inspect the latest ignored `runs/voice-game-*` logs locally: game/game-errors,
-transcript, actual model prompt/output, submitted normalized message, command
-acceptance/readiness/execution/feedback, flash count and projectile creation. Check
-that the user is running the fresh disposable project from the current launcher.
-Follow the actual failing stage instead of assuming a cause. Potential constraints
-to distinguish from bugs: one flash per round, 20m range, smoke/world LOS, temporary
-blindness, ten-second command expiry, authored region sample points and fallback
-navigation. These are diagnostic candidates, not established explanations.
+Root cause, in `bots/visible_flash_controller.gd::prepare_visible`: after turning
+toward the zone it classified the standing spot into throw-in-place (an aim point
+visible and within 20 m), occluded (walk), or **visible-but-out-of-range (terminal
+`failed`)**. When the teammate was not at Pit (the annotated baseline had moved it
+to Cubby by the time the player spoke), every B Heaven aim point was either occluded
+or 21–33 m away — past the 20 m range. The controller returned a terminal
+`visible_zone_out_of_throw_range`, so the command failed instantly instead of
+walking closer. Measured from Cubby: six B Heaven points occluded, the three clear
+ones at 33.4/34.6/32.4 m; the near points come into range only after approaching.
 
-Relevant changes: `29ba6d7` visibility-first flash, `32b427c` swing preparation/cue,
-`47846f8` current map integration. Focus on `bots/visible_flash_controller.gd`,
-`flash_controller.gd`, `motion_controller.gd`, `command_executor.gd`,
-`teammate_runtime.gd`, `scenes/bots/voice_bridge.gd`, `bots/voice_host.py`,
-`scenarios/site_coverage.json`, and the shared `utility/flash.gd`.
+Fix: a far-but-reachable zone now authorizes walking, exactly like the occluded
+case. `prepare_visible` returns `blocked` (reason `flash_zone_visible_out_of_range`
+or `flash_zone_occluded`) instead of `failed`. `motion_controller._advance_visible_flash`
+already walks toward the zone's static fallback marker, re-checks LOS and range every
+tick, and throws at the first in-range visible point; it still fails honestly
+(`flash_zone_still_occluded` / `no_reachable_flash_viewpoint`) only when navigation
+cannot get any closer. Throw-in-place for a visible in-range zone is unchanged.
+
+Required behavior now holds: "flash C link" turns toward C Link, throws from the
+current spot if an aim point is visible within range, and walks only when it cannot
+yet throw — whether the zone is occluded or simply too far — stopping and throwing
+the instant visibility and range open. "Flash … on my cue" still prepares and waits.
+There is no spoken teammate molly command; scripted enemy grenade/molly use is separate.
+
+Not yet confirmed: a fresh human microphone-to-game playthrough of the fixed far-zone
+flash. The reproduction and fix are verified in the headless site scene through the
+real voice bridge and executor path, not by a new live mic session.
 
 ## Implementation present (acceptance limits below)
 
 User-requested flash behavior: current site supplies one extra teammate flash per
 round and targets for all seven zones. `bots/visible_flash_controller.gd` turns
 first, checks static zone-point world/smoke LOS, and throws from the current spot
-when visible/in range. Only occlusion permits movement, which stops at the first
-visible throw point. Immediate flashes stage physically before commit; on-cue
+when an aim point is visible and within 20 m. When it cannot yet throw — the zone is
+occluded, or every visible point is out of range from the current spot — it walks
+toward the zone's static fallback marker, re-checking visibility and range every tick,
+and throws at the first in-range visible point. It fails honestly only when navigation
+cannot get any closer. Immediate flashes stage physically before commit; on-cue
 flashes wait for release; cancelling during visibility seeking retains the charge.
 The bridge preserves an explicit flash action instead of accepting a mistaken swing.
 No spoken teammate molly command exists. This extra flash is an authored user-requested
@@ -199,11 +217,26 @@ unaccepted full-goal experiment, not an ordinary passing regression. Keep its fa
 
 ## Actual evidence and limits
 
-- Flash update: 36 synthetic current-map checks and 575 required bot assertions
-  pass, but the user subsequently reported the flash still not fully functional. The
-  unchanged local Llama interpreter returned `throw_flash/c_link/now` for a typed
-  "flash c link" sample. No new human microphone acceptance is claimed. Controller
-  uses only own pose/static zone affordances/world-smoke occlusion, not enemy truth.
+- Flash far-zone fix (Kiro, this window): the live `runs/voice-game-20261115-061835`
+  round-2 "Flash B heaven" `execution_failed` is reproduced in the headless site
+  scene through the real voice bridge and executor. With the teammate standing at
+  Cubby, every B Heaven aim point is occluded or 32–35 m away; the old controller
+  returned a terminal out-of-range failure and did not move. After the fix it walks
+  into range and throws. New regression `_test_far_zone_flash_walks` in
+  `tests/person2/site_smoke.gd` asserts release, no `execution_failed`-without-moving,
+  physical repositioning and a throw before reaching the zone center. **Site smoke
+  now passes 40 checks** (was 36) on `76b8eaa` / belief `57f809d`. Reverting the
+  one-line controller change makes exactly the two new far-zone assertions fail,
+  confirming the regression is meaningful. Required bot suite still passes **575**;
+  flash unit tests **12**, lotus authoring/voice **7** Python tests pass. No new
+  human microphone acceptance of the fixed far-zone flash is claimed.
+
+- Flash update (prior, 29ba6d7): 36 synthetic current-map checks and 575 required bot
+  assertions passed, but the user reported the flash still not fully functional —
+  resolved above. The unchanged local Llama interpreter returned `throw_flash/c_link/now`
+  and `throw_flash/b_heaven/now` for the two logged typed/spoken samples; interpretation
+  was never the failing stage. Controller uses only own pose/static zone affordances/
+  world-smoke occlusion, not enemy truth.
 
 - Preparation/cue fix: real TCP voice regression passes **35 checks** using shared
   source `8712f7d` / belief `57f809d`. A deliberately incorrect `now` proposal for
@@ -255,11 +288,12 @@ waits real time. A guarded test health pool is fixture-only and resets to normal
 
 ## Next work, in order
 
-1. Reproduce the user-reported nonfunctional flash on the current map and trace
-   voice/model -> bridge -> executor -> motion/LOS -> shared projectile. Fix the
-   observed failure and add a regression that captures it. Preserve existing edits.
-   Do not redo completed model downloads/setup or accept synthetic tests as a
-   substitute for the reported human failure.
+1. The user-reported flash failure is diagnosed and fixed (far-but-reachable zones
+   now walk into range instead of failing in place; see the resolved-blocker section).
+   Remaining: confirm it with a fresh human microphone-to-game playthrough, and watch
+   for the related case where the ally's own scripted C Link smoke occludes C Link and
+   the teammate walks — correct behavior, but it can surprise a player. Preserve the
+   visibility-first throw-in-place path and the honest no-reachable-viewpoint failure.
 2. Coordinate the paired belief/planner schema removal and full player-report acceptance;
    test both consumers. Preserve valid uncertainty and actual delivery clocks.
 3. Human-check the implemented annotation baseline and reactive transitions,

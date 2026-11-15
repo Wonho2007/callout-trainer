@@ -8,7 +8,8 @@ extends ActorBase
 ##
 ## Weapons/shooting/damage sources and defuse are later increments.
 
-@export var mouse_sensitivity: float = 0.0025
+# User-requested tuning: mouse sensitivity scaled to 3/4 of the original 0.0025.
+@export var mouse_sensitivity: float = 0.001875
 @export var stand_height: float = 1.96
 @export var crouch_height: float = 1.0
 

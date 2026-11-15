@@ -13,6 +13,7 @@ var schedule: RefCounted
 var scenario_tick: int = -1
 var _plant_active: bool = false
 var _scenario_status: Label
+var _victory_screen: ColorRect
 
 func _ready() -> void:
 	await super._ready()
@@ -22,9 +23,10 @@ func _ready() -> void:
 	_scenario_status.add_theme_font_size_override("font_size", 14)
 	$HUD.add_child(_scenario_status)
 	_add_region_labels()
+	_build_victory_screen()
 	_info_panel.set_test_tools_enabled(false)
 	_info_panel.position.y = 315
-	$HUD/Hints.text = "WASD | LMB fire | R reload | B dash | V talk | F restart | Esc mouse"
+	$HUD/Hints.text = "WASD | LMB fire | R reload | B dash | V talk | F restart | Esc mouse | F1 player UI | F2 teammate UI"
 	_begin_plant()
 	if OS.get_cmdline_user_args().has("--lotus-smoke"):
 		var smoke = load("res://tests/person2/lotus_smoke.gd").new()
@@ -194,7 +196,55 @@ func _verify_navigation() -> void:
 	if builder.query_path(Vector3(0, 0, 9), Vector3(7.5, 1.6, -8)).is_empty():
 		push_error("Seven-region floor-to-Heaven navigation missing")
 
+func _build_victory_screen() -> void:
+	# Full-screen overlay shown when all opponents are eliminated. It sits above
+	# the gameplay HUD and is ignored by mouse input so it never blocks clicks.
+	_victory_screen = ColorRect.new()
+	_victory_screen.name = "VictoryScreen"
+	_victory_screen.color = Color(0.03, 0.06, 0.04, 0.82)
+	_victory_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_victory_screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_victory_screen.visible = false
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_victory_screen.add_child(center)
+	var column := VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 16)
+	center.add_child(column)
+	var title := Label.new()
+	title.name = "Title"
+	title.text = "VICTORY"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 72)
+	title.add_theme_color_override("font_color", Color(0.6, 0.95, 0.65))
+	column.add_child(title)
+	var subtitle := Label.new()
+	subtitle.name = "Subtitle"
+	subtitle.text = "All opponents eliminated"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 28)
+	subtitle.add_theme_color_override("font_color", Color(0.85, 0.95, 0.88))
+	column.add_child(subtitle)
+	var prompt := Label.new()
+	prompt.name = "Prompt"
+	prompt.text = "Press F to play again"
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt.add_theme_font_size_override("font_size", 20)
+	prompt.add_theme_color_override("font_color", Color(0.7, 0.8, 0.75))
+	column.add_child(prompt)
+	$HUD.add_child(_victory_screen)
+
+func _show_victory(shown: bool) -> void:
+	if is_instance_valid(_victory_screen):
+		_victory_screen.visible = shown
+	if shown and is_instance_valid(_player):
+		# Release the mouse so the player can read the screen and click away.
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func _update_round_label() -> void:
+	_show_victory(_round_state == "enemies_eliminated")
 	var label: Label = get_node_or_null("HUD/Round")
 	if label == null or _spike == null:
 		return

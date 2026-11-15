@@ -78,9 +78,13 @@ func prepare_visible(target_id: String) -> Dictionary:
 		return {"state": "ready", "reason": "flash_zone_visible"}
 	_selected_points.erase(target_id)
 	_look_points[target_id] = center
-	if visible_but_far:
-		return {"state": "failed", "reason": "visible_zone_out_of_throw_range"}
-	return {"state": "blocked", "reason": "flash_zone_occluded"}
+	# No in-range visible point from here. Whether the zone is occluded or every
+	# visible point is simply too far, walking toward it is the correct response:
+	# approach reduces distance and reveals near points. _advance_visible_flash
+	# re-checks each tick and throws as soon as an in-range visible point opens,
+	# and fails honestly only when navigation cannot get any closer.
+	var reason: String = "flash_zone_visible_out_of_range" if visible_but_far else "flash_zone_occluded"
+	return {"state": "blocked", "reason": reason}
 
 func launch(command_id: String, target_id: String) -> Dictionary:
 	if _released.has(command_id):
