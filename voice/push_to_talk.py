@@ -55,6 +55,12 @@ def main() -> None:
     print("Model: faster-whisper  |  offline, no network calls")
     print("=" * 60)
 
+    # Warm up / pre-load model into memory so recording happens at the exact beep
+    from voice.stt import _load_model, _record_mic
+    print("Pre-loading Whisper model into memory...", flush=True)
+    _load_model()
+    print("Model ready!\n", flush=True)
+
     for i in range(args.loops):
         if args.loops > 1:
             print(f"\n--- Round {i + 1}/{args.loops} ---")
@@ -77,10 +83,11 @@ def main() -> None:
             if winsound:
                 winsound.Beep(1200, 300)
             print(f">>> [LISTENING NOW - SPEAK!] Recording {args.timed}s… <<<", flush=True)
-            text, latency_s = transcribe(duration_s=args.timed)
+            waveform = _record_mic(args.timed)
             if winsound:
                 winsound.Beep(600, 200)
-            print("[STOPPED LISTENING]", flush=True)
+            print("[STOPPED LISTENING - TRANSCRIBING...]", flush=True)
+            text, latency_s = transcribe(audio=waveform)
         else:
             audio_data = record_until_keyup(key=args.key)
             text, latency_s = transcribe(audio=audio_data)
