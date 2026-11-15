@@ -1,0 +1,164 @@
+extends Node3D
+class_name Weapon
+## Shared hitscan weapon (Person 1, shared mechanics).
+##
+## One rifle. Hitscan raycast from a supplied aim origin along an aim direction,
+## with a simple spread model (spread grows while moving and while firing),
+## fire-rate limiting, a magazine and reload. The player and bots (Person 2) use
+## this same weapon and the same rules — bots drive it through aim origin/dir,
+## never by passing a target reference.
+##
+## Fairness boundary (AGENTS.md): fire() takes an origin and direction and
+## resolves the hit with a physics raycast against the world. It returns only
+## what the shooter could observe (hit position, whether something was hit). It
+## does NOT accept or expose a target node to policy. Damage is applied through
+## the hit body's Health/apply_damage, not back into any bot's decision inputs.
+##
+## All stats are DOCUMENTED PLACEHOLDERS tuned by playtest (brief §6.3). They are
+## not Valorant values; no game data has been copied.
+
+signal fired(from_pos: Vector3, to_pos: Vector3, hit: bool)
+signal ammo_changed(in_mag: int, reserve: int)
+signal reload_started
+signal reload_finished
+
+## Optional occlusion provider with segment_blocked_by_smoke(a, b) -> bool.
+## When set, a shot whose line to the hit crosses active smoke is blocked (no
+## damage), using the same deterministic test the perception system uses.
+var occluder: Object = null
+
+## Placeholder rifle stats. Replace with sourced values only if obtained from a
+## permitted source and documented; otherwise these stay as tuned placeholders.
+@export var damage_body: float = 30.0
+@export var damage_head_multiplier: float = 2.0
+@export var rounds_per_second: float = 8.0
+@export var magazine_size: int = 25
+@export var reserve_ammo: int = 75
+@export var reload_time_s: float = 2.0
+@export var range_m: float = 80.0
+## Spread in radians: base, extra while firing continuously, extra while moving.
+@export var spread_base: float = 0.004
+@export var spread_moving: float = 0.03
+@export var spread_firing: float = 0.02
+
+var in_mag: int = 0
+var reserve: int = 0
+var _cooldown: float = 0.0
+var _is_reloading: bool = false
+var _recent_fire_heat: float = 0.0  # 0..1, grows with sustained fire
+
+
+func _ready() -> void:
+	in_mag = magazine_size
+	reserve = reserve_ammo
+	ammo_changed.emit(in_mag, reserve)
+
+
+func _process(delta: float) -> void:
+	if _cooldown > 0.0:
+		_cooldown -= delta
+	# Firing heat decays when not shooting.
+	_recent_fire_heat = maxf(0.0, _recent_fire_heat - delta * 2.0)
+
+
+## Can the weapon fire this instant? (off cooldown, has ammo, not reloading)
+func can_fire() -> bool:
+	return _cooldown <= 0.0 and in_mag > 0 and not _is_reloading
+
+
+## Fire one shot. `origin`/`direction` come from the shooter's aim (camera for
+## the player, aim controller for a bot). `moving` lets the caller widen spread.
+## `shooter` is excluded from the raycast so you never shoot yourself.
+## Returns a dictionary: { hit: bool, position: Vector3, collider: Object|null }.
+## The collider is the physical hit result for the executor to apply damage; it
+## is not routed into bot policy.
+func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) -> Dictionary:
+	var result := {"hit": false, "position": origin, "collider": null}
+	if not can_fire():
+		return result
+
+	_cooldown = 1.0 / maxf(0.1, rounds_per_second)
+	in_mag -= 1
+	_recent_fire_heat = minf(1.0, _recent_fire_heat + 0.3)
+	ammo_changed.emit(in_mag, reserve)
+
+	var aim := _apply_spread(direction.normalized(), moving)
+	var to := origin + aim * range_m
+
+	var space: PhysicsDirectSpaceState3D = shooter.get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(origin, to)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	if shooter is CollisionObject3D:
+		query.exclude = [shooter.get_rid()]
+	var hit := space.intersect_ray(query)
+
+	var end := to
+	if hit:
+		end = hit.position
+		result["hit"] = true
+		result["position"] = hit.position
+		result["collider"] = hit.collider
+		# Smoke occlusion: if the line to the hit crosses active smoke, the shot
+		# is stopped by the smoke and deals no damage (shared LOS rule).
+		var blocked := false
+		if occluder != null and occluder.has_method("segment_blocked_by_smoke"):
+			blocked = occluder.segment_blocked_by_smoke(origin, hit.position)
+		if not blocked:
+			_apply_hit_damage(hit.collider, hit.position)
+		else:
+			result["hit"] = false
+
+	fired.emit(origin, end, result["hit"])
+
+	if in_mag == 0:
+		reload()
+	return result
+
+
+func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
+	if collider == null:
+		return
+	# Find an ActorBase at the hit (the collider or one of its ancestors).
+	var node := collider as Node
+	var actor: ActorBase = null
+	while node != null:
+		if node is ActorBase:
+			actor = node
+			break
+		node = node.get_parent()
+	if actor != null:
+		# Simple head/body split by height of the hit relative to the actor.
+		var local_y := hit_pos.y - actor.global_position.y
+		var dmg := damage_body
+		if local_y > 1.5:
+			dmg *= damage_head_multiplier
+		actor.apply_damage(dmg)
+
+
+func reload() -> void:
+	if _is_reloading or in_mag == magazine_size or reserve <= 0:
+		return
+	_is_reloading = true
+	reload_started.emit()
+	await get_tree().create_timer(reload_time_s).timeout
+	var needed := magazine_size - in_mag
+	var take := mini(needed, reserve)
+	in_mag += take
+	reserve -= take
+	_is_reloading = false
+	ammo_changed.emit(in_mag, reserve)
+	reload_finished.emit()
+
+
+func _apply_spread(dir: Vector3, moving: bool) -> Vector3:
+	var spread := spread_base + _recent_fire_heat * spread_firing
+	if moving:
+		spread += spread_moving
+	if spread <= 0.0:
+		return dir
+	# Random cone offset around the aim direction.
+	var rand_yaw := randf_range(-spread, spread)
+	var rand_pitch := randf_range(-spread, spread)
+	var basis := Basis(Vector3.UP, rand_yaw) * Basis(Vector3.RIGHT, rand_pitch)
+	return (basis * dir).normalized()

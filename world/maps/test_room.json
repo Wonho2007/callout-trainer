@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "note": "Clearly synthetic test room. Not a pro-site reconstruction. Units: meters, Y up, Godot Vector3 serialized as [x, y, z] (see docs/CONTRACTS.md). Region IDs are placeholders to be aligned with Persons 2/3 before freeze.",
+  "id": "test_room_01",
+  "bounds": {
+    "min": [-10, 0, -10],
+    "max": [10, 4, 10]
+  },
+  "floor": {
+    "size": [20, 20],
+    "y": 0
+  },
+  "ceiling_height": 4,
+  "wall_thickness": 0.5,
+  "walls": [
+    { "id": "wall_north", "position": [0, 2, -10], "size": [20, 4, 0.5] },
+    { "id": "wall_south", "position": [0, 2, 10], "size": [20, 4, 0.5] },
+    { "id": "wall_east", "position": [10, 2, 0], "size": [0.5, 4, 20] },
+    { "id": "wall_west", "position": [-10, 2, 0], "size": [0.5, 4, 20] }
+  ],
+  "cover": [
+    { "id": "central_cover", "position": [0, 1, 0], "size": [3, 2, 1] },
+    { "id": "west_crate", "position": [-5, 0.75, -3], "size": [1.5, 1.5, 1.5] },
+    { "id": "east_crate", "position": [5, 0.75, 3], "size": [1.5, 1.5, 1.5] }
+  ],
+  "regions": [
+    { "id": "region_a", "name": "A", "center": [-6, 1, -6], "size": [6, 4, 6] },
+    { "id": "region_b", "name": "B", "center": [6, 1, 6], "size": [6, 4, 6] },
+    { "id": "region_mid", "name": "Mid", "center": [0, 1, 0], "size": [6, 4, 6] }
+  ],
+  "spawns": [
+    { "id": "spawn_player", "role": "player", "position": [-7, 0, 7], "facing_deg": -45 },
+    { "id": "spawn_teammate_1", "role": "teammate", "position": [-5, 0, 7], "facing_deg": -45 },
+    { "id": "spawn_enemy_1", "role": "enemy", "position": [7, 0, -7], "facing_deg": 135 }
+  ],
+  "spike": { "position": [6, 0, 6], "planted": true, "site_region": "region_b" }
+}

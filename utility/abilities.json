@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "note": "Data-driven utility definitions (brief 6.3). Abilities are mapped onto three primitives, not hand-coded per agent: los_blocker (smoke), blind (flash), area_damage (molly, stretch, not implemented). All values are DOCUMENTED PLACEHOLDERS tuned by playtest, not Valorant data. area_damage is listed for completeness but is a stretch feature.",
+  "abilities": [
+    {
+      "id": "smoke",
+      "primitive": "los_blocker",
+      "radius": 3.0,
+      "duration_s": 12.0,
+      "deploy_delay_s": 0.8
+    },
+    {
+      "id": "flash",
+      "primitive": "blind",
+      "trigger_delay_s": 0.6,
+      "max_blind_s": 1.6,
+      "min_blind_s": 0.3,
+      "range_m": 20.0
+    }
+  ]
+}
