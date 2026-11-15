@@ -2,6 +2,14 @@
 
 This is the current Person 2 work plan, refreshed after the user confirmed the correct map and visible teammate. Use it with [the project brief](../callout_trainer_brief.md), [decisions](DECISIONS.md), [ownership](TEAM.md) and [actual implementation records](../bots/PERSON2_HANDOFF.md). Older appended handoff records describe their original implementation snapshots.
 
+## Latest follow-up - teammate information HUD and movable test enemy
+
+User requested visible teammate knowledge, blind feedback and enemy movement controls for manual testing. Added owned `scenes/bots/teammate_info_panel.gd` and FPS scene wiring, static test enemy presets in `scenarios/b_site_coverage.json`, `tests/person2/teammate_hud_smoke.gd` and runner `--hud-smoke` / optional `--hud-capture`. The panel reads existing copied runtime snapshots only; it shows delivered last-seen memory/age, coarse sound, accepted comms, action/charges and own blind countdown. No runtime interface, policy input or shared schema changed.
+
+F6 moves/revives the red labeled enemy to entry; F7 to the room; arrows move it through shared actor physics; P places it on safe floor under the camera crosshair; F8 creates a repeatable shared flash with actual fuse/LOS/duration. Buttons work with the mouse released. These privileged test controls do not inject reports or force sensory state. All code/presentation stays in Person 2's owned inherited scene; no shared main/map/player/utility or Person 3 UI source was edited. [Exact launch and manual checklist](../bots/FIRST_PERSON.md#test-teammate-perception-in-the-hud).
+
+Actual automated Godot 4.4.1 results using the existing pinned executable and read-only Person 1 `487ad73` / Person 3 `57f809d`: `--hud-smoke` **18 pass**, `--perception-smoke` **45 pass**, `--first-person-smoke` **40 pass**, default/cross-lane command **477 pass**. Combined **580 assertions**, exit 0. Optional rendered `--hud-smoke --hud-capture <PNG>` **19 pass** (same 18 plus PNG save); the actual captured layout was inspected. Known shared bake mesh-readback warning remains. These are automated tests/rendering inspection, not a human gameplay or voice/model pass. Remaining cross-lane dependencies and ordered work below are unchanged.
+
 ## Current continuation result - live sensing and physical flash
 
 The unfinished November 14 checkpoint below is preserved as history. Its dirty work was retained and completed on `person-2/bot-perception`, above merge `28950f4` of main `487ad73`; publication stays on draft PR #4. No shared actor, map, main/player scene, utility, project setting, schema, or Person 3 source was edited.

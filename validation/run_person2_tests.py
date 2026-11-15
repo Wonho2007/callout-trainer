@@ -56,12 +56,16 @@ def main():
     mode.add_argument("--first-person", action="store_true", help="Open the shared first-person sandbox with a teammate (voice/model host seam, no menu)")
     mode.add_argument("--first-person-smoke", action="store_true", help="Headless first-person scene/comm/intent integration assertions")
     mode.add_argument("--perception-smoke", action="store_true", help="Inherited FPS live perception and fairness assertions")
+    mode.add_argument("--hud-smoke", action="store_true", help="Teammate information HUD and real enemy test-control assertions")
+    parser.add_argument("--hud-capture", type=Path, help="Optional rendered HUD PNG from --hud-smoke (opens a temporary game window)")
     person3 = parser.add_mutually_exclusive_group()
     person3.add_argument("--person3-root", type=Path, help="Optional Person 3 checkout; copy belief files read-only to the temporary project")
     person3.add_argument("--person3-ref", help="Optional fetched git ref; read Person 3 belief files without changing a checkout")
     parser.add_argument("--person1-ref", help="Optional fetched git ref; test actual shared actor and baked room (requires Person 3 input)")
     args = parser.parse_args()
-    first_person = args.first_person or args.first_person_smoke or args.perception_smoke
+    if args.hud_capture and not args.hud_smoke:
+        parser.error("--hud-capture requires --hud-smoke")
+    first_person = args.first_person or args.first_person_smoke or args.perception_smoke or args.hud_smoke
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
         args.person1_ref = args.person1_ref or ("origin/main" if first_person else "0fd1285")
@@ -122,6 +126,7 @@ def main():
                     copy_ref(args.person1_ref, relative)
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "perception/scene_sensor.gd",
+                                 "scenes/bots/teammate_info_panel.gd",
                                  "scenes/bots/first_person.gd", "scenes/bots/first_person.tscn",
                                  "scenarios/b_site_coverage.json",
                                  "tests/person2/first_person_smoke.gd"]:
@@ -129,6 +134,7 @@ def main():
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(ROOT / relative, target)
                 shutil.copy2(ROOT / "tests/person2/scene_perception_smoke.gd", project / "tests/person2/scene_perception_smoke.gd")
+                shutil.copy2(ROOT / "tests/person2/teammate_hud_smoke.gd", project / "tests/person2/teammate_hud_smoke.gd")
             if visual:
                 for relative in ["scenes/bots/motion_visual_demo.gd", "scenes/bots/motion_visual_demo.tscn"]:
                     target = project / relative
@@ -179,11 +185,14 @@ def main():
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
                 return subprocess.run([godot, "--path", str(project)], check=False).returncode
-            if args.first_person_smoke or args.perception_smoke:
-                smoke_mode = "--perception-smoke" if args.perception_smoke else "--first-person-smoke"
-                marker = "PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"
+            if args.first_person_smoke or args.perception_smoke or args.hud_smoke:
+                smoke_mode = "--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke")
+                marker = "PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS")
+                command = [godot, *([] if args.hud_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
+                if args.hud_capture:
+                    command.append("--hud-capture=" + str(args.hud_capture.resolve()))
                 result = subprocess.run(
-                    [godot, "--headless", "--path", str(project), "--", smoke_mode],
+                    command,
                     capture_output=True, text=True, timeout=45,
                 )
                 output = result.stdout + result.stderr

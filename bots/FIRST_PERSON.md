@@ -24,6 +24,36 @@ On this shared Windows workspace, the directory may be owned by the sandbox acco
 
 WASD moves, mouse looks, LMB fires, R reloads, Q/E use smoke/flash, F restarts, Esc releases/recaptures the mouse. Additional utility keys remain Person 1's current inputs. Close the window to exit. There is no player comm shortcut/menu: the voice host must connect to the runtime below before speech can cause movement. Do not interpret a stationary fallback teammate as proof that a microphone/LLM path exists.
 
+## Test teammate perception in the HUD
+
+Close an older temporary game window and rerun `--first-person` using the command above to load these changes. The **TEAMMATE INFORMATION** panel shows its action, flash inventory, own blind countdown, last delivered enemy sighting with age, recent coarse sound and accepted player comms. Last seen is memory: hiding/moving the enemy does not replace it with an unseen location. Recognition/reaction delay applies before a new sighting appears. Flashing blocks new sightings while old knowledge remains.
+
+The red capsule labeled **TEST ENEMY** is the movable target; the blue capsule with the yellow facing marker is your teammate. Both use shared ActorBase collision/movement. The enemy label uses normal depth testing, so it does not show through walls.
+
+| Control | Test action |
+|---|---|
+| F6 | Move/revive the enemy at the entry, visible from the teammate's initial corridor position |
+| F7 | Move/revive it into the room behind the initial corridor wall |
+| Arrow keys | Move the enemy relative to your view, using real collision/gravity/run speed |
+| P | Aim at open floor and place/revive the enemy there; walls, obstructed/off-nav ground and overlapping actors are rejected |
+| F8 | Spawn a stationary shared test flash two meters ahead of the teammate; its real fuse, LOS/facing and duration determine blindness |
+| Esc | Release the mouse to click the equivalent panel buttons; press again to resume mouse look |
+| F | Reset the round, teammate knowledge/blind state and enemy position |
+
+Quick manual sequence: press **F6**, wait for `Last seen: enemy in entry`, then **F7** and watch that the last-seen region remains entry while its age grows. Press **F8** and watch `Vision: BLINDED` count down to `ready`; then use F6 again to reacquire. Use arrows or aim down at floor + P for your own sightline experiments. Q/E still throw the player's normal smoke/flash. F8 is a repeatable test effect, not a teammate command, and does not consume the teammate's one command charge. If the spike ends the round or the teammate has moved away, press F to repeat from the initial setup.
+
+These are privileged **test tools** in the owned inherited scene. Placement changes world state only; it does not submit a report, force perception or update beliefs. The HUD receives only the runtime's copied delivered snapshot and own blindness. No pending samples, hidden target pose, live visibility query or player-only recon data enters its knowledge display or policy.
+
+Automated controls/HUD check:
+
+~~~powershell
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --hud-smoke
+# Optional actual-renderer PNG (opens a temporary game window):
+& $pythonExe validation/run_person2_tests.py --godot $godotExe --hud-smoke --hud-capture "$env:TEMP\callout-teammate-hud.png"
+~~~
+
+This tests the real controls, delayed HUD updates, stale memory after hidden movement, invalid placement, arrow movement/release, shared flash blindness/recovery, button callbacks and reset. A rendered PNG is automated rendering evidence; human game feel/input/playtesting remains separate.
+
 ## Full acceptance rule and current implementation gap
 
 The teammate must always fully trust valid delivered player comms, including wrong calls, without credibility/history scoring, required corroboration or numeric hedge-based credibility discounts. Preserve explicit uncertainty as content, and keep clarification, delay, provenance and physical checks. Person 3's imported belief module still uses 0.9/0.7/0.4 hedge strengths; Person 2 does not rewrite that owned source or claim runtime alignment. Person 3 must align the belief/interpreter/model behavior when connecting the existing seam. An empty `trust: {}` compatibility key has no feature or scoring semantics.
