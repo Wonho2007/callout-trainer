@@ -38,6 +38,33 @@ the other session's controls. No microphone input or language parser runs here.
 | 0 | Repeat last comm ID | Resends the identical envelope, testing deduplication; no second action |
 | - | Invalid goal / fallback | Submits malformed synthetic model output and displays the deterministic fallback |
 
+The action harness now explicitly enables shared-rifle combat; ordinary
+`--first-person`, perception and HUD modes leave it disabled. Released swings
+keep the existing home stage and strafe from [-2,0,11.5] to `peek_entry`
+[0.4,0,11.5], facing entry rather than turning to face the movement direction.
+The peek exists in both motion and planner markers. This is an authored tactical
+approximation, not verified pro-player behavior.
+
+Press F to reset, then 5, wait for ready, and 6 to see the lateral peek. Press F6
+to place a real visible test enemy at entry. After actual recognition and delivery,
+the bot stops, aligns to its copied last-observed torso point and fires its own
+shared rifle. The physical panel shows `stopping_to_shoot`, aim, cooldown, fire
+and reload states. A new round restores rifle ammo. F7 hides/revives the test
+enemy in the room; delivered loss or stale contact stops fire, and unfinished
+movement can resume. A visible dummy can now take damage and die in this mode.
+
+Only delivered seen `enemy_aim` / `enemy_lost` observations drive combat. Aim
+expires at 30 ticks from its original event, with no extension by late delivery.
+Own current blind/smoke/unknown-vision states suppress fire. There is no hidden
+target lookup, predictive tracking or claimed kill from a shot result. Combat
+pauses the sole movement controller; a pause cannot complete a swing route.
+
+These live checks require the perception session's coordinated aim/loss producer,
+currently present in the shared working tree but not committed by the action
+session. Its information-delivery, HUD and sensory changes remain separately
+owned and must be integrated before reproducing live combat from action commits
+alone. The separate unit fixtures do not require that producer.
+
 Start with **3**, watch the blue teammate navigate and stop at coverage; use **2**
 to return home. These static goal fixtures cite no enemy evidence: they use
 authored destinations and own reachability in a copied context. While selected,
@@ -110,3 +137,21 @@ through the user, and explicitly allowed preserving/committing its existing
 scripts for its approved wave fix. Those source files and the concurrent
 sensor/scene/scenario/HUD changes stay uncommitted by this action task. The
 launcher continues to print frozen dependency revisions and overlay provenance.
+
+## Latest clean validation: lateral peek and opt-in combat
+
+After approved execution outside the certificate-restricted sandbox, official
+Godot 4.4.1 completed these strict existing-runner checks with exit 0:
+
+- Default suites: 505 assertions (183 command, 74 planner, 92 sensor kernel,
+  77 motion, 23 intent, 12 flash, 44 combat).
+- `--first-person-smoke`: 41 assertions, including no rifle/combat by default.
+- `--action-smoke`: 46 assertions, including real stopped rifle fire/damage,
+  shared reload, delivered-evidence audit, sight-loss fire cutoff, lateral
+  movement, command lifecycle, opt-in idempotence, death and reset.
+
+Total: 592 automated assertions. FPS checks used read-only Person 1 `487ad73`
+and Person 3 `57f809d`, plus the coordinated local producer and approved existing
+wave overlay. The shared runtime-bake mesh-readback warning remains. These clean
+results supersede the earlier certificate-blocked action validation above;
+they are still not human gameplay, voice/model, export or pro-behavior evidence.

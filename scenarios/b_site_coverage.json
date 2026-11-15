@@ -28,7 +28,8 @@
     "regions": ["room", "entry", "corridor"],
     "markers": [
       {"id": "home", "watch_regions": ["entry"], "roles": ["hold"], "objectives": ["none"]},
-      {"id": "cover", "watch_regions": ["room"], "roles": ["hold"], "objectives": ["none"]}
+      {"id": "cover", "watch_regions": ["room"], "roles": ["hold"], "objectives": ["none"]},
+      {"id": "peek_entry", "watch_regions": ["entry"], "roles": ["hold"], "objectives": ["none"]}
     ],
     "baseline_marker_id": "home",
     "baseline_watch_region": "entry",
@@ -39,7 +40,8 @@
   },
   "motion_markers": {
     "home": {"position": [-2, 0, 11.5], "watch_points": {"entry": [0, 1.6, 8]}},
-    "cover": {"position": [-1, 0, 3], "watch_points": {"room": [0, 1.6, -2.5]}}
+    "cover": {"position": [-1, 0, 3], "watch_points": {"room": [0, 1.6, -2.5]}},
+    "peek_entry": {"position": [0.4, 0, 11.5], "watch_points": {"entry": [0, 1.6, 8]}}
   },
-  "entries": {"entry": {"stage_marker_id": "home", "route_marker_ids": ["cover"]}}
+  "entries": {"entry": {"stage_marker_id": "home", "route_marker_ids": ["peek_entry"], "watch_region_id": "entry"}}
 }

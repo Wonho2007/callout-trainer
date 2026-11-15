@@ -18,6 +18,7 @@ FILES = [
     "tests/person2/fake_actor.gd", "tests/person2/run_tests.gd",
     "bots/knowledge_planner.gd", "tests/person2/planner_tests.gd",
     "scenarios/synthetic_coverage.json",
+    "scenarios/b_site_coverage.json",
     "perception/perception_sensor.gd", "tests/person2/perception_tests.gd",
     "tests/person2/physics_probe.gd",
     "bots/motion_controller.gd", "tests/person2/motion_tests.gd",
@@ -25,6 +26,8 @@ FILES = [
     "bots/intent_gate.gd", "tests/person2/intent_gate_tests.gd",
     "bots/flash_controller.gd",
     "tests/person2/flash_tests.gd",
+    "bots/combat_policy.gd", "bots/combat_controller.gd",
+    "tests/person2/combat_tests.gd",
 ]
 
 
@@ -177,6 +180,7 @@ def main():
                 ("motion_tests.gd", "PERSON2_MOTION_PASS"),
                 ("intent_gate_tests.gd", "PERSON2_INTENT_GATE_PASS"),
                 ("flash_tests.gd", "PERSON2_FLASH_PASS"),
+                ("combat_tests.gd", "PERSON2_COMBAT_PASS"),
             ]
             if args.person3_root or args.person3_ref:
                 scripts.append(("planner_belief_integration.gd", "PERSON2_BELIEF_INTEGRATION_PASS"))

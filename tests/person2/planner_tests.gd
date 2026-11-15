@@ -14,6 +14,7 @@ func _initialize() -> void:
 	test_validation_and_copying()
 	test_invariance_and_stability()
 	test_hysteresis_and_malformed_evidence()
+	test_current_map_peek_config()
 	if failures.is_empty():
 		print("PERSON2_PLANNER_PASS checks=", checks)
 		quit(0)
@@ -26,6 +27,17 @@ func expect(condition: bool, name: String) -> void:
 	checks += 1
 	if not condition:
 		failures.append("FAIL: " + name)
+
+func test_current_map_peek_config() -> void:
+	var scenario: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/b_site_coverage.json"))
+	var state: Dictionary = {"alive": true, "marker_id": "home", "reachable_marker_ids": scenario.motion_markers.keys(), "role": "hold", "objective": "none"}
+	var belief: Dictionary = {"bot_id": "ally", "tick": -1, "enemies": {"enemy": {"room": 0.3333333333333333, "entry": 0.3333333333333333, "corridor": 0.3333333333333333}}, "trust": {}, "evidence_ids": []}
+	var inbox = Inbox.new("ally")
+	inbox.release(0)
+	var result: Dictionary = Planner.new("ally", scenario.planner).decide(0, belief, state, inbox)
+	expect(result.ok and result.decision.target_id == "home", "current map accepts every physically reachable marker including lateral peek")
+	state.marker_id = "peek_entry"
+	expect(Planner.new("ally", scenario.planner).decide(0, belief, state, inbox).ok, "arriving at lateral peek cannot invalidate ordinary planner own state")
 
 func config() -> Dictionary:
 	return JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/synthetic_coverage.json")).planner

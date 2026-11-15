@@ -20,9 +20,20 @@ var _fault: String = ""
 var _arrival: float
 var _stuck_ticks: int
 var _flash: RefCounted
+var _combat: RefCounted
+var _combat_decision: Dictionary = {}
+var _combat_status: Dictionary = {}
 
 func attach_flash(adapter: RefCounted) -> void:
 	_flash = adapter
+
+func attach_combat(adapter: RefCounted) -> void:
+	# This remains the sole movement owner. Combat can request a halt, but
+	# cannot move the actor or inspect any live target.
+	_combat = adapter
+
+func combat_status() -> Dictionary:
+	return _combat_status.duplicate(true)
 
 func _init(bot_id: String, actor: Node3D, navigation: Node3D,
 		markers: Dictionary, entries: Dictionary, arrival_m: float = 0.25,
@@ -48,20 +59,30 @@ func _init(bot_id: String, actor: Node3D, navigation: Node3D,
 				return
 	for id in _entries:
 		var entry: Variant = _entries[id]
-		if not Data.nonempty(id) or not entry is Dictionary or not Data.keys_exact(entry, ["stage_marker_id", "route_marker_ids"]):
+		if not Data.nonempty(id) or not entry is Dictionary or not (Data.keys_exact(entry, ["stage_marker_id", "route_marker_ids"]) or Data.keys_exact(entry, ["stage_marker_id", "route_marker_ids", "watch_region_id"])):
 			return
 		if not entry.stage_marker_id is String or not _markers.has(entry.stage_marker_id) or not entry.route_marker_ids is Array or entry.route_marker_ids.is_empty():
 			return
 		for marker in entry.route_marker_ids:
 			if not marker is String or not _markers.has(marker):
 				return
+		if entry.has("watch_region_id"):
+			if not Data.nonempty(entry.watch_region_id):
+				return
+			for marker in [entry.stage_marker_id] + entry.route_marker_ids:
+				if not _markers[marker].watch_points.has(entry.watch_region_id):
+					return
 	_configured = true
 
 # Once per physics tick AFTER executor.step and planner.decide. active_command is
 # the executor's trusted snapshot. It owns movement even if the planner errors.
 # Executor errors freeze ALL movement; a planner error freezes only autonomy.
 func step(tick: int, plan: Dictionary, executor_output: Dictionary,
-		active_command: Dictionary, inbox: RefCounted) -> Dictionary:
+		active_command: Dictionary, inbox: RefCounted, combat_decision: Dictionary = {}) -> Dictionary:
+	_combat_status = {}
+	_combat_decision = combat_decision.duplicate(true) if Data.valid(combat_decision) else {}
+	if not Data.valid(combat_decision):
+		return _fail("invalid_combat_decision")
 	if tick < 0 or tick <= _clock:
 		return _fail("non_monotonic_tick")
 	_clock = tick
@@ -74,6 +95,9 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 		return _fail("executor_error")
 	if inbox.owner_id() != _bot_id or inbox.current_tick() != tick:
 		return _fail("inbox_not_current_or_foreign")
+	if not _combat_decision.is_empty():
+		if not Data.equal(_combat_decision.get("bot_id"), _bot_id) or not Data.equal(_combat_decision.get("tick"), tick) or not _evidence(_combat_decision.get("evidence_ids"), tick, inbox):
+			return _fail("invalid_combat_decision")
 	# Validate a complete intent batch before any physical side effect.
 	for intent in executor_output.intents:
 		if not _valid_intent(intent, tick, inbox):
@@ -119,7 +143,7 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 			return _status("failed", "unknown_entry")
 		var entry: Dictionary = _entries[intent.target_id]
 		var route: Array = [entry.stage_marker_id] if intent.op == "stage" else entry.route_marker_ids
-		_start(command_id, intent.op, intent.target_id, route, null)
+		_start(command_id, intent.op, intent.target_id, route, entry.get("watch_region_id"))
 	if not command_id.is_empty():
 		if _task.is_empty():
 			_stop_actor()
@@ -185,10 +209,20 @@ func _advance() -> Dictionary:
 			_path_index = 0
 			_progress_tick = _clock
 			_progress_distance = INF
-		else:
+	# Contact can interrupt travel/peeking/holding. The weapon adapter returns
+	# only own-action telemetry; this controller alone stops movement.
+	if _combat != null and not _combat_decision.is_empty():
+		_combat_status = _combat.step(_clock, _combat_decision)
+		if not _combat_status.get("ok", false):
+			return _fail("combat_adapter_error")
+		if _combat_status.get("halt_movement", false):
 			_stop_actor()
-			_watch()
-			return _status("holding", "at_authored_marker")
+			_progress_tick = _clock
+			return _status("engaging", _combat_status.reason)
+	if _task.done:
+		_stop_actor()
+		_watch()
+		return _status("holding", "at_authored_marker")
 	var destination: Vector3 = _vec(_markers[_task.route[_task.route_index]].position)
 	# query_path snaps endpoints, sometimes onto an unrelated island. Require
 	# both returned endpoints near the requested anchors; never walk a partial
@@ -233,12 +267,16 @@ func _advance() -> Dictionary:
 		return _physical_failure("stuck")
 	var next: Vector3 = _path[_path_index]
 	_actor.move_toward_point(next)
-	_face(next)
+	if _task.op == "start_swing" and _task.watch_region_id is String:
+		_watch()
+	else:
+		_face(next)
 	return _status("moving", "following_navigation")
 
 func _watch() -> void:
 	if _task.watch_region_id is String:
-		_face(_vec(_markers[_task.target_id].watch_points[_task.watch_region_id]))
+		var marker: String = _task.route[-1] if _task.done else _task.route[_task.route_index]
+		_face(_vec(_markers[marker].watch_points[_task.watch_region_id]))
 
 func _face(point: Vector3) -> void:
 	var direction: Vector3 = point - _actor.global_position

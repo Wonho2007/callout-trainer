@@ -24,6 +24,8 @@ var _buttons: Dictionary = {}
 func _ready() -> void:
 	name = "DeveloperActionTests"
 	set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
 	offset_left = -800
 	offset_right = -12
 	offset_top = -300
@@ -37,6 +39,8 @@ func _ready() -> void:
 	_status = Label.new()
 	_status.custom_minimum_size = Vector2(610, 100)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.max_lines_visible = 6
+	_status.clip_text = true
 	_status.add_theme_font_size_override("font_size", 14)
 	column.add_child(_status)
 	var grid := GridContainer.new()
@@ -184,10 +188,14 @@ func _refresh() -> void:
 	if policy == "local_model":
 		policy = "synthetic intent fixture"
 	var lifecycle: Array = []
+	var evidence: Array = decision.get("evidence_ids", [])
+	var evidence_text: String = str(evidence.slice(maxi(0, evidence.size() - 2)))
+	if evidence.size() > 2:
+		evidence_text += " (+%d earlier)" % (evidence.size() - 2)
 	for result in _history.slice(maxi(0, _history.size() - 3)):
 		lifecycle.append("%s:%s/%s" % [result.message_id.get_slice(":", 2), result.status, result.reason_code])
 	_status.text = "Policy: %s | goal: %s → %s\nWhy: %s | evidence: %s\nPhysical: %s / %s | renewed test goal: %s\n%s\n%s" % [
 		policy, decision.get("goal", "waiting"), decision.get("target_id", ""),
-		decision.get("reason", ""), str(decision.get("evidence_ids", [])),
+		decision.get("reason", ""), evidence_text,
 		physical.get("state", "waiting"), physical.get("reason", ""),
 		_goal if not _goal.is_empty() else "none", _feedback, " → ".join(lifecycle)]

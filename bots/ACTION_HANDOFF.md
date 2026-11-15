@@ -162,3 +162,62 @@ nonoverlapping HUDs. Existing shared bake warning remains. Python compile/help,
 docs and whitespace checks pass. No human input, voice/model or export playtest
 is claimed. Live follow-player sensing remains the other session's acceptance
 gate; the harness does not fabricate a player-entry observation.
+
+## Lateral peek and opt-in combat checkpoint
+
+User requested a lateral peek and stopping to shoot when the bot sees an enemy.
+Through the user, the perception session approved new copied seen content
+`{type:"enemy_aim", enemy_id, aim_position:[x,y,z]}` and
+`{type:"enemy_lost", enemy_id}` without changing `enemy_seen`. It owns actually
+visible torso sampling, fair FOV/LOS/smoke/blind checks and causal delivery order.
+It also approved runtime wiring/telemetry, authored peek markers/route and runner
+copy/test additions, while retaining home staging, spawn, coverage, flash and
+player-entry setup. A later correction explicitly required 30-tick freshness
+and opt-in combat; both are implemented.
+
+New pure `combat_policy.gd` consumes promoted copied observations and own vision
+status. Only seen aim points delivered by the decision tick can engage. Loss
+invalidates equal/older event-time aim; stale points expire at event+30 ticks,
+and configuration cannot extend that limit. Reports/coarse sound never invent
+exact aim. Current own blind/smoke/unknown vision blocks engagement. Decisions
+cite original delivered aim IDs. No opponent Nodes, hidden transform, archive,
+minimap or player scan enters policy.
+
+New privileged `combat_controller.gd` uses the bot's own shared Weapon. It requests
+a motion halt, waits for actual horizontal speed <=0.15 m/s, turns toward the
+copied point and obeys shared cooldown, ammo, reload, spread and damage. Placeholder
+aim turns at 360 degrees/s, requires 3-degree alignment and settles error from
+2 to 0.6 degrees over 24 ticks. It does not move actors or return physical hit
+colliders/positions to policy. A shot is not a claimed kill. Motion remains the
+sole movement owner and pauses/resumes unfinished routes without false completion.
+
+`runtime.configure` leaves combat disabled and creates no rifle. Trusted
+`runtime.enable_combat(utility)` idempotently opts in; only the inherited action
+playtest calls it, including on reset. Snapshot/decision records add copied
+`combat:{enabled,decision,physical}` telemetry. Model context keys and supported
+model goals remain unchanged. No Person 3 voice/belief/model source was edited.
+
+The scenario adds `peek_entry` to BOTH planner and motion markers; its position
+is [0.4,0,11.5], watching entry. Swing staging stays at home [-2,0,11.5]; release
+is lateral +X at unchanged Z, with angle-facing independent of movement direction.
+Old two-field entry definitions remain supported; optional `watch_region_id`
+enables the new strafing behavior. Spawn/home/cover/flash are unchanged. Only
+these authored scenario hunks are staged; the other session's player-entry
+sensing addition stays uncommitted. This is not a verified pro reconstruction.
+
+Strict official Godot `4.4.1.stable.official.49a5bc7b6` runs now pass outside the
+certificate-restricted sandbox: default 505 assertions, normal FPS 41, action
+FPS 46, all exit 0 (592 total). Runtime imports pass. The shared mesh-readback
+bake warning remains. FPS refs: Person 1 `487ad73`, Person 3 `57f809d`; these
+live runs also use the other session's uncommitted aim/loss producer and approved
+local wave overlay. That producer must be published/integrated for live combat
+when running from action commits alone. Default unit tests are independent.
+
+Tests cover event/delivery/freshness ordering, own impairment, copies, unseen
+node perturbation, policy dependencies, real stop/fire/damage/reload, lost sight,
+single movement owner, lateral facing, actual completion, default-off/idempotent
+opt-in, death and fresh reset. Planner regressions verify ordinary planning with
+all reachable markers and while physically at the peek. Earlier action-fixture
+failures were corrected by sampling the actual completion event and presenting
+the target before the short lateral route finished; no sensor/mechanic was
+patched for acceptance. No new human/voice/model/export test is claimed.

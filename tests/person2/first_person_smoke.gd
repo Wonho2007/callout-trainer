@@ -23,6 +23,7 @@ func run(scene: Node3D) -> void:
 	runtime.decision_recorded.connect(func(record: Dictionary): records.append(record))
 	runtime.comm_result.connect(func(result: Dictionary): results.append(result))
 	await wait_tick(runtime, 2)
+	expect(not runtime.snapshot().combat.enabled and scene.teammate.get_node_or_null("TeammateRifle") == null, "normal FPS information fixture does not opt into combat or create a rifle")
 	var player: Node3D = scene.get("_player")
 	var builder: Node3D = scene.get("builder")
 	expect(builder.map_path == "res://world/maps/b_site.json" and builder.map_data.id == "b_site_box", "launch uses Person 1's current map, not the old test room")

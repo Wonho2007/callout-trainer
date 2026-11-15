@@ -6,6 +6,8 @@ const Planner = preload("res://bots/knowledge_planner.gd")
 const Motion = preload("res://bots/motion_controller.gd")
 const Gate = preload("res://bots/intent_gate.gd")
 const FlashController = preload("res://bots/flash_controller.gd")
+const CombatPolicy = preload("res://bots/combat_policy.gd")
+const CombatController = preload("res://bots/combat_controller.gd")
 signal policy_context_ready(context: Dictionary)
 signal decision_recorded(record: Dictionary)
 signal comm_result(result: Dictionary)
@@ -33,6 +35,9 @@ var _sensing: RefCounted
 var _sensory_ids: Dictionary = {}
 var _applied_senses: Dictionary = {}
 var _flash: RefCounted
+var _combat_policy: RefCounted
+var _combat_adapter: RefCounted
+var _combat_decision: Dictionary = {}
 
 func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCounted,
 		configuration: Dictionary, markers: Dictionary, entries: Dictionary, round_id: int,
@@ -57,12 +62,30 @@ func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCou
 	_gate = Gate.new(bot_id, affordances)
 	_configured = true
 
+func enable_combat(utility: Node3D) -> bool:
+	# Trusted scene opt-in only. configure() leaves combat disabled so sensory
+	# and information fixtures remain independent and never acquire a rifle.
+	if not _configured:
+		return false
+	if _combat_adapter != null:
+		return true
+	var rifle: Node3D = load("res://weapons/weapon.gd").new()
+	rifle.name = "TeammateRifle"
+	_actor.add_child(rifle)
+	rifle.occluder = utility
+	_combat_policy = CombatPolicy.new(_bot_id, 30)
+	_combat_adapter = CombatController.new(_bot_id, _actor, rifle)
+	_motion.attach_combat(_combat_adapter)
+	return true
+
 func attach_perception(adapter: RefCounted) -> void:
 	if _sensing != null:
 		_sensing.dispose()
 	_sensing = adapter
 
 func _exit_tree() -> void:
+	if _combat_adapter != null:
+		_combat_adapter.dispose()
 	if _sensing != null:
 		_sensing.dispose()
 
@@ -96,6 +119,7 @@ func snapshot() -> Dictionary:
 	return {"tick": _tick, "bot_id": _bot_id, "physical": _status.duplicate(true),
 		"plan": _last_plan.duplicate(true), "active_command": _executor.active_command_snapshot(),
 		"observations": _policy_observations(), "flash_count": _flash.remaining(),
+		"combat": {"enabled": _combat_adapter != null, "decision": _combat_decision.duplicate(true), "physical": _motion.combat_status()},
 		"own_perception": _sensing.own_status() if _sensing != null else {}}
 
 func _own_state() -> Dictionary:
@@ -177,9 +201,14 @@ func _physics_process(_delta: float) -> void:
 	elif not active.is_empty():
 		policy = "accepted_player_command"
 	_last_plan = plan.duplicate(true)
-	_status = _motion.step(_tick, plan, output, active, _executor.inbox)
+	if _combat_policy != null:
+		var own_vision: Dictionary = _sensing.own_status() if _sensing != null else {}
+		own_vision["alive"] = own.alive
+		_combat_decision = _combat_policy.decide(_tick, _policy_observations(), own_vision)
+	_status = _motion.step(_tick, plan, output, active, _executor.inbox, _combat_decision)
 	decision_recorded.emit({"tick": _tick, "bot_id": _bot_id, "policy": policy,
 		"plan": plan.duplicate(true), "physical": _status.duplicate(true), "model_record": _gate.active_record(),
+		"combat": {"enabled": _combat_adapter != null, "decision": _combat_decision.duplicate(true), "physical": _motion.combat_status()},
 		"errors": output.errors.duplicate(true)})
 	# A slow, bounded copied context is available for Person 3's local model.
 	# Person 3 must also log its real prompt/raw response; this record cannot

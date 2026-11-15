@@ -17,6 +17,7 @@ func _ready() -> void:
 	print("PERSON2_ACTION_PLAYTEST_READY synthetic_inputs=true voice_model=false")
 
 func _bind_action_runtime(bot_runtime: Node) -> void:
+	bot_runtime.enable_combat(utility)
 	# Developer camera setup only: the shared spawn faces a nearby wall.
 	# Turn the own player toward the corridor/teammate using its static spawn
 	# orientation. Keep the same shared camera, movement and spawn position.
