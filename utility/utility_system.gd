@@ -14,6 +14,8 @@ const BlindWaveScript := preload("res://utility/blind_wave.gd")
 const ScanOrbScript := preload("res://utility/scan_orb.gd")
 const ReconOutlineScript := preload("res://utility/recon_outline.gd")
 
+# Privileged damage attribution; not exposed to policy.
+signal kill_confirmed(victim: ActorBase, thrower_id: String)
 ## Emitted when utility is deployed, for the privileged recorder/grader (not a
 ## policy input). Carries the ability id, thrower id and world position.
 signal deployed(ability_id: String, thrower_id: String, position: Vector3)
@@ -122,6 +124,7 @@ func throw_molly(from: Vector3, velocity: Vector3, thrower_id: String = "player"
 	molly.throw(from, velocity)
 	_mollies.append(molly)
 	molly.expired.connect(func(): _mollies.erase(molly))
+	molly.kill_confirmed.connect(func(victim: ActorBase): kill_confirmed.emit(victim, thrower_id))
 	molly.ignited.connect(func(pos): deployed.emit("molly", thrower_id, pos))
 	return molly
 

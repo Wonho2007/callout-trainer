@@ -68,6 +68,8 @@ def main():
     mode.add_argument("--lotus-smoke", action="store_true", help="Seven-region geometry/nav and late enemy spawning regression")
     mode.add_argument("--site-playtest", action="store_true", help="Plant-hold voice game on Person 3 seven-zone B site map")
     mode.add_argument("--site-smoke", action="store_true", help="Seven-zone B site scenario and source-map integration checks")
+    mode.add_argument("--combat-ui-smoke", action="store_true", help="Combat UI regression in the real site scene")
+    parser.add_argument("--combat-ui-capture", type=Path, help="Rendered combat UI capture prefix")
     parser.add_argument("--site-capture", type=Path, help="Optional rendered B site capture from --site-smoke")
     parser.add_argument("--voice-port", type=int, default=8765)
     parser.add_argument("--voice-headless", action="store_true", help="Developer external-host fixture, no window")
@@ -88,8 +90,11 @@ def main():
         parser.error("--lotus-capture requires --lotus-smoke")
     if args.site_capture and not args.site_smoke:
         parser.error("--site-capture requires --site-smoke")
+    if args.combat_ui_capture and not args.combat_ui_smoke:
+        parser.error("--combat-ui-capture requires --combat-ui-smoke")
     action_mode = args.action_playtest or args.action_smoke
-    site_mode = args.site_playtest or args.site_smoke
+    combat_ui = args.combat_ui_smoke
+    site_mode = args.site_playtest or args.site_smoke or combat_ui
     lotus_mode = args.lotus_playtest or args.lotus_smoke or site_mode
     if lotus_mode:
         from check_lotus import validate_files
@@ -159,9 +164,9 @@ def main():
                     copy_ref(args.person1_ref, relative)
                 # User-requested shared mechanics: use the current wave/player,
                 # rifle damage, utility attribution and round cleanup scripts.
-                for relative in ["utility/blind_wave.gd", "utility/utility_system.gd", "scenes/player/player.gd", "weapons/weapon.gd"]:
+                for relative in ["utility/blind_wave.gd", "utility/utility_system.gd", "utility/molly.gd", "scenes/player/player.gd", "weapons/weapon.gd"]:
                     shutil.copy2(ROOT / relative, project / relative)
-                print("PERSON2_SHARED_OVERLAY utility/blind_wave.gd utility/utility_system.gd scenes/player/player.gd weapons/weapon.gd (user-requested mechanics)")
+                print("PERSON2_SHARED_OVERLAY utility/blind_wave.gd utility/utility_system.gd utility/molly.gd scenes/player/player.gd weapons/weapon.gd (user-requested mechanics)")
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "perception/scene_sensor.gd",
                                  "scenes/bots/teammate_info_panel.gd",
@@ -186,7 +191,8 @@ def main():
                         target.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(ROOT / relative, target)
                 if lotus_mode:
-                    for relative in ["world/lotus_builder.gd", "world/maps/lotus_b_adaptation.json",
+                    for relative in ["ui/combat_feedback.gd", "tests/person2/combat_ui_smoke.gd",
+                                     "world/lotus_builder.gd", "world/maps/lotus_b_adaptation.json",
                                      "scenarios/lotus_b_coverage.json", "scenarios/first_known_spawns.gd",
                                      "scenarios/fnc_prx_lotus_toronto2024_gf.json",
                                      "bots/annotation_policy.gd", "bots/annotation_executor.gd",
@@ -255,10 +261,18 @@ def main():
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
                 return subprocess.run([godot, *(["--headless"] if args.voice_headless else []), "--path", str(project), *(["--", "--voice-port=" + str(args.voice_port), *(["--voice-interpret-fixture" if args.voice_interpret_only else "--voice-model-fixture"] if args.voice_headless else [])] if args.voice_playtest or args.lotus_playtest or args.site_playtest else [])], check=False).returncode
-            if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke or args.voice_smoke or args.lotus_smoke or args.site_smoke:
+            if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke or args.voice_smoke or args.lotus_smoke or args.site_smoke or combat_ui:
                 smoke_mode = "--site-smoke" if args.site_smoke else "--lotus-smoke" if args.lotus_smoke else "--voice-smoke" if args.voice_smoke else "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
+                if combat_ui:
+                    smoke_mode = "--combat-ui-smoke"
                 marker = "PERSON2_SITE_PASS" if args.site_smoke else "PERSON2_LOTUS_PASS" if args.lotus_smoke else "PERSON2_VOICE_SMOKE_PASS" if args.voice_smoke else "PERSON2_ACTION_PASS" if args.action_smoke else ("PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"))
-                command = [godot, *([] if args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
+                if combat_ui:
+                    marker = "PERSON2_COMBAT_UI_PASS"
+                command = [godot, *([] if args.combat_ui_capture or args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
+                if combat_ui:
+                    command.append("--voice-port=0")
+                if args.combat_ui_capture:
+                    command.append("--combat-ui-capture=" + str(args.combat_ui_capture.resolve()))
                 if args.hud_capture:
                     command.append("--hud-capture=" + str(args.hud_capture.resolve()))
                 if args.voice_smoke or args.lotus_smoke or args.site_smoke:

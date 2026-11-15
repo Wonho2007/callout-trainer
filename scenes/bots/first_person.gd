@@ -171,7 +171,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # overlays (flash/blind/smoke whiteouts) and the crosshair stay on so the toggle
 # cannot change what the player can actually see or aim with.
 func _player_ui_nodes() -> Array:
-	var names: Array = ["Hints", "Round", "Events", "Coords", "Status", "Disclaimer", "Minimap"]
+	var names: Array = ["Hints", "Round", "Events", "Coords", "Status", "Disclaimer", "Minimap", "CombatFeedback"]
 	var nodes: Array = []
 	for n in names:
 		var node: Node = get_node_or_null("HUD/" + n)

@@ -14,6 +14,7 @@ var scenario_tick: int = -1
 var _plant_active: bool = false
 var _scenario_status: Label
 var _victory_screen: ColorRect
+var _combat_feedback: Control
 
 func _ready() -> void:
 	await super._ready()
@@ -23,16 +24,27 @@ func _ready() -> void:
 	_scenario_status.add_theme_font_size_override("font_size", 14)
 	$HUD.add_child(_scenario_status)
 	_add_region_labels()
+	_combat_feedback = preload("res://ui/combat_feedback.gd").new()
+	_combat_feedback.name = "CombatFeedback"
+	$HUD.add_child(_combat_feedback)
 	_build_victory_screen()
 	_info_panel.set_test_tools_enabled(false)
 	_info_panel.position.y = 315
 	$HUD/Hints.text = "WASD | LMB fire | R reload | B dash | V talk | F restart | Esc mouse | F1 player UI | F2 teammate UI"
 	_begin_plant()
+	if OS.get_cmdline_user_args().has("--combat-ui-smoke"):
+		_run_combat_ui_smoke.call_deferred()
 	if OS.get_cmdline_user_args().has("--lotus-smoke"):
 		var smoke = load("res://tests/person2/lotus_smoke.gd").new()
 		add_child(smoke)
 		_smoke_silence_player_input()
 		smoke.run(self)
+
+func _run_combat_ui_smoke() -> void:
+	var smoke = load("res://tests/person2/combat_ui_smoke.gd").new()
+	add_child(smoke)
+	_smoke_silence_player_input()
+	smoke.run(self)
 
 func _spawn_target() -> void:
 	# At plant all four FNC positions are unknown: no actors or colliders exist.
@@ -68,7 +80,7 @@ func _spawn_teammate() -> void:
 	_utility_executors["ally"] = AnnotationExecutor.new("ally", teammate, runtime, utility, _scenario.motion_markers)
 	teammate.health.max_hp = float(_scenario.ally_hp)
 	teammate.health.reset()
-	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke"):
+	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke") and not OS.get_cmdline_user_args().has("--combat-ui-smoke"):
 		runtime.enable_combat(utility)
 
 func _begin_plant() -> void:
@@ -79,7 +91,33 @@ func _begin_plant() -> void:
 	_spike.reset()
 	_player.health.max_hp = float(_scenario.player_hp)
 	_player.health.reset()
+	_bind_combat_feedback()
 	_wire_all_minimap()
+
+func _bind_combat_feedback() -> void:
+	_combat_feedback.begin_round(_round_serial, _player.health)
+	var weapon: Node = _player.get_node("Camera3D/Weapon")
+	# Player survives restart; remove only our previous round bindings.
+	for source in [weapon, utility]:
+		for connection in source.kill_confirmed.get_connections():
+			if connection.callable.get_object() == self:
+				source.kill_confirmed.disconnect(connection.callable)
+	weapon.kill_confirmed.connect(_on_rifle_kill.bind(_round_serial))
+	utility.kill_confirmed.connect(_on_utility_kill.bind(_round_serial))
+
+func _on_rifle_kill(victim: ActorBase, shooter: Node3D, serial: int) -> void:
+	if shooter == _player:
+		_record_player_kill(victim, serial)
+
+func _on_utility_kill(victim: ActorBase, thrower_id: String, serial: int) -> void:
+	if thrower_id == "player":
+		_record_player_kill(victim, serial)
+
+func _record_player_kill(victim: ActorBase, serial: int) -> void:
+	if _restart_pending or serial != _round_serial or not is_instance_valid(victim):
+		return
+	if victim in enemies.values() and not victim.is_alive:
+		_combat_feedback.confirm_kill(victim.get_instance_id(), serial)
 
 func _physics_process(delta: float) -> void:
 	# PRX is defending its own plant: player cannot defuse the planted spike.
@@ -152,7 +190,7 @@ func _materialize(spec: Dictionary) -> void:
 	enemy_runtime.attach_perception(SceneSensor.new(spec.actor_id, actor, builder, utility,
 		{"player": _player, "ally": teammate}, _scenario.perception, int(_scenario.perception_seed) + enemies.size(), _round_serial))
 	enemy_runtime.attach_scenario_policy(AnnotationPolicy.new(spec.actor_id, _annotation.timeline, int(spec.first_known_tick), int(_scenario.get("utility_grace_ticks", 120))))
-	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke"):
+	if not OS.get_cmdline_user_args().has("--lotus-smoke") and not OS.get_cmdline_user_args().has("--site-smoke") and not OS.get_cmdline_user_args().has("--combat-ui-smoke"):
 		enemy_runtime.enable_combat(utility)
 	runtime.register_opponent(spec.actor_id, actor)
 	enemy_runtimes[spec.actor_id] = enemy_runtime
@@ -197,54 +235,16 @@ func _verify_navigation() -> void:
 		push_error("Seven-region floor-to-Heaven navigation missing")
 
 func _build_victory_screen() -> void:
-	# Full-screen overlay shown when all opponents are eliminated. It sits above
-	# the gameplay HUD and is ignored by mouse input so it never blocks clicks.
-	_victory_screen = ColorRect.new()
-	_victory_screen.name = "VictoryScreen"
-	_victory_screen.color = Color(0.03, 0.06, 0.04, 0.82)
-	_victory_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_victory_screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_victory_screen.visible = false
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_victory_screen.add_child(center)
-	var column := VBoxContainer.new()
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 16)
-	center.add_child(column)
-	var title := Label.new()
-	title.name = "Title"
-	title.text = "VICTORY"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 72)
-	title.add_theme_color_override("font_color", Color(0.6, 0.95, 0.65))
-	column.add_child(title)
-	var subtitle := Label.new()
-	subtitle.name = "Subtitle"
-	subtitle.text = "All opponents eliminated"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 28)
-	subtitle.add_theme_color_override("font_color", Color(0.85, 0.95, 0.88))
-	column.add_child(subtitle)
-	var prompt := Label.new()
-	prompt.name = "Prompt"
-	prompt.text = "Press F to play again"
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.add_theme_font_size_override("font_size", 20)
-	prompt.add_theme_color_override("font_color", Color(0.7, 0.8, 0.75))
-	column.add_child(prompt)
+	# Result is a sibling of the F1-toggleable gameplay HUD.
+	_victory_screen = _combat_feedback.build_result_screen()
 	$HUD.add_child(_victory_screen)
 
-func _show_victory(shown: bool) -> void:
-	if is_instance_valid(_victory_screen):
-		_victory_screen.visible = shown
-	if shown and is_instance_valid(_player):
-		# Release the mouse so the player can read the screen and click away.
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+func _show_round_result() -> void:
+	if is_instance_valid(_combat_feedback):
+		_combat_feedback.show_result(_round_state)
 
 func _update_round_label() -> void:
-	_show_victory(_round_state == "enemies_eliminated")
+	_show_round_result()
 	var label: Label = get_node_or_null("HUD/Round")
 	if label == null or _spike == null:
 		return
@@ -287,6 +287,7 @@ func _restart() -> void:
 	if _restart_pending:
 		return
 	_plant_active = false
+	_combat_feedback.begin_round(-1, null)
 	utility.clear_effects()
 	_utility_executors.clear()
 	_flash_indicators.clear()

@@ -17,6 +17,7 @@ const LAYER_AREA_DAMAGE: int = 1 << 5  # layer 6 "area_damage"
 const ACTOR_MASK: int = (1 << 1) | (1 << 2)
 
 signal ignited(source_position: Vector3)
+signal kill_confirmed(victim: ActorBase)
 signal expired
 
 var radius: float = 2.5
@@ -160,7 +161,10 @@ func _physics_process(delta: float) -> void:
 	for body in _area.get_overlapping_bodies():
 		var actor := _actor_of(body)
 		if actor != null:
+			var was_alive := actor.is_alive
 			actor.apply_damage(dmg)
+			if was_alive and not actor.is_alive:
+				kill_confirmed.emit(actor)
 
 
 ## Find an ActorBase at `body` (the body or an ancestor), or null.

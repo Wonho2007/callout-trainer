@@ -17,6 +17,9 @@ class_name Weapon
 ## All stats are DOCUMENTED PLACEHOLDERS tuned by playtest (brief §6.3). They are
 ## not Valorant values; no game data has been copied.
 
+# Privileged physical result for presentation only; never a policy input.
+signal kill_confirmed(victim: ActorBase, shooter: Node3D)
+
 signal fired(from_pos: Vector3, to_pos: Vector3, hit: bool)
 signal ammo_changed(in_mag: int, reserve: int)
 signal reload_started
@@ -145,7 +148,7 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 		if occluder != null and occluder.has_method("segment_blocked_by_smoke"):
 			blocked = occluder.segment_blocked_by_smoke(origin, hit.position)
 		if not blocked:
-			_apply_hit_damage(hit.collider, hit.position)
+			_apply_hit_damage(hit.collider, hit.position, shooter)
 		else:
 			result["hit"] = false
 
@@ -156,7 +159,7 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 	return result
 
 
-func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
+func _apply_hit_damage(collider: Object, hit_pos: Vector3, shooter: Node3D = null) -> void:
 	if collider == null:
 		return
 	# A hitbox Area3D carries a "hit_part" meta (head/body/legs) and links to its actor
@@ -188,7 +191,10 @@ func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 				dmg = damage_legs
 			else:
 				dmg = damage_body
+	var was_alive := actor.is_alive
 	actor.apply_damage(dmg)
+	if was_alive and not actor.is_alive:
+		kill_confirmed.emit(actor, shooter)
 
 
 func reload() -> void:
