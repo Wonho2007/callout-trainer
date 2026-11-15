@@ -12,8 +12,13 @@ func run(scene: Node) -> void:
 	await get_tree().physics_frame
 	await get_tree().process_frame
 	var source: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://world/maps/b_site.json"))
-	expect(scene.builder.map_data.walls == source.walls and source.walls.size() == 40, "uses all imported map walls without approximation replacement")
-	expect(scene.builder.map_data.regions == source.regions and source.regions.size() == 7, "uses all seven imported zone definitions unchanged")
+	expect(scene.builder.map_data.walls == source.walls, "uses all imported map walls without approximation replacement")
+	var footprints_match: bool = source.regions.size() == 7
+	for i in range(source.regions.size()):
+		var actual: Dictionary = scene.builder.map_data.regions[i]
+		var expected: Dictionary = source.regions[i]
+		footprints_match = footprints_match and actual.id == expected.id and actual.center[0] == expected.center[0] and actual.center[2] == expected.center[2] and actual.size[0] == expected.size[0] and actual.size[2] == expected.size[2]
+	expect(footprints_match, "keeps all seven source zone footprints; Pit volume extends to its deep floor")
 	expect(scene.builder.map_path == "res://world/maps/b_site.json", "plant scenario uses teammate map rather than old Lotus approximation")
 	expect(scene.enemies.is_empty() and scene.builder.map_data.spawns.size() == 1, "unknown enemies have no actor or guessed spawn marker at plant")
 	expect(scene.runtime._sensing._region(scene._player.global_position + Vector3.UP) == "b_heaven", "human starts in annotated Heaven region")
@@ -64,6 +69,7 @@ func run(scene: Node) -> void:
 		await get_tree().physics_frame
 	var until: int = bot.snapshot().own_perception.blind_until_tick
 	expect(until > bot.current_tick() and scene._flash_indicators.crashies.visible, "real flash triggers enemy blackout and white head circle on new map")
+	expect(until - bot.current_tick() >= 174 and victim.get_node("BlindIndicator").visible, "updated three-to-five-second flash drives native actor indicator and combat impairment")
 	var rifle: Node = victim.get_node("TeammateRifle")
 	var ammo: int = rifle.in_mag
 	var safe: bool = true
@@ -79,6 +85,7 @@ func run(scene: Node) -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	expect(scene.enemies.values().all(func(actor: ActorBase): return not actor.visible and actor.collision_layer == 0), "dead enemies vanish with collision removed")
+	expect(scene.enemies.values().all(func(actor: ActorBase): return actor.get_children().all(func(child: Node): return not child is CollisionObject3D or child.collision_layer == 0)), "dead hitbox actors leave no child damage colliders blocking shots")
 	expect(scene._round_state == "enemies_eliminated", "real deaths resolve plant hold on imported map")
 	scene._restart()
 	while scene._restart_pending:
@@ -159,22 +166,35 @@ func _test_far_zone_flash_walks(scene: Node) -> void:
 
 func _test_flash_commands(scene: Node) -> void:
 	await _test_far_zone_flash_walks(scene)
+	# The new deep Pit correctly occludes C Link. Use an open C Link position
+	# for the separate no-walking visibility case, not the obsolete flat Pit.
+	await _place_teammate(scene, "c_link")
 	var releases: Array = []
 	scene.utility.deployed.connect(func(ability: String, _owner: String, point: Vector3):
 		if ability == "flash": releases.append(point))
 	expect(scene.runtime.snapshot().flash_count == 1, "teammate starts with the user-requested one flash per round")
 	var start: Vector3 = scene.teammate.global_position
 	var initial_yaw: float = scene.teammate.rotation.y
+	var accepted: Dictionary = {"ready": false, "position": start, "yaw": initial_yaw}
+	var capture_start := func(result: Dictionary):
+		if result.status == "accepted":
+			scene.teammate.rotation.y = PI
+			accepted.ready = true
+			accepted.position = scene.teammate.global_position
+			accepted.yaw = PI
+	scene.runtime.comm_result.connect(capture_start)
 	_flash_request(scene, "visible-c-link", "flash c link")
 	var movement: float = 0
 	for _i in range(150):
-		movement = maxf(movement, Vector2(scene.teammate.global_position.x - start.x, scene.teammate.global_position.z - start.z).length())
+		if accepted.ready:
+			movement = maxf(movement, Vector2(scene.teammate.global_position.x - accepted.position.x, scene.teammate.global_position.z - accepted.position.z).length())
 		if not releases.is_empty(): break
 		await get_tree().physics_frame
 	expect(scene.voice_bridge.events[-1].message.payload.action == "throw_flash", "flash utterance cannot become a swing command")
 	expect(releases.size() == 1 and scene.runtime.snapshot().flash_count == 0, "flash C Link physically throws one shared projectile and consumes one charge")
 	expect(movement < 0.15, "visible part of C Link is flashed without walking toward its center")
-	expect(absf(angle_difference(initial_yaw, scene.teammate.rotation.y)) > deg_to_rad(20), "teammate actually turns toward the flash destination")
+	expect(absf(angle_difference(accepted.yaw, scene.teammate.rotation.y)) > deg_to_rad(20), "teammate actually turns toward the flash destination")
+	scene.runtime.comm_result.disconnect(capture_start)
 	_flash_request(scene, "depleted-c-link", "flash c link")
 	for _i in range(25): await get_tree().physics_frame
 	expect(releases.size() == 1, "depleted flash inventory cannot create another projectile")

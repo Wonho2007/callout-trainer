@@ -18,7 +18,7 @@ product requirements from current implementation and acceptance evidence.
 | Scenario start | **Plant instant is t0.** PRX player/ally hold against retakers |
 | Unknown enemies | Do not spawn guessed starts. First-known +23s arrivals: Chronicle/crashies Heaven, kaajak C Link, Boaster B Main. Remote smoke does not locate Boaster |
 | Boaster adaptation | First localized by a recorded death; materialized alive at that location as a labeled authored continuation. No source kill/outcome is forced |
-| Map | Default uses Person 3 seven-zone map at 76b8eaa; main was already included, map branch merged at 513b2e9. Old room/custom Lotus are explicit legacy profiles; metric fidelity remains unverified |
+| Map | Default uses Person 3 seven-zone map at 0260f28; main was already included, latest map branch merged at 1fae655; voice scenario adapts elevations/Pit volume and adds one Upper access ramp. Old room/custom Lotus are explicit legacy profiles; metric fidelity remains unverified |
 | Source | Person 3 annotation at `b84cc93`; event/year/title/channel/named annotator/team review unresolved. Legacy scenario filename is not verification |
 | Physics | Shared movement/rifle/damage/utility/defuse; HP+armor currently one simplified pool. Annotated movement/utility baseline implemented with physical staging and evidence-based deviations; utility/continuous trajectories remain approximate |
 | Human acceptance | Five standalone spoken calls confirmed. New voice-to-Lotus gameplay acceptance is unconfirmed; rendered/headless checks cannot stand in for it |

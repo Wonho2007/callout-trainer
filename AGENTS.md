@@ -29,9 +29,10 @@ to its implementation or shared schemas. Read docs/TEAM.md for the current split
 
 Godot **4.4.1 stable**, GDScript, Compatibility renderer are the implemented baseline.
 Do not reopen engine choice. Use the existing data-driven builder and shared actor,
-weapon, damage and utility components. Keep changes small and reviewable. The default voice scenario now uses Person 3's seven-zone B site map at `76b8eaa`
-(merged from `person-3/greybox-b-site` at `513b2e9`, per the user). Old room/custom
-Lotus maps are explicit legacy profiles. Preserve the imported map geometry/zones.
+weapon, damage and utility components. Keep changes small and reviewable. The default voice scenario now uses Person 3's seven-zone B site map at `0260f28`
+(merged from `person-3/greybox-b-site` at `1fae655`, per the user). Old room/custom
+Lotus maps are explicit legacy profiles. Preserve the imported source map; scenario-only height/volume adjustments and
+one Upper access ramp are documented in bots/SITE_SCENARIO.md.
 
 ## Product rules
 

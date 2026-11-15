@@ -27,26 +27,27 @@ Compatibility fixes preserve capsule-only player/legacy actor damage, exclude a
 shooter's own hitboxes, disable child hitbox collision when bots die, and derive
 player/bot ballistic flash flight time from the active utility definitions.
 
-**Important: importing source is not complete live-profile acceptance.** The voice
-launcher intentionally still pins **76b8eaa**. Do not simply replace that pin: the
-new map puts Upper/Heaven on 2m blocks and deepens Pit to -3m; current bot anchors,
-spawn heights, region vertical bounds and navigation connectivity require review.
-Preserve the new map's intended geometry rather than silently inventing ramps.
-The new source's native indicator/actor blindness path also needs coordinated
-review against the existing sensor/runtime path before enabling it in the live
-profile. Full-opacity smoke cutoff and all new damage cases need actual validation.
+**Voice-profile adaptation is now implemented on shared source 0260f28.** The
+launcher and site-test default select that revision. Pit spawn/plant are at -2.9m;
+Upper/Heaven anchors and arrivals are at 2.1m; A Link is at 0.6m. Watch/flash points
+follow the corresponding surface elevations. Pit's region volume now includes its
+-3m floor while preserving its footprint and Upper priority.
 
-Fresh checks: **575 required bot assertions** pass with shared ref **0260f28** and
-belief **57f809d**. **40 existing-profile scene checks** pass using shared ref
-**76b8eaa** plus local merged player/weapon/runtime overlays. These are different
-scopes, not acceptance of the new elevated map in the voice game. Tests used the
-installed Python 3.12 and Godot 4.4.1; no Python 3.14 migration was performed.
-Known navigation-bake/ObjectDB warnings remain. No new human/export acceptance.
+The source map JSON remains unchanged. A single narrow scenario-only access ramp
+at the east side of Upper connects its otherwise inaccessible 2m platform to the
+ground. Navigation bakes static collision after CSG synchronization, so the deep
+Pit floor is included. This is an authored access adaptation, not a source fact.
+The existing sensor drives native ActorBase blind visuals via apply_blind; it is
+still the bot combat authority. No actor-global event truth enters policy.
 
-Next focused work: migrate and validate the current scenario's anchors, navigation,
-region heights and shared impairment/indicator behavior on the new map; then switch
-the shared-source pin after checks and a human playtest. Continue using existing
-models and transport; do not restart setup or silently change belief dependencies.
+Checks: required bot suite previously passed 575 with source 0260f28. Adapted-map
+rendered run passed 41 checks (40 functional + capture), and its image was inspected.
+Final headless run passes **42 checks**, including updated duration/native
+indicators and child-hitbox cleanup. The old flat-Pit no-walk flash fixture was moved to a genuinely visible
+C Link position and measures movement after command acceptance, since the deep
+Pit physically occludes that zone. Range/expiry guards were not weakened.
+Known bake/ObjectDB warnings remain; no new human voice/export acceptance claimed.
+Checks use installed Python 3.12 and Godot 4.4.1, not assumed Python 3.14.
 
 ## Workspace and Git
 
@@ -147,7 +148,7 @@ two-second context window and remain unaccepted. `-ModelGoals` is experimental. 
 claim it works, silently enable it, relax expiry or turn its failing fixture into a pass.
 
 **Scenario:** `validation/run_voice_game.ps1` now defaults to Person 3's seven-zone
-`world/maps/b_site.json` at `76b8eaa`. `-Lotus` is a compatibility alias for the
+`world/maps/b_site.json` at `0260f28`. `-Lotus` is a compatibility alias for the
 new default, not the old geometry. `-LegacyRoom` and `-LegacyLotus` retain old
 profiles. `world/site_builder.gd` preserves source geometry/zones and adapts only
 plant/spawn metadata; `scenarios/site_coverage.json` supplies new physical anchors.
@@ -211,7 +212,7 @@ seams are internal Person 2 integration APIs.
   deleting a field. Fully accept valid player testimony without credibility/history.
 - Person 3's Python headless pipeline applies at future ticks immediately for fixtures;
   do not use that mirror as a live clock. Godot owns actual receipt/delivery timing.
-- Default launcher freezes map/shared game source **76b8eaa**, keeps belief **57f809d**,
+- Default launcher freezes map/shared game source **0260f28**, keeps belief **57f809d**,
   and overlays local bot integration and approved mechanics. Legacy profiles retain
   shared source **8712f7d**. Dependency refs are printed; do not advance belief alone.
 

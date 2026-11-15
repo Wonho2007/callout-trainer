@@ -6,6 +6,13 @@ Paste this into a fresh Kiro window with repository access:
 Continue development in Kiro as Person 2 in:
 C:\Users\Isoto\Documents\GitHub\callout-trainer
 Branch: person-2/model-capability-spike
+
+Latest adaptation: voice scenario now pins shared source 0260f28, with elevated
+Heaven/Upper, deep Pit anchors, extended Pit volume and one scenario-only Upper
+access ramp. Navigation bakes synchronized CSG collision. The source map JSON is
+unchanged. Read the current handoff for the newest results before older notes.
+Do not switch the launcher back to 76b8eaa. No remote push without a new explicit
+user instruction.
 Latest gameplay commit: 29ba6d7
 Project handoff checkpoint: 4f98952 (newer documentation commits may follow)
 Repository: https://github.com/Wonho2007/callout-trainer

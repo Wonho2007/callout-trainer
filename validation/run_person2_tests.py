@@ -101,7 +101,7 @@ def main():
     first_person = args.first_person or args.first_person_smoke or args.perception_smoke or args.hud_smoke or action_mode or voice_mode
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
-        args.person1_ref = args.person1_ref or ("76b8eaa" if site_mode else "origin/main" if first_person else "0fd1285")
+        args.person1_ref = args.person1_ref or ("0260f28" if site_mode else "origin/main" if first_person else "0fd1285")
         if not (args.person3_root or args.person3_ref):
             args.person3_ref = "57f809d" if first_person else "ff2a6d7"
     if args.person1_ref and not (args.person3_root or args.person3_ref):

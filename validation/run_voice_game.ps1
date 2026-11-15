@@ -30,7 +30,7 @@ try {
     $gameErrors = Join-Path $runRoot 'game-errors.log'
     # Seven-zone teammate map is now the default. -Lotus remains a compatibility alias.
     $sceneMode = '--site-playtest'
-    $sharedRef = '76b8eaa'
+    $sharedRef = '0260f28'
     if ($LegacyRoom) { $sceneMode = '--voice-playtest'; $sharedRef = '8712f7d' }
     if ($LegacyLotus) { $sceneMode = '--lotus-playtest'; $sharedRef = '8712f7d' }
     $gameArgs = @('-u', "`"$(Join-Path $PSScriptRoot 'run_person2_tests.py')`"", '--godot', "`"$godotExe`"",
