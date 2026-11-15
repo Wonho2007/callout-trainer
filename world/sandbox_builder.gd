@@ -530,8 +530,29 @@ func _build_stair_pit(divot: Dictionary, parent: Node3D) -> void:
 	mesh_instance.material_override = mat
 	body.add_child(mesh_instance)
 
+	# Collision is a SMOOTH cone (rim -> bottom), NOT the stepped mesh. CharacterBody3D
+	# snags on vertical step risers (the "getting stuck" bug); a smooth conical surface at
+	# a sub-45-degree slope lets the capsule walk in and out freely. The stepped mesh above
+	# is visual only. A flat bottom disc closes the cone so the player stands on level ground.
+	var cst := SurfaceTool.new()
+	cst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var c_bottom := Vector3(0, -depth, 0)
+	for i in range(segments):
+		var a0 := TAU * float(i) / float(segments)
+		var a1 := TAU * float(i + 1) / float(segments)
+		var t0 := Vector3(cos(a0) * top_radius, 0.0, sin(a0) * top_radius)
+		var t1 := Vector3(cos(a1) * top_radius, 0.0, sin(a1) * top_radius)
+		var bd0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
+		var bd1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
+		# smooth cone wall
+		cst.add_vertex(t0); cst.add_vertex(bd0); cst.add_vertex(t1)
+		cst.add_vertex(t1); cst.add_vertex(bd0); cst.add_vertex(bd1)
+		# flat bottom
+		cst.add_vertex(bd0); cst.add_vertex(c_bottom); cst.add_vertex(bd1)
+	cst.generate_normals()
+	var cmesh := cst.commit()
 	var collision := CollisionShape3D.new()
-	collision.shape = mesh.create_trimesh_shape()
+	collision.shape = cmesh.create_trimesh_shape()
 	body.add_child(collision)
 
 
