@@ -257,8 +257,25 @@ func _build_floor(m: Dictionary, parent: Node3D) -> void:
 		_build_solid_box(floor_box, parent, Color(0.30, 0.31, 0.34))
 		return
 
-	# Single divot: split the floor into four boxes around the square gap.
-	# (Handles the one-divot case the map uses; extend later if needed.)
+	# Circular (stair/cone) divot: build a CONTINUOUS floor with a round hole exactly the
+	# size of the divot rim, so the floor meets the pit edge with no square-corner gaps and
+	# no bottom cap (the divot mesh is the only surface inside the circle -> no z-fighting).
+	var circular: Dictionary = {}
+	for divot in m.get("divots", []):
+		var c := _to_vec3(divot.get("center", [0, 0, 0]))
+		var r: float
+		if String(divot.get("shape", "ramp")) == "stairs":
+			r = float(divot.get("top_radius", 6.0))
+		else:
+			r = float(divot.get("radius", 2.0)) + float(divot.get("depth", 0.9)) * RAMP_RUN_FACTOR
+		circular = {"x": c.x, "z": c.z, "r": r}
+		break  # one divot supported here
+	if not circular.is_empty():
+		_build_floor_with_hole(fx, fz, fy, float(circular["x"]), float(circular["z"]),
+			float(circular["r"]), parent, Color(0.30, 0.31, 0.34))
+		return
+
+	# (Legacy square-gap path kept for any non-circular future divot shapes.)
 	var g: Dictionary = gaps[0]
 	var gx := float(g["x"])
 	var gz := float(g["z"])
@@ -301,6 +318,78 @@ func _floor_slab(id: String, x0: float, x1: float, z0: float, z1: float, y: floa
 		"size": [w, 0.1, d],
 	}
 	_build_solid_box(box, parent, color)
+
+
+## Continuous floor covering the whole rectangle EXCEPT a circular hole of radius `hole_r`
+## centered at (cx,cz). Built in two parts: (1) plain box slabs filling the rectangle outside
+## a square that bounds the circle, and (2) a procedural "square-with-round-hole" ring mesh
+## (+ trimesh collision) for the band between the circle and that square. No gaps at the
+## corners, and nothing is placed inside the circle (the divot mesh fills it) -> no z-fighting.
+func _build_floor_with_hole(fx: float, fz: float, fy: float, cx: float, cz: float,
+		hole_r: float, parent: Node3D, color: Color) -> void:
+	var xmin := -fx * 0.5
+	var xmax := fx * 0.5
+	var zmin := -fz * 0.5
+	var zmax := fz * 0.5
+	# Square that bounds the circle (side = 2*hole_r), centered on the hole.
+	var sx0 := cx - hole_r
+	var sx1 := cx + hole_r
+	var sz0 := cz - hole_r
+	var sz1 := cz + hole_r
+	# (1) Four plain slabs filling the rectangle outside that bounding square.
+	_floor_slab("floor_n", xmin, xmax, zmin, sz0, fy, parent, color)   # north of the square
+	_floor_slab("floor_s", xmin, xmax, sz1, zmax, fy, parent, color)   # south of the square
+	_floor_slab("floor_w", xmin, sx0, sz0, sz1, fy, parent, color)     # west band
+	_floor_slab("floor_e", sx1, xmax, sz0, sz1, fy, parent, color)     # east band
+
+	# (2) Square-with-round-hole ring between the circle (radius hole_r) and the bounding
+	# square edge. For each angular segment, connect a point on the circle to the matching
+	# point on the square perimeter, triangulated so the band is solid.
+	var body := StaticBody3D.new()
+	body.name = "floor_hole_ring"
+	body.position = Vector3(cx, fy - 0.05, cz)
+	body.collision_layer = LAYER_WORLD
+	body.collision_mask = 0
+	parent.add_child(body)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segs := 64
+	for i in range(segs):
+		var a0 := TAU * float(i) / float(segs)
+		var a1 := TAU * float(i + 1) / float(segs)
+		# inner points on the circle
+		var inr0 := Vector3(cos(a0) * hole_r, 0, sin(a0) * hole_r)
+		var inr1 := Vector3(cos(a1) * hole_r, 0, sin(a1) * hole_r)
+		# outer points on the square perimeter (ray from center to square edge)
+		var out0 := _square_edge_point(cos(a0), sin(a0), hole_r)
+		var out1 := _square_edge_point(cos(a1), sin(a1), hole_r)
+		# two triangles forming the quad (inr0, out0, out1, inr1); wind to face up (+Y)
+		st.add_vertex(inr0); st.add_vertex(out0); st.add_vertex(out1)
+		st.add_vertex(inr0); st.add_vertex(out1); st.add_vertex(inr1)
+	st.generate_normals()
+	var mesh := st.commit()
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = mat
+	body.add_child(mi)
+	var collision := CollisionShape3D.new()
+	collision.shape = mesh.create_trimesh_shape()
+	body.add_child(collision)
+
+
+## Point where a ray (dirx,dirz) from the center hits the edge of a square of half-size `half`.
+func _square_edge_point(dirx: float, dirz: float, half: float) -> Vector3:
+	var ax := absf(dirx)
+	var az := absf(dirz)
+	var t: float
+	if ax >= az:
+		t = half / maxf(ax, 0.0001)
+	else:
+		t = half / maxf(az, 0.0001)
+	return Vector3(dirx * t, 0, dirz * t)
 
 
 ## A walk-in circular divot: a recessed flat bottom with a gentle sloped conical
