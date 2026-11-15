@@ -324,3 +324,13 @@ User confirmed correct new-map startup and a visible teammate, then explicitly r
 Refreshed Person 2 priorities: wire live sight/hearing/smoke/blind adapters into the current FPS runtime; coordinate voice/local-model comm/goal/log wiring with Person 3 in parallel; complete shared physical actions and safety handling; convert verified source notes into executable enemy/scenario branches with structural and physical validation. Person 3's current numeric hedge-weighted belief module still needs alignment with full acceptance. No runtime/schema/fixture or teammate-source change is claimed by this docs-only update.
 
 Checks: tools/check_repo.py and git diff --check passed. Godot suites were not rerun for documentation-only changes; prior 494 checks remain historical. Manual result: user reports current map correct and teammate visible; no further gameplay/voice validation inferred. Next exact acceptance/dependencies are in docs/PERSON2_HANDOFF.md.
+
+### 2026-11-14 — Person 1: walk-in circular divot (lower level)
+
+- Branch/PR and owning lane: `person-1/divot-floor-hole`; Person 1 (world/ builder + map).
+- Changed files: `world/sandbox_builder.gd`, `world/maps/b_site.json`.
+- Interface/schema changes and consumers: `divots` map field now renders a real walk-in lower level. `_build_divot` generates a recessed flat bottom + a gentle sloped conical ramp (RAMP_RUN_FACTOR 2.5 → ~22° walkable up and down) with trimesh collision. `_build_floor` splits into four box slabs leaving a square gap for the pit, plus a solid cap across the gap at pit depth so a player cannot fall through the circle-vs-square corners. The top-right box is extended downward to seal against the pit (no air gap). Bounds min y lowered to -1 to allow the sub-floor pit/skirt.
+- Automated checks run and results: `python tools/check_repo.py` PASSES. Map passes the builder's validation (build result 0).
+- Manual playtest and results: tester confirmed the circle is a usable lower level — walk down and back up the slope, no fall-through, no air gap under the box; movement and smoke/flash/molly all still work.
+- Remaining work/dependency: the floor gap is square while the pit is round, so the corners are covered by the solid cap rather than matched exactly (acceptable greybox). Builder currently handles a single divot's floor split; extend if multiple divots are needed. Map remains an in-progress synthetic layout.
+- Next integration step: continue map iteration, then the region-graph/sound/actor-command backbone for Persons 2/3.
