@@ -93,8 +93,44 @@ func run(scene: Node) -> void:
 	expect(scene.enemies.is_empty() and scene.teammate.is_alive and scene.teammate.visible and scene.utility.active_smokes().is_empty(), "restart restores clean new-map baseline and removes old effects")
 	expect(scene.runtime._sensing._region(scene._player.global_position + Vector3.UP) == "b_heaven", "restart preserves human's annotated Heaven start")
 	await _test_flash_commands(scene)
+	await _test_box_jumps(scene)
 	print("PERSON2_SITE_", "FAIL" if failed else "PASS", " checks=", checks)
 	get_tree().quit(1 if failed else 0)
+
+func _test_box_jumps(scene: Node) -> void:
+	await _reset(scene)
+	expect(scene.builder.get_node("NavRegion").get_node_or_null("scenario_upper_access") == null, "added Upper ramp is removed")
+	var results: Array = []
+	scene.runtime.comm_result.connect(func(result: Dictionary): results.append(result))
+	var issued: int = scene.runtime.current_tick() + 1
+	scene.runtime.submit_comm({"schema_version": "comms.v1", "message_id": "jump-upper", "speaker_id": "player", "recipient_id": "ally",
+		"issued_tick": issued, "expires_tick": issued + 600, "kind": "command", "payload": {"action": "swing_together", "target_id": "b_upper", "timing": {"mode": "now"}}})
+	var on_box: bool = false
+	var jumping: bool = false
+	var states: Array = []
+	for _i in range(580):
+		var physical: Dictionary = scene.runtime.snapshot().physical
+		if states.is_empty() or states[-1][0] != physical.get("reason"):
+			states.append([physical.get("reason"), scene.teammate.global_position])
+		var position: Vector3 = scene.teammate.global_position
+		on_box = on_box or (scene.teammate.is_on_floor() and absf(position.y - 1.0) < 0.15 and absf(position.x - 12.405) < 0.5)
+		jumping = jumping or scene.runtime.snapshot().physical.get("state") == "jumping"
+		if results.any(func(result: Dictionary): return result.message_id == "jump-upper" and result.status in ["completed", "failed", "expired"]): break
+		await get_tree().physics_frame
+	var completed: bool = results.any(func(result: Dictionary): return result.message_id == "jump-upper" and result.status == "completed")
+	expect(jumping and on_box, "teammate physically jumps and lands on existing box_3")
+	expect(completed and scene.teammate.global_position.y > 1.9, "second physical jump reaches Upper and completes the command")
+	if not completed: print("BOX_JUMP_DIAGNOSTIC ", scene.teammate.global_position, " states=", states, " results=", results)
+	# After the completed player command, ordinary defensive autonomy returns
+	# to Pit. This exercises descending jump links without inventing a command.
+	var returned: bool = false
+	for _i in range(580):
+		if scene.teammate.is_on_floor() and scene.teammate.global_position.y < -2.8:
+			returned = true
+			break
+		await get_tree().physics_frame
+	expect(returned and scene.teammate.global_position.y < -2.8, "teammate can descend over the boxes and return to deep Pit")
+	if not returned: print("BOX_DESCENT_DIAGNOSTIC ", scene.teammate.global_position, " physical=", scene.runtime.snapshot().physical, " results=", results)
 
 func _flash_request(scene: Node, id: String, transcript: String, region: String = "c_link") -> void:
 	# Deliberately model the wrong action/timing: explicit flash speech must

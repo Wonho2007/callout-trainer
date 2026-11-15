@@ -17,14 +17,14 @@ at `513b2e9`. Existing local bot/voice/damage changes were checkpointed at `86a5
 before the merge. Nothing was merged into main.
 
 The updated source walls, cover, platforms and CSG Pit are reused. Scenario-only
-adaptations add one narrow ramp up to Upper and extend Pit's region volume down
+adaptations extend Pit's region volume down
 to its -3m floor. Horizontal zone footprints and the source JSON remain unchanged.
 The minimap shows C Link, Heaven, Upper, circular Pit, A Link, Cubby and Main.
 This replaces the earlier custom Lotus geometry in the default game. Source scale,
 within-zone actor placements and utility trajectories remain authored greybox data,
 not verified professional metric coordinates.
 
-`world/site_builder.gd` adapts runtime metadata, the access ramp and navigation bake: human starts in
+`world/site_builder.gd` adapts runtime metadata, authored box-jump links and navigation bake: human starts in
 Heaven, spike/ally start in Pit, unknown enemy spawn markers are removed, and
 list-order region precedence is enabled. The source map's authoring/debug player
 and spike positions are retained in the JSON but are not the plant scenario starts.
@@ -103,6 +103,22 @@ and belief `57f809d`; seven Python authoring/voice tests and launcher syntax pas
 No new human microphone-to-game or export acceptance is claimed.
 
 Updated elevated-map adaptation: 41-check rendered run passed and capture inspected.
-Final headless run passes **42 checks**, including native indicator duration and
-child-hitbox cleanup. Existing 575 required bot checks passed on source 0260f28.
+The earlier pre-jump headless run passed 42 checks, including native indicator
+duration and child-hitbox cleanup; the current box-jump version passes 46. Existing 575 required bot checks passed on source 0260f28.
 No human voice acceptance is inferred from these checks.
+
+## Box access to Upper (current)
+
+The added Upper ramp has been removed. Two bidirectional navigation links use the
+existing long `box_3`: ground -> 1m box top -> 2m Upper platform. The motion adapter
+requests ordinary shared jumps and verifies floor contact/height before continuing;
+failed landings/timeouts fail the route, and descent uses controlled drops. Actor
+jump strength and source map geometry are unchanged. This is an authored traversal
+route for the existing box, not general learned parkour or teleportation.
+
+The scenario's navigation cell size is 0.1m with a 0.3m agent radius to preserve the
+narrow box top. Path voxel offsets are converted to real landing surfaces. Both
+ordinary commands and visibility-seeking flash movement can use the links.
+The latest headless scene passes 46 checks, including physical box and platform
+landings, autonomous return to Pit and absence of the old ramp. Prior rendered
+captures predate this jump change; no human jump playtest is claimed.

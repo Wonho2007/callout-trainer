@@ -32,7 +32,7 @@ Do not reopen engine choice. Use the existing data-driven builder and shared act
 weapon, damage and utility components. Keep changes small and reviewable. The default voice scenario now uses Person 3's seven-zone B site map at `0260f28`
 (merged from `person-3/greybox-b-site` at `1fae655`, per the user). Old room/custom
 Lotus maps are explicit legacy profiles. Preserve the imported source map; scenario-only height/volume adjustments and
-one Upper access ramp are documented in bots/SITE_SCENARIO.md.
+authored jump links over existing box_3 are documented in bots/SITE_SCENARIO.md.
 
 ## Product rules
 

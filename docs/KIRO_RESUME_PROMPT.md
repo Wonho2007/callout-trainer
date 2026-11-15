@@ -8,8 +8,7 @@ C:\Users\Isoto\Documents\GitHub\callout-trainer
 Branch: person-2/model-capability-spike
 
 Latest adaptation: voice scenario now pins shared source 0260f28, with elevated
-Heaven/Upper, deep Pit anchors, extended Pit volume and one scenario-only Upper
-access ramp. Navigation bakes synchronized CSG collision. The source map JSON is
+Heaven/Upper, deep Pit anchors, extended Pit volume and existing-box jump links; the added Upper ramp is removed. Navigation bakes synchronized CSG collision. The source map JSON is
 unchanged. Read the current handoff for the newest results before older notes.
 Do not switch the launcher back to 76b8eaa. No remote push without a new explicit
 user instruction.

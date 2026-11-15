@@ -23,6 +23,7 @@ var _flash: RefCounted
 var _combat: RefCounted
 var _combat_decision: Dictionary = {}
 var _combat_status: Dictionary = {}
+var _jump_state: Dictionary = {}
 
 func attach_flash(adapter: RefCounted) -> void:
 	_flash = adapter
@@ -150,6 +151,8 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 			_stop_actor()
 			return _status("command", "waiting_for_command_intent")
 		return _advance()
+	if not _jump_state.is_empty():
+		return _advance_jump()
 	# Never execute an autonomous plan on the same tick as terminal command
 	# stop. This makes cancellation/expiry visibly stop before the next plan.
 	if not executor_output.intents.is_empty():
@@ -195,6 +198,8 @@ func _start(command: String, op: String, target: String, route: Array, watch: Va
 func _advance() -> Dictionary:
 	if not _navigation.navigation_is_ready:
 		return _physical_failure("navigation_not_ready")
+	if not _jump_state.is_empty():
+		return _advance_jump()
 	if _task.op == "visible_flash_stage":
 		return _advance_visible_flash()
 	if _task.done:
@@ -269,6 +274,8 @@ func _advance() -> Dictionary:
 	elif _clock - _progress_tick >= _stuck_ticks:
 		return _physical_failure("stuck")
 	var next: Vector3 = _path[_path_index]
+	if _start_jump(next):
+		return _advance_jump()
 	_actor.move_toward_point(next)
 	if _task.op == "start_swing" and _task.watch_region_id is String:
 		_watch()
@@ -312,8 +319,43 @@ func _advance_visible_flash() -> Dictionary:
 		_progress_tick = _clock
 	elif _clock - _progress_tick >= _stuck_ticks:
 		return _physical_failure("stuck")
+	if _start_jump(_path[_path_index]):
+		return _advance_jump()
 	_actor.move_toward_point(_path[_path_index])
 	return _status("moving", "seeking_visible_flash_position")
+
+func _start_jump(target: Vector3) -> bool:
+	if not _navigation.has_method("jump_leg") or not _navigation.jump_leg(_actor.global_position, target):
+		return false
+	if not _actor.is_on_floor():
+		return false
+	target = _navigation.jump_surface(target)
+	_jump_state = {"target": target, "tick": _clock, "airborne": false}
+	if target.y > _actor.global_position.y + 0.3:
+		_actor.request_jump()
+	return true
+
+func _advance_jump() -> Dictionary:
+	var target: Vector3 = _jump_state.target
+	_jump_state.airborne = _jump_state.airborne or not _actor.is_on_floor()
+	if _clock - int(_jump_state.tick) > 120:
+		return _physical_failure("jump_landing_timeout")
+	if _horizontal(_actor.global_position, target) > 0.12:
+		_actor.move_toward_point(target)
+	else:
+		_stop_actor()
+	_face(target)
+	if _jump_state.airborne and _actor.is_on_floor():
+		if absf(_actor.global_position.y - target.y) > 0.15:
+			return _physical_failure("jump_landing_missed")
+		if _horizontal(_actor.global_position, target) > 0.2:
+			return _status("jumping", "centering_box_landing")
+		_jump_state.clear()
+		_path_index += 1
+		_progress_distance = INF
+		_progress_tick = _clock
+		return _status("moving", "jump_landed")
+	return _status("jumping", "following_authored_box_link")
 
 func _watch() -> void:
 	if _task.watch_region_id is String:
@@ -341,6 +383,7 @@ func _status(state: String, reason: String) -> Dictionary:
 	return {"ok": true, "state": state, "reason": reason, "tick": _clock, "bot_id": _bot_id}
 
 func _halt() -> void:
+	_jump_state.clear()
 	_task = {}
 	_path.clear()
 	_path_index = 0
@@ -388,6 +431,9 @@ func _horizontal(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
 
 func _at_point(point: Vector3) -> bool:
+	if _navigation.has_method("is_jump_landing") and _navigation.is_jump_landing(point):
+		var surface: Vector3 = _navigation.jump_surface(point)
+		return _horizontal(_actor.global_position, surface) <= 0.18 and absf(_actor.global_position.y - surface.y) <= 0.15 and _actor.is_on_floor()
 	return _horizontal(_actor.global_position, point) <= _arrival and absf(_actor.global_position.y - point.y) <= 0.75
 
 func _at_marker(marker_id: String) -> bool:

@@ -2,8 +2,9 @@
 
 Fetched and locally merged Person 3/shared updates through **0260f28** on the
 existing integration branch. New-source bot regression: 575 pass; existing live
-profile with compatibility overlays: 40 pass. The voice scenario now selects 0260f28 with height-correct anchors, a scenario-only
-Upper access ramp and CSG collision navigation; 41 rendered checks pass. these passes are not new-map live acceptance.
+profile with compatibility overlays: 40 pass. The voice scenario now selects 0260f28 with height-correct anchors, bidirectional existing-box jump links and CSG collision navigation. Latest no-ramp jump version passes 46 scene checks and
+575 required bot assertions; the earlier 41-check capture predates jumping.
+These automated results are not human playtest acceptance.
 No remote push is authorized by the latest handoff. See the current Person 2 handoff.
 
 Updated 2026-11-15. **Resolved: the user-reported flash failure is diagnosed and

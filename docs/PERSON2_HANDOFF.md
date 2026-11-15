@@ -33,17 +33,24 @@ Upper/Heaven anchors and arrivals are at 2.1m; A Link is at 0.6m. Watch/flash po
 follow the corresponding surface elevations. Pit's region volume now includes its
 -3m floor while preserving its footprint and Upper priority.
 
-The source map JSON remains unchanged. A single narrow scenario-only access ramp
-at the east side of Upper connects its otherwise inaccessible 2m platform to the
-ground. Navigation bakes static collision after CSG synchronization, so the deep
-Pit floor is included. This is an authored access adaptation, not a source fact.
+The user removed the added Upper ramp. The source map and its geometry remain
+unchanged: two bidirectional authored jump links now use existing box_3 (ground
+to its 1m top, then to the 2m Upper platform). Navigation bakes CSG static collision
+at 0.1m cell size with the actual 0.3m actor radius, retaining the narrow box top.
+The motion controller uses unchanged shared request_jump/gravity, waits for real
+floor contact, centers the landing, and fails honestly on missed landings/timeouts.
+It handles downward links as controlled drops and never teleports or adds jump power.
+Only this authored box route is provided, not general learned parkour. Motion uses
+own state/static routes, not enemy transforms. Jump waypoints use real collision
+surface heights rather than the navigation mesh voxel offset.
 The existing sensor drives native ActorBase blind visuals via apply_blind; it is
 still the bot combat authority. No actor-global event truth enters policy.
 
 Checks: required bot suite previously passed 575 with source 0260f28. Adapted-map
 rendered run passed 41 checks (40 functional + capture), and its image was inspected.
-Final headless run passes **42 checks**, including updated duration/native
-indicators and child-hitbox cleanup. The old flat-Pit no-walk flash fixture was moved to a genuinely visible
+Latest headless run passes **46 checks**, including actual two-stage box climbing
+and autonomous descent to Pit, ramp removal, duration/native indicators and dead
+hitbox cleanup. The prior rendered capture predates removal of the ramp. The old flat-Pit no-walk flash fixture was moved to a genuinely visible
 C Link position and measures movement after command acceptance, since the deep
 Pit physically occludes that zone. Range/expiry guards were not weakened.
 Known bake/ObjectDB warnings remain; no new human voice/export acceptance claimed.

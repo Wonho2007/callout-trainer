@@ -1,5 +1,9 @@
 extends "res://scenes/bots/lotus_playtest.gd"
 # Reuse plant/baseline/voice mechanics on Person 3's measured-zone greybox.
+func _enter_tree() -> void:
+	super._enter_tree()
+	NavigationServer3D.map_set_cell_size(get_world_3d().navigation_map, 0.1)
+
 func _ready() -> void:
 	await super._ready()
 	_scenario_status.text = "Seven-zone B site map (Person 3)\nPlant hold: player starts Heaven; enemies arrive at first known positions."
