@@ -23,6 +23,9 @@ var blind_overlay: ColorRect
 var smoke_overlay: ColorRect
 ## Enemy actors the scan orb tests against (set by main; read-only use).
 var scan_targets: Array = []
+## When true, movement intent is held at zero (e.g. while defusing). Mouse-look
+## and the input/comms channel stay active — only locomotion is rooted.
+var movement_locked: bool = false
 
 var _pitch: float = 0.0
 var _mouse_captured: bool = false
@@ -178,6 +181,13 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# Translate input into shared-actor intent, then let ActorBase move the body.
+	# While movement is locked (e.g. defusing), feed zero move intent but keep
+	# mouse-look and the input/comms channel alive.
+	if movement_locked:
+		set_move_dir(Vector3.ZERO)
+		super._physics_process(delta)
+		return
+
 	var is_crouching := Input.is_action_pressed("crouch")
 	if is_crouching:
 		move_mode = MoveMode.CROUCH
