@@ -9,6 +9,7 @@ class_name UtilitySystem
 
 const SmokeScript := preload("res://utility/smoke.gd")
 const FlashScript := preload("res://utility/flash.gd")
+const MollyScript := preload("res://utility/molly.gd")
 
 ## Emitted when utility is deployed, for the privileged recorder/grader (not a
 ## policy input). Carries the ability id, thrower id and world position.
@@ -19,6 +20,7 @@ signal deployed(ability_id: String, thrower_id: String, position: Vector3)
 var _defs: Dictionary = {}
 var _smokes: Array[Smoke] = []
 var _flashes: Array[Flash] = []
+var _mollies: Array[Molly] = []
 
 
 func _ready() -> void:
@@ -88,6 +90,22 @@ func throw_flash(from: Vector3, velocity: Vector3) -> Flash:
 	flash.expired.connect(func(): _flashes.erase(flash))
 	deployed.emit("flash", "player", from)
 	return flash
+
+
+## Toss a molly (area_damage) projectile from `from` with an initial `velocity`.
+## It arcs, bounces, and ignites a damaging ground zone where it rests. Returns
+## the Molly, or null if undefined.
+func throw_molly(from: Vector3, velocity: Vector3) -> Molly:
+	if not _defs.has("molly"):
+		return null
+	var molly: Molly = MollyScript.new()
+	molly.setup(_defs["molly"])
+	add_child(molly)
+	molly.throw(from, velocity)
+	_mollies.append(molly)
+	molly.expired.connect(func(): _mollies.erase(molly))
+	molly.ignited.connect(func(pos): deployed.emit("molly", "player", pos))
+	return molly
 
 
 ## True if any active smoke blocks the straight segment a -> b. Perception and

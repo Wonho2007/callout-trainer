@@ -151,3 +151,13 @@ User-assigned: Person 3 watches and annotates videos; Person 2 converts verified
 - Manual playtest and results: tester confirmed the tracer is visible from a barrel-offset position (not screen-center), short-lived, and ends at the impact; R reloads and F restarts as swapped.
 - Remaining work/dependency: tracer uses an opaque unshaded material (reliable under the Compatibility renderer); no muzzle flash/impact decal. Offsets/lifetime are tunable placeholders.
 - Next integration step: unchanged — region graph/travel-times, sound events and the actor-command adapter remain the higher-value Person 1 coherence work.
+
+### 2026-11-14 — Person 1: molly (area_damage) throwable utility
+
+- Branch/PR and owning lane: `person-1/molly-utility`; Person 1 (utility/ shared mechanics).
+- Changed files: `utility/molly.gd` (new), `utility/abilities.json`, `utility/utility_system.gd`, `scenes/player/player.gd`, `scenes/main.gd`, `scenes/main.tscn`, `project.godot`.
+- Interface/schema changes and consumers: implements the brief's third generic primitive, `area_damage` (a deliberate approximation of a "deny space" tool, not a replica of any agent kit). `Molly` is a thrown RigidBody3D projectile that arcs/bounces, then on a fixed 1.5s fuse (from throw) drops to the floor beneath and ignites a flat ground zone that damages any ActorBase inside over time via the shared `apply_damage` path. `UtilitySystem.throw_molly(from, velocity)` spawns it; signals `ignited`/`expired`; emits `deployed("molly", ...)` for the event bus. New collision layer 6 "area_damage". Player throws with X. Fixed a stale HUD hint in main.gd (it still showed the pre-swap F reload/R restart); both HUD texts now read R reload / F restart / X molly.
+- Automated checks run and results: `python tools/check_repo.py` PASSES locally. Project loads/runs clean in Godot 4.4.1.
+- Manual playtest and results: tester confirmed X lobs an arcing projectile that bounces, ignites ~1.5s after the throw, drops its fire flat onto the floor (even when thrown at a wall), and damages the player/target standing inside until it burns out (~6s). Values are documented placeholders, not game data.
+- Remaining work/dependency: both player and bots take molly damage (shared), but only the player throws it so far; no utility charges/cooldown limits; the fire disc is a flat cylinder visual (no particle fire). This third primitive is the basis for data-driven character loadouts (smoke/flash/molly bundles) discussed with the team.
+- Next integration step: data-driven character/loadout system over the three primitives (original kits, not kit replicas), or the region-graph/sound/actor-command backbone.
