@@ -128,3 +128,37 @@ effects, delivery and HUD work. Person 3 retains voice/LLM/working-belief
 full-acceptance corrections and exact prompt/output logging. Verified pro notes
 remain required for source-derived scenarios. New broader actions and changes
 to runtime/scene/scenario/runner/shared handoffs require exact coordination.
+
+## First-person developer action harness follow-up
+
+The user requested a first-person way to exercise these actions. The other
+session approved through the user the exact addition of `--action-playtest` /
+`--action-smoke`, copying new action files and selecting their inherited scene.
+It also authorized including its existing runner `PERSON2_SHARED_OVERLAY` block
+in this commit; the corresponding shared source edits remain its uncommitted
+work. No existing mode was removed or redirected to the new scene.
+
+Added `scenes/bots/action_playtest.{gd,tscn}`, separate
+`scenes/bots/action_test_panel.gd`, `tests/person2/action_playtest_smoke.gd`,
+the agreed runner changes and [manual controls/results](ACTION_PLAYTEST.md).
+The existing FPS bootstrap/runtime/scenario/information HUD and other session's
+sensory/shared-mechanics source are not edited or committed by this increment.
+
+The harness uses real delayed normalized comms and copied-context validated
+intent fixtures. It offers report, home/cover, now/cued/follow swing, cued flash,
+cancel, identical-ID replay and invalid-output fallback. It shows actual decision
+reason/evidence, physical status and recent lifecycle results. Selected authored
+goal fixtures renew only against fresh copied contexts, without extending the
+gate's context expiry. Reset clears fixture state and reconnects the new runtime.
+No direct movement controller, hidden enemy state, sensor injection or competing
+voice/LLM implementation is introduced.
+
+Validation on official Godot 4.4.1: strict new runner exits 1 at import due to the
+Windows certificate-store error. Diagnostic direct run of the prepared scene
+reports 32 functional assertions plus one actual-renderer PNG save without
+assertion failures, but still emits that error; **not a clean engine/full-suite
+pass**. Captured layout inspected, including first-person camera and separate
+nonoverlapping HUDs. Existing shared bake warning remains. Python compile/help,
+docs and whitespace checks pass. No human input, voice/model or export playtest
+is claimed. Live follow-player sensing remains the other session's acceptance
+gate; the harness does not fabricate a player-entry observation.

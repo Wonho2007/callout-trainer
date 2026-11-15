@@ -54,6 +54,8 @@ def main():
     mode.add_argument("--visual-demo", action="store_true", help="Open the standalone interactive movement demo (close window to exit)")
     mode.add_argument("--visual-smoke", action="store_true", help="Headless automated check of the visual demo's action callbacks")
     mode.add_argument("--first-person", action="store_true", help="Open the shared first-person sandbox with a teammate (voice/model host seam, no menu)")
+    mode.add_argument("--action-playtest", action="store_true", help="Open inherited first-person developer action controls (synthetic comms/goals)")
+    mode.add_argument("--action-smoke", action="store_true", help="Headless inherited first-person action-control and physical execution assertions")
     mode.add_argument("--first-person-smoke", action="store_true", help="Headless first-person scene/comm/intent integration assertions")
     mode.add_argument("--perception-smoke", action="store_true", help="Inherited FPS live perception and fairness assertions")
     mode.add_argument("--hud-smoke", action="store_true", help="Teammate information HUD and real enemy test-control assertions")
@@ -65,7 +67,8 @@ def main():
     args = parser.parse_args()
     if args.hud_capture and not args.hud_smoke:
         parser.error("--hud-capture requires --hud-smoke")
-    first_person = args.first_person or args.first_person_smoke or args.perception_smoke or args.hud_smoke
+    action_mode = args.action_playtest or args.action_smoke
+    first_person = args.first_person or args.first_person_smoke or args.perception_smoke or args.hud_smoke or action_mode
     visual = args.visual_demo or args.visual_smoke
     if visual or first_person:
         args.person1_ref = args.person1_ref or ("origin/main" if first_person else "0fd1285")
@@ -124,6 +127,11 @@ def main():
                 )
                 for relative in listing.splitlines():
                     copy_ref(args.person1_ref, relative)
+                # User-approved shared wave behavior fix: exercise and launch
+                # these local shared scripts until Person 1 adopts them upstream.
+                for relative in ["utility/blind_wave.gd", "scenes/player/player.gd"]:
+                    shutil.copy2(ROOT / relative, project / relative)
+                print("PERSON2_SHARED_OVERLAY utility/blind_wave.gd scenes/player/player.gd (user-requested passing-wave fix)")
                 for relative in ["bots/teammate_runtime.gd", "scenes/bots/bot.tscn",
                                  "perception/scene_sensor.gd",
                                  "scenes/bots/teammate_info_panel.gd",
@@ -135,6 +143,12 @@ def main():
                     shutil.copy2(ROOT / relative, target)
                 shutil.copy2(ROOT / "tests/person2/scene_perception_smoke.gd", project / "tests/person2/scene_perception_smoke.gd")
                 shutil.copy2(ROOT / "tests/person2/teammate_hud_smoke.gd", project / "tests/person2/teammate_hud_smoke.gd")
+                if action_mode:
+                    for relative in ["scenes/bots/action_playtest.tscn", "scenes/bots/action_playtest.gd",
+                                     "scenes/bots/action_test_panel.gd", "tests/person2/action_playtest_smoke.gd"]:
+                        target = project / relative
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(ROOT / relative, target)
             if visual:
                 for relative in ["scenes/bots/motion_visual_demo.gd", "scenes/bots/motion_visual_demo.tscn"]:
                     target = project / relative
@@ -143,7 +157,8 @@ def main():
             if first_person:
                 settings = (project / "project.godot").read_text(encoding="utf-8")
                 settings = settings.replace('run/main_scene="res://scenes/main.tscn"',
-                                            'run/main_scene="res://scenes/bots/first_person.tscn"')
+                                            'run/main_scene="res://scenes/bots/action_playtest.tscn"' if action_mode
+                                            else 'run/main_scene="res://scenes/bots/first_person.tscn"')
                 (project / "project.godot").write_text(settings, encoding="utf-8")
             else:
                 (project / "project.godot").write_text(
@@ -179,15 +194,15 @@ def main():
                     return 1
                 print("PERSON2_SHARED_IMPORT_PASS (temporary project only)")
                 scripts.append(("motion_integration.gd", "PERSON2_MOTION_INTEGRATION_PASS"))
-            if args.visual_demo or args.first_person:
+            if args.visual_demo or args.first_person or args.action_playtest:
                 print("Opening first-person scene (voice backend not connected). Close the window to return."
-                      if args.first_person else "Opening overhead motion test. Close window or press Esc to return.", flush=True)
+                      if args.first_person or args.action_playtest else "Opening overhead motion test. Close window or press Esc to return.", flush=True)
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
                 return subprocess.run([godot, "--path", str(project)], check=False).returncode
-            if args.first_person_smoke or args.perception_smoke or args.hud_smoke:
-                smoke_mode = "--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke")
-                marker = "PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS")
+            if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke:
+                smoke_mode = "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
+                marker = "PERSON2_ACTION_PASS" if args.action_smoke else ("PERSON2_HUD_PASS" if args.hud_smoke else ("PERSON2_SCENE_PERCEPTION_PASS" if args.perception_smoke else "PERSON2_FIRST_PERSON_PASS"))
                 command = [godot, *([] if args.hud_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
                 if args.hud_capture:
                     command.append("--hud-capture=" + str(args.hud_capture.resolve()))
