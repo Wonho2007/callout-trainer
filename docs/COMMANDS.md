@@ -1,89 +1,86 @@
-# Natural-language communication contract v1
+# Communication contract
 
-**Current product direction:** the user adopted the newer handoffs on November 14: voice-only player comms and local grounded LLM teammate decisions. Quick-call code stays a deterministic test/fallback helper, not the player UI. This changes input priority, not the existing comms.v1 envelope or lifecycle. Person 3 owns transcription/interpretation and model goals; Person 2 owns validation and physical execution. The separate model-goal seam in bots/FIRST_PERSON.md is proposed, not a silent extension of this schema.
+The demo interprets natural speech locally, then validates a normalized proposal
+against `comms.v1`. See [the JSON Schema](../schemas/comms_v1.schema.json),
+[examples](../examples/comms_v1.json) and [architecture](ARCHITECTURE.md).
+The model supplies intent/targets/timing; the trusted bridge supplies IDs, recipient,
+receipt tick and expiry. It maps public region names to authored action targets.
 
-Status: selected by the user for implementation on Person 2's branch. This defines the boundary for Persons 1/2/3; the [bot-side runtime](PERSON2_EXECUTOR.md) now implements delayed delivery and execution against fake actor feedback. Speech interpretation and actual 3D mechanics remain pending. Other engine-wide contracts remain proposed. Coordinate changes through a PR; do not silently change these names.
+## Shared envelope
 
-## Responsibility and scope
+All messages contain `schema_version`, `message_id`, `speaker_id`, `recipient_id`,
+`issued_tick`, `expires_tick`, `kind`, and `payload`. A message addresses one bot.
+Unknown fields/IDs, malformed payloads, future issue times and expired commands
+are rejected. Expiry must be later than issue time. Stable request IDs deduplicate
+transport retries; the same message ID cannot perform an action twice.
 
-- Person 3: speech/transcript input, paraphrase interpretation, contextual references, clarification, belief/report handling, UI acknowledgments and logs.
-- Person 2 (Wonho2007): validate commands against permitted bot inputs; execute/interrupt authored behavior; publish lifecycle results and decision evidence.
-- Person 1: shared movement/flash mechanics and authored entry/flash markers. Expose nearby teammate movement only through the agreed perception interface.
-
-The user wants flexible language, not exact keyword-only phrases. Use a natural-language interpreter to normalize paraphrases into this contract; a small language model is an option, provider/model remains open. Keep deterministic structured/menu and alias fallbacks. First build against typed transcripts. Voice is the desired input; quick-call remains the mandatory demo fallback. Never require a paid API.
-
-Initial actions: swing_together, throw_flash, report_enemy. Supporting cue/cancel messages manage timing and interruption. Unsupported tactical actions get an honest response, not invented behavior. Repeated messages throughout the round are supported.
-
-## Message envelope
-
-**Player comms are fully accepted:** a valid, delivered player statement becomes the teammate's working information even if it is wrong. Do not require visual corroboration or apply a credibility/history penalty. Preserve explicit uncertainty as meaning; a hedge is not a numeric reason to distrust or ignore the player. Unknown/ambiguous references still require clarification, and command expiry, reaction delay, actor state, utility and physical reachability remain enforced. Simulator truth stays outside this path. Person 3 must align the currently hedge-weighted belief/model implementation; this requirement update does not change the schema or claim that runtime alignment is complete.
-
-See [the JSON Schema](../schemas/comms_v1.schema.json) and [synthetic examples](../examples/comms_v1.json).
-
-All fields required: schema_version ("comms.v1"), message_id, speaker_id, recipient_id, issued_tick, expires_tick, kind, payload. Each message addresses one allied bot; Person 3 expands an explicit team broadcast into separate addressed messages. No hidden-state-based recipient selection.
-
-A trusted adapter assigns IDs, actor IDs and simulation ticks; the language model only proposes intent/targets/timing. Reject unknown fields, malformed output and unsupported IDs. Require expires_tick > issued_tick. Expiry is scenario-configured, never invented by a model. Example ticks/IDs are illustrative, not real map data or fixed tuning.
-
-| kind | payload | Meaning |
+| Kind | Payload | Meaning |
 |---|---|---|
-| command | action: swing_together; target_id: entry marker; timing.mode | Coordinate the authored entry/peek route |
-| command | action: throw_flash; target_id: flash marker; timing.mode | Throw using shared flash mechanics |
-| report | action: report_enemy; region_id; count; hedge | Update belief, never set confirmed truth |
-| cue | command_id | Release an already-ready on_cue command |
-| cancel | command_id | Cancel that speaker's active interruptible command |
+| command | `action: swing_together`, `target_id`, `timing.mode` | Stage and traverse an authored entry route |
+| command | `action: throw_flash`, `target_id`, `timing.mode` | Stage/seek visibility and release a shared flash |
+| report | `action: report_enemy`, `region_id`, `count`, `hedge` | Deliver testimony, not confirmed world truth |
+| cue | `command_id` | Release the same speaker's ready on-cue action |
+| cancel | `command_id` | Cancel the same speaker's interruptible active action |
 
-A report count is a positive integer or null for unspecified; never infer "one" merely from "someone." Hedge is sure/think/unsure and preserves what the player said, not a speaker-credibility score. Existing report fixtures remain legacy illustrative v0; adapt new reports into the same working-knowledge path. Clarify parser uncertainty rather than assigning reliability to the player.
+`count` is a positive integer or null when unspecified; "someone" need not mean
+exactly one. `hedge` is `sure`, `think`, or `unsure`. Preserve what the player
+actually said rather than inventing enemy identity, coordinates or confidence.
+The pinned belief implementation still has a known mismatch with the intended
+full acceptance of player testimony; no credibility/history filter is supported.
 
-## Natural language and context
+## Timing and physical lifecycle
 
-"Swing with me" and "let's peek together" normalize to swing_together/follow_player at the same known entry. "Double swing" means coordinated peeking here, not an instruction to jump or fire twice. "Flash through that smoke" and "flash out the smoke" resolve to the relevant authored flash marker, not arbitrary model-generated coordinates.
+Swing timing supports `now`, `on_cue` and `follow_player`. Flash supports `now` and
+`on_cue`. "Get ready to swing" is guarded as on-cue even if the model proposes now.
+On-cue staging is physical: the executor reports ready only after stage feedback,
+then waits for a separate delivered cue. Early cues do not latch. Follow-player
+timing uses permitted delayed teammate-entry evidence after readiness, not a live
+player-transform shortcut. Even a now action must satisfy its physical requirements.
 
-Resolve references using recent conversation, static marker IDs and bot-permitted observations only. "That smoke" needs a unique known smoke/associated marker; "with me" needs a unique known entry. Otherwise ask "Which entrance?" or "Flash which smoke?" Do not emit an executable message until resolved. Preserve separate intents in compound speech; issue a clarification if action order/timing is ambiguous.
+The runtime stamps receipt and applies 18 ticks of radio delay. The executor has
+one active action per bot. A feasible new action supersedes a cancellable one;
+an invalid request leaves it intact. Projectile release is the commit boundary:
+a committed throw cannot be refunded or undone. Physical completion/failure
+comes back from adapters on a later tick. Expiry, death, cancellation and execution
+timeouts terminate pending work according to the executor's rules.
 
-Enemy reports go to Person 3's belief layer via delayed told observations. Person 2 reads resulting local beliefs and may choose coverage; the report is not a forced movement command. Commands also arrive through a delayed observation and cite that evidence.
+Results contain `schema_version`, `result_id`, `message_id`, `bot_id`, `tick`,
+`status`, `reason_code`, and `evidence_ids`. Status is `accepted`, `ready`,
+`executing`, `completed`, `rejected`, `failed`, `cancelled`, or `expired`.
+Completing a report means processing testimony, not verifying it against truth.
 
-## Timing, countdowns and late input
+## Local persistent positioning
 
-- follow_player: move to the authored staging position; emit ready; start the route when delayed permitted perception detects the nearby player's entry movement. Use observed player motion, never a global player transform.
-- now: start as soon as the request is available, validated and feasible. It never bypasses reaction delay.
-- on_cue: stage and emit ready, then wait for a cue referencing this command. The bot only acts after that cue becomes available. "Get ready to swing" selects this mode; a separate "swing" or "go" releases it. Preparation must never be interpreted as immediate execution.
-- throw_flash accepts now/on_cue; swing_together accepts all three modes.
+Explicit region positioning/pushes are a local bridge/runtime extension, not new
+actions in the shared schema. The engine grounds a single known zone from an
+imperative such as "play Heaven with me" or "let's push A Link together" and
+enqueues a `told` observation with content:
 
-A countdown and "swing with me" share an action, but not necessarily timing. For reliable countdown coordination, first prepare the swing ("on my count"), wait for ready, then deliver the final go cue through a fast deterministic speech/structured cue path. Keep expensive language-model interpretation outside the final release path.
+```json
+{"type":"player_position","target_id":"b_heaven"}
+```
 
-Do not assume a completed push-to-talk transcript can synchronize a countdown that already ended. If no command is armed, a countdown requires a newly validated swing and cannot execute retroactively. If the bot is unready when a cue arrives, reject the cue with not_ready; retain preparation until expiry or cancellation and require another cue after ready. Expired/late cues cannot unexpectedly launch a pending swing.
+The bot accepts it only after ordinary delivery. Its authored position persists
+until superseded/cancelled or death/round reset, regardless of the short action
+expiry. Completed swing routes likewise retain their reached endpoint, citing
+delivered command evidence. Duplicate completions cannot replace a newer goal.
+Flash actions can temporarily take control and then resume the position.
 
-## Lifecycle and multiple requests
+A new position uses the existing cancellation rules for pending actions. An
+unreachable position stops honestly; it does not silently substitute spike defense.
+No goal tracks the player's hidden/live transform. Reports do not overwrite a
+position, and ambiguity does not authorize inventing a destination.
 
-Person 2 emits result objects with schema_version, result_id, message_id, bot_id, tick, status, reason_code and evidence_ids. They contain copied values only. Valid statuses: accepted, ready, executing, completed, rejected, failed, cancelled, expired.
+## Executor integration
 
-- accepted means validated and scheduled; ready means staged and waiting; executing means physical action started; completed means it finished.
-- rejected means validation failed; failed means accepted execution became impossible. Both include a reason.
-- cancelled/expired terminate an accepted pending action. Commands are single-active per bot in v1; no hidden queue.
-- A newly validated, feasible command replaces an interruptible active command and emits cancelled/superseded for the old one. Rejecting a new request leaves the old action unchanged.
-- Committed throws cannot be undone. Reject a conflicting request with busy_committed rather than claiming cancellation.
-- Reports update beliefs without replacing an action. Completing a report means processing it, not verifying its truth.
-- Re-delivery of the same message_id returns the last result, without repeating a flash or applying testimony twice. Distinct IDs are new requests, validated again.
-- Cue/cancel references must belong to the same speaker, recipient and active command. Wrong/unknown references are rejected.
+`bots/command_executor.gd` is a pure state machine with a bot-owned delayed inbox,
+static catalog and schema. Its own-state input is alive, flash inventory and known
+reachable targets. Feedback is `{command_id, phase}` with phase `staged`, `completed`
+or `failed`; stale/conflicting feedback cannot complete an unrelated action.
 
-Suggested reason_code values: ok, invalid_message, unknown_target, ambiguous_target, no_utility, unreachable, actor_dead, busy_committed, not_ready, expired, unknown_command, superseded, cancelled_by_player, execution_failed. Fixed parser/model confidence thresholds are not part of this contract.
-
-Person 3 renders short contextual acknowledgments, such as "Getting ready", "Ready", "Flashing", "No flash left". Do not say "Ready" before the executor reports ready. In the silent comparison arm, record lifecycle results and display essential status without bot speech; use the same execution rules in every arm.
-
-## Validation and fairness
-
-Before acceptance: validate schema and known IDs, ally recipient, time window, actor alive, required utility, reachable authored route/target and action state. No target IDs or model explanation grant access to hidden enemies. All results/decisions cite observations available to that bot at that tick. Commands can interrupt the baseline plan; resume it only if its guards still hold.
-
-Log transcript, normalized message, parser outcome and timestamps separately from the bot-local evidence stream. Only permitted structured observations enter policy. Log clarification and failures as well as success. A rejected/unclear parse never causes an action.
-
-## First integration checks
-
-- Paraphrases produce the same action and target; timing differences are preserved.
-- A logs report changes beliefs without cancelling an active swing.
-- A repeated message ID cannot throw two flashes.
-- No flash remaining produces rejected/no_utility.
-- An unready or expired go cue cannot launch a swing.
-- Ambiguous smoke/entry produces clarification, not guessed coordinates.
-- Unseen enemy movement cannot change these decisions when all permitted inputs match.
-
-The schema and examples are interface artifacts. The [Person 2 suite](PERSON2_EXECUTOR.md) now covers the bot-side observation, lifecycle and fake-action checks. Paraphrase interpretation, actual scene behavior and speech/countdown performance still need integration tests.
+Physical intents are `stage`, `start_swing`, `throw_flash`, and `stop`, with command,
+bot, tick, authored target and evidence IDs. Adapters never report success merely
+because an intent was emitted. Flash inventory is spent atomically at release.
+Create fresh runtime/executor state for a round, and keep scene objects out of
+policy inputs. See [motion](../bots/MOTION_CONTROLLER.md) and
+[contracts](CONTRACTS.md) for the boundary.

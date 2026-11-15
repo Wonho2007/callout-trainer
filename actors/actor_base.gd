@@ -74,7 +74,7 @@ signal died
 
 ## False once dead: a dead actor stops moving as a combatant. Death does not
 ## free the node and (for the player) does not disable the comms/input channel —
-## the player must still be able to report after dying (COMMUNICATION_COACHING).
+## the player must still be able to report after dying (docs/SCENARIO.md).
 var is_alive: bool = true
 
 

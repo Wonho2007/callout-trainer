@@ -170,7 +170,7 @@ func _on_spike_detonated() -> void:
 
 func _on_player_died() -> void:
 	# The player's combatant state is dead, but input/comms stay available so the
-	# player can still report (COMMUNICATION_COACHING). For this single-player
+	# player can still report (docs/SCENARIO.md). For this single-player
 	# scaffold, the player dying ends the round (no teammates yet).
 	if _round_state == "active":
 		_round_state = "player_down"

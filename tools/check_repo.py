@@ -8,8 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def check():
     required = [
-        "README.md", "AGENTS.md", "CONTRIBUTING.md", "callout_trainer_brief.md",
-        "docs/TEAM.md", "docs/CONTRACTS.md", "docs/DECISIONS.md", "docs/HANDOFFS.md",
+        "README.md", "AGENTS.md", "CONTRIBUTING.md",
+        "docs/SETUP.md", "docs/ARCHITECTURE.md", "docs/SCENARIO.md",
+        "docs/COMMANDS.md", "docs/CONTRACTS.md", "docs/TESTING.md", "docs/ARCHIVE.md",
         "examples/interface_fixture.json",
     ]
     for name in required:
