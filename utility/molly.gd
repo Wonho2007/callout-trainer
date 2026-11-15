@@ -84,7 +84,7 @@ func _run_fuse() -> void:
 	freeze = true
 	# Drop the ignition point straight down onto the floor beneath, so the fire
 	# always lands flat on the ground even though the timer is absolute.
-	var ground := _floor_under(global_position)
+	var ground = _floor_under(global_position)
 	if ground != null:
 		global_position = ground as Vector3
 	global_rotation = Vector3.ZERO
