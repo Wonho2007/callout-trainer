@@ -141,6 +141,8 @@ def transcribe(
         language=language,
         beam_size=5,
         initial_prompt=CALLOUT_PROMPT,
+        vad_filter=True,
+        repetition_penalty=1.1,
     )
     text = " ".join(seg.text for seg in segments).strip()
     latency_s = time.perf_counter() - t0
