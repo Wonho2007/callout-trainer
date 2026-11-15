@@ -24,7 +24,7 @@ These are proposed implementation paths, not files supplied by this documentatio
 | ui/debug/ | Bot goal, region, sightline and observation diagnostics | Person 3; Persons 1/2 provide data |
 | validation/ | Map/scenario checks and perception validation | Person 2; Person 1 supplies map adapter |
 
-Static geometry data is distinct from scenario data. Person 1 owns wall dimensions/collision/spawns; Person 2 owns round actors, baseline actions and branches in scenarios/. Agree region IDs together. Privileged debug information must not enter policy.
+Static geometry data is distinct from scenario data. Person 1 owns wall dimensions/collision/spawns; Person 3 owns verified video notes in annotations/; Person 2 converts those notes into round actors, baseline actions and branches in scenarios/. Agree region IDs together. Privileged debug information must not enter policy.
 
 Example geometry record, for discussion only:
 
