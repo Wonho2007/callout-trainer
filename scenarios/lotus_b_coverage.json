@@ -1,0 +1,589 @@
+{
+  "schema_version": "person2.coverage.v1",
+  "synthetic": true,
+  "note": "Authored physical realization of pending-review annotation; no hidden enemy placements before first-known +23 seconds. All metric coordinates are approximation.",
+  "map_id": "lotus_b_adaptation",
+  "perception_seed": 73,
+  "perception": {
+    "region_ids": [
+      "b_main",
+      "b_cubby",
+      "b_heaven",
+      "b_upper",
+      "b_pit",
+      "c_link",
+      "a_link"
+    ],
+    "vision_mask": 23,
+    "vision_range": 40.0,
+    "fov_degrees": 100.0,
+    "near_range": 8.0,
+    "near_exposure_ticks": 2,
+    "far_exposure_ticks": 5,
+    "refresh_ticks": 30,
+    "delay_min_ticks": 12,
+    "delay_max_ticks": 18,
+    "sound_radii": {
+      "footstep_run": 11.0,
+      "footstep_walk": 0.0,
+      "footstep_crouch": 0.0,
+      "gunshot": 40.0,
+      "utility": 15.0,
+      "defuse": 12.0
+    },
+    "hearing_near_distance": 3.0,
+    "navigation_layers": 1,
+    "navigation_snap_distance": 0.75
+  },
+  "teammate_spawn": {
+    "position": [
+      -0.7,
+      -0.5,
+      0.2
+    ],
+    "facing_deg": 0
+  },
+  "player_entry_sensing": {},
+  "flash_charges": 0,
+  "flash_targets": {},
+  "planner": {
+    "regions": [
+      "b_main",
+      "b_cubby",
+      "b_heaven",
+      "b_upper",
+      "b_pit",
+      "c_link",
+      "a_link"
+    ],
+    "markers": [
+      {
+        "id": "b_main",
+        "watch_regions": [
+          "b_main"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "b_cubby",
+        "watch_regions": [
+          "b_cubby"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "b_heaven",
+        "watch_regions": [
+          "b_heaven"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "b_upper",
+        "watch_regions": [
+          "b_upper"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "b_pit",
+        "watch_regions": [
+          "b_pit",
+          "c_link",
+          "b_upper"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "c_link",
+        "watch_regions": [
+          "c_link"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      },
+      {
+        "id": "a_link",
+        "watch_regions": [
+          "a_link"
+        ],
+        "roles": [
+          "hold"
+        ],
+        "objectives": [
+          "none"
+        ]
+      }
+    ],
+    "baseline_marker_id": "b_pit",
+    "baseline_watch_region": "c_link",
+    "threat_threshold": 0.55,
+    "freshness_ticks": 600,
+    "heartbeat_ticks": 30,
+    "switch_margin": 0.1
+  },
+  "motion_markers": {
+    "b_main": {
+      "position": [
+        -2.5,
+        0.1,
+        9.5
+      ],
+      "watch_points": {
+        "b_main": [
+          -1.5,
+          1.6,
+          7.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "b_cubby": {
+      "position": [
+        -7.3,
+        0.1,
+        1
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -6.3,
+          1.6,
+          -1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "b_heaven": {
+      "position": [
+        7.5,
+        1.6,
+        -7
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          8.5,
+          3.1,
+          -9
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "b_upper": {
+      "position": [
+        0,
+        0.1,
+        -5
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          1,
+          1.6,
+          -7
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "b_pit": {
+      "position": [
+        -0.7,
+        -0.5,
+        0.2
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          0.30000000000000004,
+          1.0,
+          -1.8
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "c_link": {
+      "position": [
+        -8.5,
+        0.1,
+        -8
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -7.5,
+          1.6,
+          -10
+        ],
+        "a_link": [
+          8.5,
+          1.3,
+          2
+        ]
+      }
+    },
+    "a_link": {
+      "position": [
+        8.5,
+        0.1,
+        2
+      ],
+      "watch_points": {
+        "b_main": [
+          -2.5,
+          1.3,
+          9.5
+        ],
+        "b_cubby": [
+          -7.3,
+          1.3,
+          1
+        ],
+        "b_heaven": [
+          7.5,
+          2.8,
+          -7
+        ],
+        "b_upper": [
+          0,
+          1.3,
+          -5
+        ],
+        "b_pit": [
+          -0.7,
+          0.7,
+          0.2
+        ],
+        "c_link": [
+          -8.5,
+          1.3,
+          -8
+        ],
+        "a_link": [
+          9.5,
+          1.6,
+          0
+        ]
+      }
+    }
+  },
+  "entries": {
+    "b_main": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "b_main"
+      ],
+      "watch_region_id": "b_main"
+    },
+    "b_cubby": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "b_cubby"
+      ],
+      "watch_region_id": "b_cubby"
+    },
+    "b_heaven": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "b_heaven"
+      ],
+      "watch_region_id": "b_heaven"
+    },
+    "b_upper": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "b_upper"
+      ],
+      "watch_region_id": "b_upper"
+    },
+    "c_link": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "c_link"
+      ],
+      "watch_region_id": "c_link"
+    },
+    "a_link": {
+      "stage_marker_id": "b_pit",
+      "route_marker_ids": [
+        "a_link"
+      ],
+      "watch_region_id": "a_link"
+    }
+  },
+  "command_targets": {
+    "swing_together": {
+      "b_main": "b_main",
+      "b_cubby": "b_cubby",
+      "b_heaven": "b_heaven",
+      "b_upper": "b_upper",
+      "c_link": "c_link",
+      "a_link": "a_link"
+    },
+    "throw_flash": {}
+  },
+  "enemy_ids": [
+    "chronicle",
+    "crashies",
+    "kaajak",
+    "boaster"
+  ],
+  "spawn_schedule": [
+    {
+      "actor_id": "chronicle",
+      "agent": "Viper",
+      "first_known_tick": 1380,
+      "region_id": "b_heaven",
+      "position": [
+        5.1,
+        1.6,
+        -8.5
+      ],
+      "facing_deg": 180,
+      "hp": 150,
+      "evidence_note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "actor_id": "crashies",
+      "agent": "Fade",
+      "first_known_tick": 1380,
+      "region_id": "b_heaven",
+      "position": [
+        9.8,
+        1.6,
+        -8.5
+      ],
+      "facing_deg": 180,
+      "hp": 150,
+      "evidence_note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "actor_id": "kaajak",
+      "agent": "Raze",
+      "first_known_tick": 1380,
+      "region_id": "c_link",
+      "position": [
+        -8.5,
+        0.1,
+        -8
+      ],
+      "facing_deg": 180,
+      "hp": 150,
+      "evidence_note": "First localized at +23s; exact within-region coordinate is authored."
+    },
+    {
+      "actor_id": "boaster",
+      "agent": "Omen",
+      "first_known_tick": 1380,
+      "region_id": "b_main",
+      "position": [
+        -2.5,
+        0.1,
+        9.5
+      ],
+      "facing_deg": 0,
+      "hp": 150,
+      "evidence_note": "First localized by recorded death at +23s. Spawned alive as explicit adaptation; no forced source kill."
+    }
+  ],
+  "tick_rate_hz": 60,
+  "player_hp": 150,
+  "ally_hp": 70,
+  "start_at": "spike_plant",
+  "unknown_enemies_at_plant": "not spawned; spawn only at first known annotation position",
+  "combat_enabled": true
+}

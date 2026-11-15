@@ -1,5 +1,18 @@
 # Person 2: resume in a new Codex window
 
+**Latest user correction implemented:** [LOTUS_SCENARIO.md](LOTUS_SCENARIO.md).
+Scenario starts at plant; all four unknown FNC actors are absent until their first
+known +23s positions. Source/runtime authoring checks reject guessed starts, early
+Boaster from his remote smoke, duplicate arrivals and wrong regions. The new inherited
+seven-region scene has actual navigation/ramp traversal, shared late-spawn combat,
+an observation-guarded retake branch and round/reset handling. No source kills are
+forced; Boaster alive at his first-localized death position is explicitly an adaptation.
+World coordinates/source metadata remain approximate/pending review. Existing 552
+and 139 suites, 31 new functional scene checks and seven Python checks pass;
+earlier renderer capture saved/inspected, exact results in that guide.
+Default map/main/settings and Person 3 code are unchanged. Exact utility/ally-line
+reenactment, coordinated belief changes, export/backup/human acceptance remain.
+
 **Newest continuation:** [VOICE_GAME.md](VOICE_GAME.md) runs local STT/LLM proposals
 through real Godot delayed delivery and shared movement. Default is the six-hour
 handoff's explicit fallback scope, **LLM interpretation + scripted goal selection**:

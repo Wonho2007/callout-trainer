@@ -37,7 +37,7 @@ func _hello() -> void:
 		affords[marker] = scene._scenario.motion_markers[marker].watch_points.keys()
 	_send({"type": "hello", "session": session, "regions": scene._scenario.planner.regions,
 		"affordances": affords, "synthetic": true,
-		"command_targets": {"swing_together": {"entry": "entry"}, "throw_flash": {"entry": "flash_entry"}}})
+		"command_targets": scene._scenario.get("command_targets", {"swing_together": {"entry": "entry"}, "throw_flash": {"entry": "flash_entry"}})})
 
 func _context(context: Dictionary) -> void:
 	_send({"type": "context", "session": session, "context": context})
@@ -133,10 +133,10 @@ func _receive(packet: Dictionary) -> void:
 		message["kind"] = proposal.kind
 		message["payload"] = proposal.payload.duplicate(true)
 		if proposal.kind == "command":
-			var mappings: Dictionary = {"swing_together": {"entry": "entry"}, "throw_flash": {"entry": "flash_entry"}}
+			var mappings: Dictionary = scene._scenario.get("command_targets", {"swing_together": {"entry": "entry"}, "throw_flash": {"entry": "flash_entry"}})
 			var target: Variant = mappings.get(message.payload.get("action"), {}).get(message.payload.get("target_id"))
 			if target == null:
-				scene._comm_status = "No authored action for that location. Say entry."
+				scene._comm_status = "No authored action for that location. Please clarify."
 				return
 			message.payload.target_id = target
 	var accepted: Dictionary = runtime.submit_comm(message)

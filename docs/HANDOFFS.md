@@ -5,7 +5,7 @@ Current Person 2 state: delayed inbox and command runtime implemented, with isol
 | Lane | Current state | Next deliverable | Blocker / dependency |
 |---|---|---|---|
 | Person 1 | Not started | Pin Godot version; JSON-driven synthetic room/builder, actor stubs and blank desktop export | Confirm target hardware and shared contracts |
-| Person 2 (Wonho2007) | Five standalone spoken calls pass; [voice-to-engine integration](../bots/VOICE_GAME.md) now passes real-model typed report/delay/movement and recorded-boundary audit | Spoken game acceptance, then inherited seven-region world/scenario integration | Full model goals missed budget: default LLM-interprets/scripted-goals per sprint; belief/schema/source alignment, offline/export/backup remain |
+| Person 2 (Wonho2007) | [Seven-region plant-start adaptation](../bots/LOTUS_SCENARIO.md): unknown enemies arrive at first-known +23s; physical navigation/combat/reset checked; voice-engine checkpoint already pushed | Human voice-to-scenario acceptance; exact ally/utility baseline and final-demo packaging | LLM-interprets/scripted-goals selected after goal-timeout spike; belief/schema/source review, export/offline/backup remain |
 | Person 3 | Not started | Verified video notes for Persons 1/2; schemas, fake run and evidence/time checks | Shared contracts; use synthetic fixture |
 
 Update only the facts for your lane. Append a short handoff using:

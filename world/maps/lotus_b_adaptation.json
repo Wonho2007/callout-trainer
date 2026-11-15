@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "id": "lotus_b_adaptation",
+  "note": "Authored approximate greybox using the seven annotation region names. Coordinates, scale, cover, ramp and sightlines are synthetic; not a verified Lotus reconstruction. Unknown enemies are NOT placed at plant.",
+  "bounds": {
+    "min": [
+      -12,
+      -1,
+      -12
+    ],
+    "max": [
+      12,
+      7,
+      12
+    ]
+  },
+  "floor": {
+    "size": [
+      25,
+      25
+    ],
+    "y": 0
+  },
+  "walls": [
+    {
+      "id": "north",
+      "position": [
+        0,
+        3,
+        -12
+      ],
+      "size": [
+        24,
+        6,
+        0.4
+      ]
+    },
+    {
+      "id": "south",
+      "position": [
+        0,
+        3,
+        12
+      ],
+      "size": [
+        24,
+        6,
+        0.4
+      ]
+    },
+    {
+      "id": "west",
+      "position": [
+        -12,
+        3,
+        0
+      ],
+      "size": [
+        0.4,
+        6,
+        24
+      ]
+    },
+    {
+      "id": "east",
+      "position": [
+        12,
+        3,
+        0
+      ],
+      "size": [
+        0.4,
+        6,
+        24
+      ]
+    },
+    {
+      "id": "heaven_ramp_left",
+      "position": [
+        5.9,
+        1.5,
+        -3
+      ],
+      "size": [
+        0.2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "heaven_ramp_right",
+      "position": [
+        9.1,
+        1.5,
+        -3
+      ],
+      "size": [
+        0.2,
+        3,
+        4
+      ]
+    }
+  ],
+  "cover": [
+    {
+      "id": "heaven_platform",
+      "position": [
+        7.5,
+        0.75,
+        -8
+      ],
+      "size": [
+        8,
+        1.5,
+        6
+      ]
+    },
+    {
+      "id": "right_pillar",
+      "position": [
+        3.8,
+        1,
+        -0.5
+      ],
+      "size": [
+        1,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "left_pillar",
+      "position": [
+        -4,
+        1,
+        -1
+      ],
+      "size": [
+        1,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "north_box",
+      "position": [
+        -1.5,
+        1,
+        -8
+      ],
+      "size": [
+        2,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "cubby_cover",
+      "position": [
+        -10,
+        1,
+        3
+      ],
+      "size": [
+        0.8,
+        2,
+        3
+      ]
+    }
+  ],
+  "ramps": [
+    {
+      "id": "heaven_ramp",
+      "position": [
+        7.5,
+        0,
+        -3
+      ],
+      "size": [
+        3,
+        1.5,
+        4
+      ]
+    }
+  ],
+  "divots": [
+    {
+      "id": "pit",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 1.4,
+      "depth": 0.6
+    }
+  ],
+  "regions": [
+    {
+      "id": "b_main",
+      "name": "B Main",
+      "center": [
+        0,
+        1.5,
+        9.25
+      ],
+      "size": [
+        23,
+        5,
+        5.5
+      ]
+    },
+    {
+      "id": "b_cubby",
+      "name": "B Cubby",
+      "center": [
+        -8.5,
+        1.5,
+        1.25
+      ],
+      "size": [
+        6,
+        5,
+        10.5
+      ]
+    },
+    {
+      "id": "b_heaven",
+      "name": "B Heaven",
+      "center": [
+        7.5,
+        3.5,
+        -8
+      ],
+      "size": [
+        8,
+        4,
+        6
+      ]
+    },
+    {
+      "id": "b_upper",
+      "name": "B Upper",
+      "center": [
+        0,
+        1.5,
+        -5
+      ],
+      "size": [
+        6,
+        5,
+        4
+      ]
+    },
+    {
+      "id": "b_pit",
+      "name": "B Pit",
+      "center": [
+        0,
+        1,
+        0
+      ],
+      "size": [
+        6,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "c_link",
+      "name": "C Link",
+      "center": [
+        -8,
+        1.5,
+        -8
+      ],
+      "size": [
+        7,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "a_link",
+      "name": "A Link",
+      "center": [
+        8,
+        1.5,
+        1.25
+      ],
+      "size": [
+        7,
+        5,
+        10.5
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "id": "spawn_player",
+      "role": "player",
+      "position": [
+        4.8,
+        1.6,
+        -6.2
+      ],
+      "facing_deg": 180
+    }
+  ],
+  "spike": {
+    "position": [
+      0,
+      -0.6,
+      0
+    ],
+    "planted": true,
+    "site_region": "b_pit"
+  }
+}

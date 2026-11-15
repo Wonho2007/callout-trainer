@@ -107,6 +107,8 @@ func _register_audio_actor(actor: CharacterBody3D) -> void:
 	# Only a shared actor's own weapon events are subscribed, never the archive
 	# or an unrestricted global bus. Hit/collider data is ignored.
 	var weapon: Node = actor.get_node_or_null("Camera3D/Weapon")
+	if weapon == null:
+		weapon = actor.get_node_or_null("TeammateRifle")
 	if weapon != null:
 		_connect(weapon, "fired", _on_shot.bind(actor))
 
@@ -119,6 +121,15 @@ func dispose() -> void:
 	_opponents.clear()
 	_pending_audio.clear()
 	_player = null
+
+func register_opponent(id: String, actor: CharacterBody3D) -> bool:
+	# Trusted scene may materialize an actor at its first annotated position.
+	# Registration itself emits no observation and preserves pending evidence.
+	if not Data.nonempty(id) or not is_instance_valid(actor) or _opponents.has(id):
+		return false
+	_opponents[id] = actor
+	_register_audio_actor(actor)
+	return true
 
 func _on_shot(_from: Vector3, _to: Vector3, _hit: bool, shooter: Node3D) -> void:
 	if is_instance_valid(shooter):

@@ -15,6 +15,7 @@ var _scenario: Dictionary = {}
 var _info_panel: PanelContainer
 var _enemy_driving: bool = false
 signal teammate_ready(bot_runtime: Node)
+@export_file("*.json") var coverage_path: String = "res://scenarios/b_site_coverage.json"
 
 func _enter_tree() -> void:
 	# Local integration accommodation for the documented Person 1 nav mismatch.
@@ -25,7 +26,7 @@ func _ready() -> void:
 	await super._ready()
 	await get_tree().physics_frame
 	await get_tree().process_frame
-	_scenario = JSON.parse_string(FileAccess.get_file_as_string("res://scenarios/b_site_coverage.json"))
+	_scenario = JSON.parse_string(FileAccess.get_file_as_string(coverage_path))
 	var actual_regions: Array = []
 	for region in builder.map_data.regions:
 		actual_regions.append(region.id)
@@ -94,16 +95,22 @@ func _spawn_teammate() -> void:
 	spawn.rotation_degrees.y = _scenario.teammate_spawn.facing_deg
 	teammate.teleport_to(spawn)
 	spawn.free()
-	var belief = RegionBelief.new("ally", _scenario.planner.regions, ["enemy"])
+	var belief = RegionBelief.new("ally", _scenario.planner.regions, _belief_enemy_ids())
 	runtime = Runtime.new()
 	runtime.name = "TeammateRuntime"
 	add_child(runtime)
 	runtime.configure("ally", teammate, builder, belief, _scenario.planner,
 		_scenario.motion_markers, _scenario.entries, _round_serial, utility, _scenario.flash_targets, int(_scenario.flash_charges))
 	runtime.attach_perception(SceneSensor.new("ally", teammate, builder, utility,
-		{"enemy": _target}, _scenario.perception, int(_scenario.perception_seed), _round_serial, _player, _scenario.player_entry_sensing))
+		_opponent_registry(), _scenario.perception, int(_scenario.perception_seed), _round_serial, _player, _scenario.player_entry_sensing))
 	runtime.comm_result.connect(_comm_result)
 	teammate_ready.emit(runtime)
+
+func _opponent_registry() -> Dictionary:
+	return {"enemy": _target}
+
+func _belief_enemy_ids() -> Array:
+	return ["enemy"]
 
 func _verify_navigation() -> void:
 	# Person 1 calls this from the ready signal's physics continuation. Let

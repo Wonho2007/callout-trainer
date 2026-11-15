@@ -309,7 +309,7 @@ def main():
         host.transcript(args.text, host.hello['session'])
         host.closed.wait(args.seconds)
     else:
-        print('Hold RIGHT CTRL to speak. Calls: room, entry, corridor. Ctrl+C exits.', flush=True)
+        print('Hold RIGHT CTRL to speak. Calls: ' + ', '.join(host.hello['regions']) + '. Ctrl+C exits.', flush=True)
         while not host.closed.is_set():
             captured = capture_for_game(host)
             if captured is None:

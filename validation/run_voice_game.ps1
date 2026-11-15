@@ -1,4 +1,4 @@
-param([switch]$ModelGoals)
+param([switch]$ModelGoals, [switch]$Lotus)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $pythonExe = Join-Path $env:USERPROFILE '.cache\callout-voice-venv\Scripts\python.exe'
@@ -28,8 +28,10 @@ try {
     New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
     $gameLog = Join-Path $runRoot 'game.log'
     $gameErrors = Join-Path $runRoot 'game-errors.log'
+    $sceneMode = '--lotus-playtest'
+    if (-not $Lotus) { $sceneMode = '--voice-playtest' }
     $gameArgs = @('-u', "`"$(Join-Path $PSScriptRoot 'run_person2_tests.py')`"", '--godot', "`"$godotExe`"",
-        '--voice-playtest', '--voice-port', $voicePort, '--person1-ref', '8712f7d', '--person3-ref', '57f809d')
+        $sceneMode, '--voice-port', $voicePort, '--person1-ref', '8712f7d', '--person3-ref', '57f809d')
     $gameProcess = Start-Process -FilePath $pythonExe -ArgumentList $gameArgs -WorkingDirectory $repoRoot -WindowStyle Hidden -RedirectStandardOutput $gameLog -RedirectStandardError $gameErrors -PassThru
     $ready = $false
     $readyDeadline = (Get-Date).AddSeconds(30)

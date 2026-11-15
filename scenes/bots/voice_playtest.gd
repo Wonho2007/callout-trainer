@@ -21,7 +21,7 @@ func _ready() -> void:
 		return
 	teammate_ready.connect(voice_bridge.attach)
 	voice_bridge.attach(runtime)
-	_comm_status = "Voice host waiting. Synthetic calls: room, entry, corridor."
+	_comm_status = "Voice host waiting. Hold Right Ctrl once connected."
 	print("PERSON2_VOICE_READY port=", voice_bridge.server.get_local_port())
 	if OS.get_cmdline_user_args().has("--voice-smoke"):
 		var smoke = load("res://tests/person2/voice_bridge_smoke.gd").new()
@@ -53,4 +53,4 @@ func _model_fixture() -> void:
 func _restart() -> void:
 	await super._restart()
 	if is_instance_valid(voice_bridge):
-		_comm_status = "Voice connected. Hold Right Ctrl to speak." if voice_bridge.peer != null else "Voice host waiting. Synthetic calls: room, entry, corridor."
+		_comm_status = "Voice connected. Hold Right Ctrl to speak." if voice_bridge.peer != null else "Voice host waiting. Hold Right Ctrl once connected."

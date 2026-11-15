@@ -38,6 +38,10 @@ var _flash: RefCounted
 var _combat_policy: RefCounted
 var _combat_adapter: RefCounted
 var _combat_decision: Dictionary = {}
+var _scenario_policy: RefCounted
+
+func attach_scenario_policy(policy: RefCounted) -> void:
+	_scenario_policy = policy
 
 func configure(bot_id: String, actor: Node3D, navigation: Node3D, belief: RefCounted,
 		configuration: Dictionary, markers: Dictionary, entries: Dictionary, round_id: int,
@@ -82,6 +86,9 @@ func attach_perception(adapter: RefCounted) -> void:
 	if _sensing != null:
 		_sensing.dispose()
 	_sensing = adapter
+
+func register_opponent(id: String, actor: CharacterBody3D) -> bool:
+	return _sensing != null and _sensing.register_opponent(id, actor)
 
 func _exit_tree() -> void:
 	if _combat_adapter != null:
@@ -199,6 +206,9 @@ func _physics_process(_delta: float) -> void:
 		_promote(observation.id)
 	var active: Dictionary = _executor.active_command_snapshot()
 	var plan: Dictionary = _planner.decide(_tick, _belief.snapshot(), own, _executor.inbox, active)
+	if _scenario_policy != null and active.is_empty():
+		plan = {"ok": true, "errors": [], "replanned": true,
+			"decision": _scenario_policy.decide(_tick, _policy_observations(), own)}
 	var model: Dictionary = _gate.decision(_tick, _executor.inbox)
 	var policy: String = "scripted_fallback"
 	if not model.is_empty() and active.is_empty() and own.alive:

@@ -2,6 +2,34 @@
 
 ## Priority override — six-hour final sprint, 2026-11-15
 
+### Newest: plant start and first-known-position arrivals
+
+The user explicitly requires enemies to spawn only when the annotation first locates
+them, with t0 at the plant. Implemented [the seven-region adaptation](../bots/LOTUS_SCENARIO.md):
+no unknown enemy actor/collider at t0; Chronicle/crashies in Heaven, kaajak in C Link
+and Boaster in B Main materialize at +23s. +16s offscreen smoke does not locate Boaster.
+Boaster's first-localized death position is used for an alive authored continuation;
+no recorded kills are forced. Source starts remain unknown; metric coordinates and
+geometry are explicitly authored approximations, with source metadata pending review.
+
+New map/custom builder, coverage/source scenario, pure spawn schedule, observation-
+guarded retake policy and inherited Lotus scene reuse current shared mechanics.
+Late privileged sensor registration preserves pending evidence and emits no spawn
+testimony. New runtime scenario-policy/registration methods are internal owned seams;
+shared schemas, default world/main/settings and Person 3 source are unchanged.
+PRX holds the plant, cannot self-defuse; retakers use shared rifles/defuse and ordinary
+delayed perception. New scene hides developer enemy-placement controls and target HP.
+
+Actual official 4.4.1: 552 owned/cross-lane and 139 live-perception assertions pass;
+seven Python authoring/voice-boundary tests pass; Person 3 structural scenario validator
+passes with expected unknown warnings. First renderer run passed 28 functional checks
+plus PNG save, including physical Pit-to-Heaven completion and late rifle firing;
+final elimination/HUD suite passes **31 functional checks**. Rendered layout inspected.
+The clock is fast-forwarded only in the fixture; normal play waits for +23s.
+No new human/voice-to-Lotus/export/backup or full fairness claim. Launch:
+`validation/run_voice_game.ps1 -Lotus`. Exact utility and ally source-line reenactment,
+coordinated belief/schema changes and remaining final-demo acceptance are unfinished.
+
 ### Latest: local voice-to-engine integration
 
 Implemented [the synthetic voice game](../bots/VOICE_GAME.md): PC microphone/STT and
