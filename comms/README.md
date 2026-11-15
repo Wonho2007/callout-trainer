@@ -62,6 +62,15 @@ pipe.handle(Transcript.from_stt(text, latency_s, started_s=utterance_start_wall_
 matters — same call for typed and mic. The `voice/` module already returns `(text, latency_s)`,
 so only the utterance-start wall-time needs wiring on the PC.
 
+**Hand-off confirmed against the real STT (person-3/voice-track):** `voice.stt.transcribe()` is
+typed `-> tuple[str, float]` returning `(transcript, latency_s)` — exactly what
+`Transcript.from_stt(text, latency_s, started_s)` consumes, no adapter rework. One integration
+detail for Person 2: `latency_s` is measured "from the START of transcription, not recording",
+so it is **not** the utterance clock. Pass `started_s` = the wall-time recording began (the
+`>>> LISTENING NOW` instant for `--timed`, or key-down in `record_until_keyup`), captured in
+`voice/push_to_talk.py`, not the post-transcription `datetime.now()` the CLI currently prints.
+With that one value, the mic path is drop-in.
+
 ## Run
 
 ```powershell
