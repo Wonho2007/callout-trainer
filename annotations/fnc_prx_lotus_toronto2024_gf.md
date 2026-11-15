@@ -121,11 +121,11 @@ screen) separate from inference (what you reason happened off-screen).
 | +23 | 01:01:48 | crashies (Fade) | `b_heaven` (first seen) | **Fade Eye** thrown into `b_heaven` (see overlay img 004028); 1 → 0 Eye | POV (eye icon + recon arc visible) | observed | recon sweep over Heaven; Eye now on cooldown |
 | +23 | 01:01:48 | Chronicle (Viper) | `b_heaven` (first seen) | none | minimap/POV | observed | in Heaven at +23s; later moves to `b_upper` (dies there +30s) |
 | +23 | 01:01:48 | kaajak (Raze) | `c_link` (first seen) | 1 grenade held | minimap/POV | observed | swings retake via C side |
-| +26 | 01:01:51 | Something (Yoru) | moved `a_link` → boundary between `b_site` and `a_link`, holding angle onto `b_heaven` | none | POV/minimap | observed (position is a region boundary — see note) | off-angle hold onto Heaven |
+| +26 | 01:01:51 | Something (Yoru) | moved `a_link` → `a_link` (holding angle onto `b_heaven` from the `b_site`/`a_link` boundary) | none | POV/minimap | observed (position is a region boundary — see note) | off-angle hold onto Heaven |
 | +26 | 01:01:51 | Something (Yoru) | kills **crashies (Fade, FNC)** in `b_heaven` | — | killfeed/POV | observed | SECOND PICK for PRX; FNC down to 2 (Chronicle, kaajak) |
 | +26 | 01:01:51 | crashies (Fade) | **dies** in `b_heaven` | Eye already thrown (+23s); no util lost | killfeed | observed | retake now 2v2 |
 | +26 | 01:01:51 | f0rsakeN (Omen) | moved `b_main` → `b_cubby` | none | POV/minimap | observed | repositions back into Cubby after the Main trade |
-| +28 | 01:01:53 | Something (Yoru) | moved `b_site`/`a_link` boundary → `b_pit` (onto the spike) | none | POV/minimap | observed | PRX holds the plant spot |
+| +28 | 01:01:53 | Something (Yoru) | moved `a_link` (at the `b_site`/`a_link` boundary) → `b_pit` (onto the spike) | none | POV/minimap | observed | PRX holds the plant spot |
 | +28 | 01:01:53 | kaajak (Raze) | `c_link` | **Raze grenade** thrown into `b_pit`; 1 → 0 (one-use, no recharge); FNC now 0 util total | POV/minimap | observed | contests Pit/spike; Something in Pit reported 100/50 (not hit per readout) |
 | +30 | 01:01:55 | Something (Yoru) | `b_pit` → now 97/44 (took minor damage, likely Raze nade chip) | none | HUD | observed | survives the Pit nade with light damage |
 | +30 | 01:01:55 | f0rsakeN (Omen) | kills **Chronicle (Viper, FNC)** in `b_upper` | — | killfeed/POV | observed | round-ending pick 1 (Chronicle was in `b_upper`, distinct from the Heaven holds) |
@@ -187,7 +187,11 @@ only — a participant does not automatically know spectator info.
 - Spike/round timer value at the plant was not read (just-planted; `unknown`). The 45s post-plant
   window is implied by the +0→+30s action but the exact clock was not recorded.
 - Something's +26s position ("between B site and A Link") is a region boundary, not a clean
-  single id — flag for the Person 1 region freeze (may widen `a_link`/`b_site` or accept it).
+  single id. **Resolved for authoring:** mapped to `a_link` (the frozen id it was paired with,
+  and the region Something rotated from → held → moved to `b_pit`). `b_site` is NOT a frozen
+  region id, so the timeline no longer uses it. The underlying VOD observation (a boundary
+  hold with an angle onto `b_heaven`) is kept in the beat text; if Person 1's region freeze
+  later widens the site area, revisit. This is a modeling choice, not a new pro fact.
 - The 4 players already dead at the plant (3 PRX, 1 FNC) are not identified; not needed for the
   6-actor scenario.
 
@@ -212,7 +216,8 @@ Key facts for the scenario:
 Dependencies / open items:
 - **Region ids (§2) need the team freeze with Person 1** before authoring. 7 ids:
   `b_main`, `b_cubby`, `b_heaven`, `b_upper`, `b_pit`, `c_link`, `a_link`.
-- Something's +26s boundary position (`b_site`/`a_link`) needs a region decision (see §7).
+- Something's +26s boundary position is mapped to `a_link` for authoring (see §7); the
+  timeline uses only the 7 frozen ids.
 - Weapons are `unknown`; utility cooldown rules (Omen smoke 30s, Fade Eye 45s) are
   **team-provided modeling values**, not VOD-observed — see §5a.
 - Comms opportunities (§6) are intentionally left blank for now.
