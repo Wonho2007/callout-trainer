@@ -24,6 +24,10 @@ PR #4 was already merged before this branch; no current-main merge is claimed.
 
 ## Read next
 
+- [Parallel combat UI assignment](PARALLEL_COMBAT_UI_HANDOFF.md): separate Codex
+  worktree for player kill feedback/count, defeat screen and visible health bar.
+  This is a scoped parallel task; the primary bot/navigation lane stays here.
+
 Current local rifle tuning is 40 body / 160 head damage for player and bots;
 the integration runner overlays the shared weapon script onto its pinned source.
 
