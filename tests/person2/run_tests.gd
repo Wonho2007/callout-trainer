@@ -328,6 +328,14 @@ func test_edge_cases() -> void:
 	expect(executor.step(4, actor.snapshot()).intents.is_empty(), "other actor motion cannot release a swing")
 	executor.enqueue(observation("stale_motion", {"type": "player_entry", "actor_id": "player", "entry_id": "entry"}, 5, "seen", 1))
 	expect(executor.step(5, actor.snapshot()).intents.is_empty(), "movement from before ready is not a new go signal")
+	for discriminator in ["enemy_seen", "sound_heard", "", 7, null]:
+		executor.enqueue(observation("wrong_event:" + str(discriminator), {"type": discriminator, "actor_id": "player", "entry_id": "entry"}, executor.inbox.current_tick() + 1, "seen", 5))
+		expect(executor.step(executor.inbox.current_tick() + 1, actor.snapshot()).intents.is_empty(), "non-entry event cannot release coordinated swing: " + str(discriminator))
+	var release_tick: int = executor.inbox.current_tick() + 2
+	executor.enqueue(observation("valid_entry", {"type": "player_entry", "actor_id": "player", "entry_id": "entry"}, release_tick, "seen", release_tick - 1))
+	expect(executor.step(release_tick - 1, actor.snapshot()).intents.is_empty(), "entry release respects actual observation delay")
+	output = executor.step(release_tick, actor.snapshot())
+	expect(output.intents.size() == 1 and output.intents[0].op == "start_swing" and "valid_entry" in output.intents[0].evidence_ids, "valid delivered entry releases once with its evidence")
 	var ordered = Inbox.new("ally")
 	ordered.enqueue(observation("a_later", {}, 9, "seen", 8))
 	ordered.enqueue(observation("z_earlier", {}, 9, "seen", 3))

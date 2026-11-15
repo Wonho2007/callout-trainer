@@ -100,6 +100,11 @@ func step(tick: int, plan: Dictionary, executor_output: Dictionary,
 		if intent.command_id != command_id:
 			# A later cancel/supersession in this executor batch wins.
 			continue
+		# Readiness is physical, not a permanent permission to release from any
+		# position. A cue may arrive on the same tick as own displacement.
+		if intent.op == "start_swing" and not _task.is_empty() and _task.op == "stage" and _task.done:
+			if not _at_marker(_task.route[-1]):
+				return _physical_failure("staging_position_lost")
 		if intent.op == "throw_flash":
 			_halt()
 			var released: Dictionary = {"ok": false, "reason": "utility_adapter_unavailable"} if _flash == null else _flash.launch(command_id, intent.target_id)
@@ -166,9 +171,24 @@ func _advance() -> Dictionary:
 	if not _navigation.navigation_is_ready:
 		return _physical_failure("navigation_not_ready")
 	if _task.done:
-		_stop_actor()
-		_watch()
-		return _status("holding", "at_authored_marker")
+		if not _at_marker(_task.route[-1]):
+			if _task.op == "stage":
+				return _physical_failure("staging_position_lost")
+			if not _task.command_id.is_empty():
+				# Completed routes cannot be replayed by displacement.
+				_stop_actor()
+				return _status("stopped", "completed_route_position_lost")
+			# Reacquire the same authored coverage using a fresh physical path.
+			_task.done = false
+			_task.route_index = 0
+			_path.clear()
+			_path_index = 0
+			_progress_tick = _clock
+			_progress_distance = INF
+		else:
+			_stop_actor()
+			_watch()
+			return _status("holding", "at_authored_marker")
 	var destination: Vector3 = _vec(_markers[_task.route[_task.route_index]].position)
 	# query_path snaps endpoints, sometimes onto an unrelated island. Require
 	# both returned endpoints near the requested anchors; never walk a partial
@@ -183,13 +203,13 @@ func _advance() -> Dictionary:
 		if not point.is_finite():
 			return _physical_failure("invalid_navigation_path")
 	var previous_index: int = _path_index
-	while _path_index < _path.size() and _horizontal(_actor.global_position, _path[_path_index]) <= _arrival:
+	while _path_index < _path.size() and _at_point(_path[_path_index]):
 		_path_index += 1
 	if _path_index != previous_index:
 		_progress_distance = INF
 		_progress_tick = _clock
 	if _path_index >= _path.size():
-		if _horizontal(_actor.global_position, destination) > _arrival:
+		if not _at_point(destination):
 			return _physical_failure("partial_navigation_path")
 		_path.clear()
 		_task.route_index += 1
@@ -286,3 +306,9 @@ func _vec(point: Array) -> Vector3:
 
 func _horizontal(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
+
+func _at_point(point: Vector3) -> bool:
+	return _horizontal(_actor.global_position, point) <= _arrival and absf(_actor.global_position.y - point.y) <= 0.75
+
+func _at_marker(marker_id: String) -> bool:
+	return _at_point(_vec(_markers[marker_id].position))
