@@ -59,9 +59,10 @@ func _initialize() -> void:
 	hostile.content.node.free()
 	check(Reports.make_report("x", "player", "ally_1", 1, 1, "site").is_empty(), "invalid expiry rejected")
 	check(Reports.make_report("x", "player", "ally_1", 1, 10, "site", 0).is_empty(), "zero count rejected")
-	# Trust removed as a mechanism (DECISIONS.md 2026-11-14). The snapshot keeps an
-	# always-empty trust field for Person 2's planner contract; nothing populates it.
-	check(belief.snapshot().has("trust") and belief.snapshot().trust.is_empty(), "trust field is retained but always empty")
+	# Trust removed as a mechanism (DECISIONS.md 2026-11-14) and the vestigial empty
+	# compatibility key is now dropped too. The snapshot must no longer carry `trust`;
+	# Person 2's planner must drop it from keys_exact before this branch merges.
+	check(not belief.snapshot().has("trust"), "trust field is no longer present in the snapshot")
 	var sighting: RefCounted = model()
 	sighting.apply(report(), 138)
 	sighting.apply(seen("upper", 140, 155), 155)

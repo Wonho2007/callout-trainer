@@ -27,12 +27,12 @@ func _init(bot_id: String, region_ids: Array, enemy_ids: Array) -> void:
 		_probabilities[enemy] = prior
 
 func snapshot() -> Dictionary:
-	# `trust` is retained as an always-empty dict for backward compatibility with
-	# Person 2's planner contract (keys_exact requires the key). Trust was removed
-	# as a mechanism (DECISIONS.md 2026-11-14); nothing populates it. Person 2 can
-	# drop the field from their validator in a coordinated change.
+	# Trust was removed as a mechanism (DECISIONS.md 2026-11-14); the vestigial
+	# empty `trust` compatibility key is now dropped too. This requires Person 2's
+	# planner to no longer expect `trust` in keys_exact / _valid_belief — coordinate
+	# before merging this branch (person-3/drop-trust-field).
 	return {"bot_id": _bot_id, "tick": _tick, "enemies": _probabilities.duplicate(true),
-		"trust": {}, "evidence_ids": _evidence.duplicate()}
+		"evidence_ids": _evidence.duplicate()}
 
 # Caller releases observations using Person 2's inbox. Reject future/foreign values.
 # No wall clock or world queries. Prediction is an explicit separate step.

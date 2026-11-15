@@ -26,7 +26,7 @@
     },
     "snapshot": {
       "type": "object", "additionalProperties": false,
-      "required": ["bot_id", "tick", "enemies", "trust", "evidence_ids"],
+      "required": ["bot_id", "tick", "enemies", "evidence_ids"],
       "properties": {
         "bot_id": {"$ref": "#/$defs/id"}, "tick": {"type": "integer", "minimum": -1},
         "enemies": {
@@ -34,7 +34,6 @@
             "type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
           }
         },
-        "trust": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
         "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
       }
     },
