@@ -96,7 +96,7 @@ func launch(command_id: String, target_id: String) -> Dictionary:
 	_remaining -= 1
 	_released[command_id] = {"ok": false, "reason": "launch_in_progress"}
 	var origin: Vector3 = _actor.global_position + Vector3.UP * 1.6
-	var flight: float = 0.6
+	var flight: float = float(_utility._defs.get("flash", {}).get("trigger_delay_s", 0.6))
 	var gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 	var velocity: Vector3 = (_selected_points[target_id] - origin) / flight + Vector3.UP * gravity * flight * 0.5
 	var effect: Node3D = _utility.throw_flash(origin, velocity)

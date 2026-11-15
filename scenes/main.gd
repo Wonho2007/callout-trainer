@@ -115,10 +115,16 @@ func _spawn_target() -> void:
 	var spawn: Marker3D = builder.get_spawn("enemy")
 	_target = ActorScene.instantiate()
 	add_child(_target)
+	_target.utility_system = utility
+	if _target.health:
+		_target.health.max_hp = 150.0
+		_target.health.hp = 150.0
 	if spawn:
 		_target.teleport_to(spawn)
+		_target.rotation.y = PI
 	else:
 		_target.global_position = Vector3(7, 1, -7)
+		_target.rotation.y = PI
 	_wire_minimap()
 
 
@@ -179,6 +185,7 @@ func _restart() -> void:
 	var espawn: Marker3D = builder.get_spawn("enemy")
 	if _target and espawn:
 		_target.teleport_to(espawn)
+		_target.rotation.y = PI
 	if _spike:
 		var pos = builder.get_spike_position()
 		if pos != null:

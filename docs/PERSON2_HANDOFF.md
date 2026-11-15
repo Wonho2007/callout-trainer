@@ -10,6 +10,44 @@ and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not
 Continuation is in **Kiro**. Use [the Kiro resume prompt](KIRO_RESUME_PROMPT.md)
 and Kiro's native tools; historical Codex tool/sandbox instructions are environment-specific.
 
+## Latest GitHub integration: 0260f28
+
+The user supplied an additional Person 3/shared-mechanics handoff and requested a
+GitHub pull. Fetched `origin/person-3/greybox-b-site` through **0260f28** and merged
+it into the existing `person-2/model-capability-spike` integration branch, preserving
+its bot/voice work. Do not interpret the pasted branch name as permission to discard
+this integration history. The user now prohibits remote pushes unless explicitly
+requested; this integration is local only.
+
+Incoming work includes revised pit/platform geometry and cover, 1.96m hitbox actors,
+160/40/34 head/body/leg damage, smoke settling, 0.75s-fuse/3-5s flash effects and
+native blind indicators. Merge conflicts were resolved by preserving new hitbox
+damage and submerged-smoke behavior together with existing utility thrower IDs.
+Compatibility fixes preserve capsule-only player/legacy actor damage, exclude a
+shooter's own hitboxes, disable child hitbox collision when bots die, and derive
+player/bot ballistic flash flight time from the active utility definitions.
+
+**Important: importing source is not complete live-profile acceptance.** The voice
+launcher intentionally still pins **76b8eaa**. Do not simply replace that pin: the
+new map puts Upper/Heaven on 2m blocks and deepens Pit to -3m; current bot anchors,
+spawn heights, region vertical bounds and navigation connectivity require review.
+Preserve the new map's intended geometry rather than silently inventing ramps.
+The new source's native indicator/actor blindness path also needs coordinated
+review against the existing sensor/runtime path before enabling it in the live
+profile. Full-opacity smoke cutoff and all new damage cases need actual validation.
+
+Fresh checks: **575 required bot assertions** pass with shared ref **0260f28** and
+belief **57f809d**. **40 existing-profile scene checks** pass using shared ref
+**76b8eaa** plus local merged player/weapon/runtime overlays. These are different
+scopes, not acceptance of the new elevated map in the voice game. Tests used the
+installed Python 3.12 and Godot 4.4.1; no Python 3.14 migration was performed.
+Known navigation-bake/ObjectDB warnings remain. No new human/export acceptance.
+
+Next focused work: migrate and validate the current scenario's anchors, navigation,
+region heights and shared impairment/indicator behavior on the new map; then switch
+the shared-source pin after checks and a human playtest. Continue using existing
+models and transport; do not restart setup or silently change belief dependencies.
+
 ## Workspace and Git
 
 - Checkout: `C:\Users\Isoto\Documents\GitHub\callout-trainer`.

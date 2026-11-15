@@ -76,6 +76,10 @@ func _on_actor_died() -> void:
 	_actor.hide()
 	_actor.set_deferred("collision_layer", 0)
 	_actor.set_deferred("collision_mask", 0)
+	for child in _actor.get_children():
+		if child is CollisionObject3D:
+			child.set_deferred("collision_layer", 0)
+			child.set_deferred("collision_mask", 0)
 	_actor.set_physics_process(false)
 	finish_round("actor_dead")
 

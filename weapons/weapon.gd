@@ -29,16 +29,20 @@ var occluder: Object = null
 
 ## Placeholder rifle stats. Replace with sourced values only if obtained from a
 ## permitted source and documented; otherwise these stay as tuned placeholders.
+## Per-hitbox damage: head/body/legs. Resolved from which hitbox Area3D the shot hits.
+@export var damage_head: float = 160.0
 @export var damage_body: float = 40.0
-@export var damage_head_multiplier: float = 4.0
+@export var damage_legs: float = 34.0
+
 @export var rounds_per_second: float = 8.0
 @export var magazine_size: int = 25
 @export var reserve_ammo: int = 75
 @export var reload_time_s: float = 2.0
 @export var range_m: float = 80.0
 ## Spread in radians: base, extra while firing continuously, extra while moving.
+## Moving spread is very large: shooting while moving is extremely inaccurate.
 @export var spread_base: float = 0.004
-@export var spread_moving: float = 0.03
+@export var spread_moving: float = 0.18
 @export var spread_firing: float = 0.02
 
 var in_mag: int = 0
@@ -111,11 +115,23 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 
 	var space: PhysicsDirectSpaceState3D = shooter.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(origin, to)
-	query.collide_with_areas = false
+	# Player capsules and legacy integration actors remain damageable. New
+	# actors' outer capsules are skipped below so their actual hitboxes decide.
+	query.collision_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 6)
+	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	if shooter is CollisionObject3D:
-		query.exclude = [shooter.get_rid()]
+		var excluded: Array[RID] = [shooter.get_rid()]
+		for child in shooter.get_children():
+			if child is CollisionObject3D:
+				excluded.append(child.get_rid())
+		query.exclude = excluded
 	var hit := space.intersect_ray(query)
+	while not hit.is_empty() and hit.collider is ActorBase and hit.collider.has_node("HitHead"):
+		var excluded: Array[RID] = query.exclude
+		excluded.append(hit.collider.get_rid())
+		query.exclude = excluded
+		hit = space.intersect_ray(query)
 
 	var end := to
 	if hit:
@@ -143,7 +159,12 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 	if collider == null:
 		return
-	# Find an ActorBase at the hit (the collider or one of its ancestors).
+	# A hitbox Area3D carries a "hit_part" meta (head/body/legs) and links to its actor
+	# via "hit_actor_path" (or an ActorBase ancestor). Resolve the part -> damage.
+	var part := ""
+	if collider is Node and (collider as Node).has_meta("hit_part"):
+		part = String((collider as Node).get_meta("hit_part"))
+	# Find the ActorBase (the hitbox's ancestor, or the collider's ancestor).
 	var node := collider as Node
 	var actor: ActorBase = null
 	while node != null:
@@ -151,13 +172,23 @@ func _apply_hit_damage(collider: Object, hit_pos: Vector3) -> void:
 			actor = node
 			break
 		node = node.get_parent()
-	if actor != null:
-		# Simple head/body split by height of the hit relative to the actor.
-		var local_y := hit_pos.y - actor.global_position.y
-		var dmg := damage_body
-		if local_y > 1.5:
-			dmg *= damage_head_multiplier
-		actor.apply_damage(dmg)
+	if actor == null:
+		return
+	var dmg: float
+	match part:
+		"head": dmg = damage_head
+		"legs": dmg = damage_legs
+		"body": dmg = damage_body
+		_:
+			# No hitbox part (e.g. hit the plain body capsule): fall back to a height split.
+			var local_y := hit_pos.y - actor.global_position.y
+			if local_y > 1.76:
+				dmg = damage_head
+			elif local_y < 0.90:
+				dmg = damage_legs
+			else:
+				dmg = damage_body
+	actor.apply_damage(dmg)
 
 
 func reload() -> void:

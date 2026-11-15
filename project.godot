@@ -123,6 +123,7 @@ scan_orb={
 3d_physics/layer_4="regions"
 3d_physics/layer_5="smoke"
 3d_physics/layer_6="area_damage"
+3d_physics/layer_7="hitbox"
 
 [rendering]
 

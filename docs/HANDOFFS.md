@@ -1,5 +1,11 @@
 # Current integration status
 
+Fetched and locally merged Person 3/shared updates through **0260f28** on the
+existing integration branch. New-source bot regression: 575 pass; existing live
+profile with compatibility overlays: 40 pass. The elevated-map scenario migration
+and launcher pin update remain pending; these passes are not new-map live acceptance.
+No remote push is authorized by the latest handoff. See the current Person 2 handoff.
+
 Updated 2026-11-15. **Resolved: the user-reported flash failure is diagnosed and
 fixed (far-but-reachable zones now walk into range instead of failing in place).
 A fresh human microphone playthrough of the fix is still unconfirmed; automated

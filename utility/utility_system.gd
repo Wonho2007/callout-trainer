@@ -17,6 +17,9 @@ const ReconOutlineScript := preload("res://utility/recon_outline.gd")
 ## Emitted when utility is deployed, for the privileged recorder/grader (not a
 ## policy input). Carries the ability id, thrower id and world position.
 signal deployed(ability_id: String, thrower_id: String, position: Vector3)
+## Emitted when a flash or blind wave detonates in the world, carrying the effect node and position.
+signal flash_detonated(flash: Flash, position: Vector3)
+signal blind_wave_detonated(wave: BlindWave, position: Vector3)
 
 @export_file("*.json") var definitions_path: String = "res://utility/abilities.json"
 
@@ -46,23 +49,28 @@ func _load_defs(path: String) -> void:
 		_defs[String(ability.get("id", ""))] = ability
 
 
-## Deploy a smoke aimed at world point `at`. The smoke stays where it is aimed;
-## if the aimed point is floating in open air, it falls straight down until it
-## lands on the ground. Returns the Smoke, or null if undefined.
+## Deploy a smoke aimed at world point `at`, settling 35% below the floor.
+## Optional thrower identity preserves bot/player attribution in the event log.
 func throw_smoke(at: Vector3, thrower_id: String = "player") -> Smoke:
+
 	if not _defs.has("smoke"):
 		return null
 	var smoke: Smoke = SmokeScript.new()
 	smoke.setup(_defs["smoke"])
 	add_child(smoke)
 
-	# The sphere center sits one radius above a surface so it rests on it.
-	var start_center := at + Vector3(0, smoke.radius, 0)
-	# Raycast straight down from the aimed point to find the ground below.
+	# Find the ground below the aimed point.
 	var ground_y = _ground_below(at)
-	var settle_center := start_center
-	if ground_y != null:
-		settle_center = Vector3(at.x, (ground_y as float) + smoke.radius, at.z)
+	var gy: float = (ground_y as float) if ground_y != null else at.y
+
+	# Bottom 35% of the sphere (diameter 2 * radius) is submerged in the ground:
+	# Submerged height = 0.35 * (2.0 * radius) = 0.70 * radius.
+	# Settle center Y = ground_y - 0.70 * radius + radius = ground_y + 0.30 * radius.
+	var settle_center := Vector3(at.x, gy + 0.30 * smoke.radius, at.z)
+
+	# Start above ground so the smoke visibly descends into the ground until settling.
+	var start_y: float = maxf(at.y + smoke.radius, gy + smoke.radius)
+	var start_center := Vector3(at.x, start_y, at.z)
 
 	smoke.deploy(start_center, settle_center)
 	_smokes.append(smoke)
@@ -94,6 +102,9 @@ func throw_flash(from: Vector3, velocity: Vector3) -> Flash:
 	add_child(flash)
 	flash.throw(from, velocity)
 	_flashes.append(flash)
+	flash.detonated.connect(func(pos):
+		flash_detonated.emit(flash, pos)
+	)
 	flash.expired.connect(func(): _flashes.erase(flash))
 	deployed.emit("flash", "player", from)
 	return flash
@@ -126,7 +137,10 @@ func throw_blind_wave(from: Vector3, direction: Vector3) -> BlindWave:
 	wave.launch(from, direction)
 	_blind_waves.append(wave)
 	wave.expired.connect(func(): _blind_waves.erase(wave))
-	wave.detonated.connect(func(pos): deployed.emit("blind_wave", "player", pos))
+	wave.detonated.connect(func(pos):
+		blind_wave_detonated.emit(wave, pos)
+		deployed.emit("blind_wave", "player", pos)
+	)
 	return wave
 
 

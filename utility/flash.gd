@@ -16,10 +16,10 @@ class_name Flash
 signal detonated(source_position: Vector3)
 signal expired
 
-var trigger_delay_s: float = 0.6
-var max_blind_s: float = 1.6
-var min_blind_s: float = 0.3
-var range_m: float = 20.0
+var trigger_delay_s: float = 0.75
+var max_blind_s: float = 5.0
+var min_blind_s: float = 3.0
+var range_m: float = 30.0
 
 var is_active: bool = false
 var _mesh: MeshInstance3D
@@ -99,9 +99,16 @@ func blind_duration_for(viewer_pos: Vector3, viewer_forward: Vector3, has_los: b
 	var dir := to_source / dist
 	# How directly the viewer looks at the flash: 1.0 = straight on, <=0 behind.
 	var facing := viewer_forward.normalized().dot(dir)
+	var range_factor := clampf(1.0 - (dist / range_m), 0.0, 1.0)
+
+	# Close detonation (< 8m): concussion and light bounce cause a strong blind even when turned
+	if dist < 8.0:
+		var close_facing_floor := lerpf(0.65, 0.20, dist / 8.0)
+		facing = maxf(facing, close_facing_floor)
+
 	if facing <= 0.0:
-		return 0.0
-	# Scale by facing directness and by range falloff.
-	var range_factor := 1.0 - (dist / range_m)
-	var strength := facing * range_factor
+		# Turned away at medium distance: glancing blind
+		return maxf(1.5, min_blind_s * 0.6 * range_factor)
+
+	var strength := clampf(facing, 0.0, 1.0) * range_factor
 	return lerpf(min_blind_s, max_blind_s, clampf(strength, 0.0, 1.0))
