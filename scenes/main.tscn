@@ -34,7 +34,7 @@ offset_left = 12.0
 offset_top = 12.0
 offset_right = 900.0
 offset_bottom = 40.0
-text = "WASD move | LMB fire | F reload | Q smoke | E flash | Hold C defuse | R restart | Esc mouse"
+text = "WASD move | LMB fire | R reload | Q smoke | E flash | Hold C defuse | F restart | Esc mouse"
 
 [node name="Round" type="Label" parent="HUD"]
 offset_left = 12.0

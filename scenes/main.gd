@@ -169,7 +169,7 @@ func _restart() -> void:
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | LMB fire | F reload | Q smoke | E flash | Hold C defuse | R restart | Esc mouse"
+		hud.text = "WASD move | LMB fire | R reload | Q smoke | E flash | Hold C defuse | F restart | Esc mouse"
 
 
 func _update_status() -> void:
@@ -197,11 +197,11 @@ func _update_round_label() -> void:
 		return
 	match _round_state:
 		"defused":
-			label.text = "SPIKE DEFUSED — round won.  Press R to restart."
+			label.text = "SPIKE DEFUSED — round won.  Press F to restart."
 		"detonated":
-			label.text = "SPIKE DETONATED — round lost.  Press R to restart."
+			label.text = "SPIKE DETONATED — round lost.  Press F to restart."
 		"player_down":
-			label.text = "YOU ARE DOWN — round lost.  Press R to restart."
+			label.text = "YOU ARE DOWN — round lost.  Press F to restart."
 		_:
 			if _spike:
 				var pct := int(_spike.defuse_progress * 100.0)
