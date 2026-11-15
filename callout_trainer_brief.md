@@ -6,6 +6,15 @@ A hand-off document for the three-person team and AI collaborators. Updated for 
 
 **Product:** a callout practice teammate. Reconstruct a pro round's starting situation and baseline plan; let the player take over one role; show how communication changes teammate beliefs and decisions. After player intervention, the continuation is an approximate tactical simulation, not a prediction of what the actual professionals would do. Read the whole document before writing code.
 
+> **Authoritative direction update, confirmed by the user in this session (November 14, 2026):** adopt the newer Person 2/3 handoffs from Person 3's `b078210`. These decisions supersede conflicting older requirements throughout this brief:
+> - Player communication is **voice only**. Quick-call code remains a deterministic test/fallback helper, not the player UI.
+> - A free, local, pretrained LLM interprets speech and chooses teammate goals using only copied, available bot-local information. Ground it in the agreed vocabulary; do not train a model. Person 3 owns this core. Person 2 validates/physically executes goals, with the existing deterministic planner as the required circuit breaker.
+> - **No speaker trust model:** use hedge-only testimony strength. Preserve the existing empty `trust: {}` snapshot key until a coordinated contract change.
+> - Grading/debrief and belief-only counterfactual are **deferred**, not cut, until voice-to-reaction works. Do not prioritize their older milestone order over the playable comms loop.
+> - Person 3 supplies verified VOD notes; Person 2 converts them to executable scenarios. The proposed FNC/PRX Lotus source label in the new handoffs still needs an exact verified VOD/year/round/timestamp before any pro reconstruction. Continue synthetic integration meanwhile.
+> - The model machine is a capable PC with a discrete GPU, specific machine **TBD**. Record actual latency and model configuration; do not assume hardware from an older handoff.
+> - Audit nondeterministic LLM decisions using the actual recorded context/prompt/output. Keep deterministic dependency, availability and hidden-state perturbation tests as additional checks.
+
 ---
 
 ## 0. How to use this document
@@ -56,7 +65,7 @@ Some factual claims in the mentor deck (engine versions, a specific on-device mo
 
 ## 2. The pitch
 
-> **A practice teammate for callouts.** It only knows what it saw, heard, or was told. It learns how much to trust you. And it shows you exactly what your comms did to the team's picture of the round.
+> **A practice teammate for callouts.** It only knows what it saw, heard, or was told. You speak to it, and its decisions show what your comms changed about the team's picture of the round.
 
 ### 2.1 One-paragraph description
 

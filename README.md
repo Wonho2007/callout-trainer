@@ -2,7 +2,9 @@
 
 A Godot first-person practice scenario where the player communicates with information-limited bot teammates, then reviews what those callouts changed.
 
-**Status: Person 2's delayed inbox and command runtime are implemented with headless tests and a synthetic actor demo. No playable Godot sandbox exists yet.** Godot and a three-person development team are confirmed. Exact editor version, map/clip, team names and hardware are still open.
+**Current direction: first-person voice comms coach with local LLM teammates.** Person 1's synthetic first-person sandbox/mechanics and Person 2's isolated bot modules exist. Person 2 now provides a separate first-person teammate integration scene; the live Person 3 voice/LLM service is still a dependency. No end-to-end voice, pro reconstruction or training benefit is claimed. Use Godot 4.4.1 stable.
+
+The user confirmed [the newer Person 2 handoff](docs/PERSON2_HANDOFF.md) and [Person 3 core handoff](docs/PERSON3_KIRO_HANDOFF.md) as authoritative: voice-only player comms, local grounded LLM decisions, no trust model, deterministic safe fallback, and grading/debrief deferred. See the precedence note at the top of the [brief](callout_trainer_brief.md). Older planning text below is historical where it conflicts.
 
 ## Start here
 
@@ -84,7 +86,7 @@ python tools/check_repo.py
 
 The GitHub Actions workflow runs this check. It is **not** a gameplay, leak-test or engine validation report.
 
-To run Godot later: Person 1 must first add project.godot, pin an exact stable Godot 4 editor/export version in docs/DECISIONS.md, and document real launch/export commands here. Do not assume that a headless script, playable scene or export already exists.
+Person 1's main sandbox runs from `project.godot`; use [the build guide](docs/BUILD.md). For Person 2's first-person teammate scene and the current voice-service dependency, use [the first-person integration guide](bots/FIRST_PERSON.md). The overhead `--visual-demo` is a development fixture and is not the player experience.
 
 ## Project contents
 

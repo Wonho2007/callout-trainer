@@ -1,5 +1,7 @@
 # Natural-language communication contract v1
 
+**Current product direction:** the user adopted the newer handoffs on November 14: voice-only player comms and local grounded LLM teammate decisions. Quick-call code stays a deterministic test/fallback helper, not the player UI. This changes input priority, not the existing comms.v1 envelope or lifecycle. Person 3 owns transcription/interpretation and model goals; Person 2 owns validation and physical execution. The separate model-goal seam in bots/FIRST_PERSON.md is proposed, not a silent extension of this schema.
+
 Status: selected by the user for implementation on Person 2's branch. This defines the boundary for Persons 1/2/3; the [bot-side runtime](PERSON2_EXECUTOR.md) now implements delayed delivery and execution against fake actor feedback. Speech interpretation and actual 3D mechanics remain pending. Other engine-wide contracts remain proposed. Coordinate changes through a PR; do not silently change these names.
 
 ## Responsibility and scope

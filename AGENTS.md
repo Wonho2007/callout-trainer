@@ -37,9 +37,11 @@ Write the leak-test fixture before bot intelligence. Verify evidence IDs existed
 
 ## Product constraints
 
-Build one compact first-person scenario with useful callouts and explainable bot adaptation. A state machine/behavior tree is sufficient; no mandatory LLM or trained model. Quick-call menu is required; speech is stretch.
+The user confirmed the newer direction documents from Person 3's `b078210` as authoritative in this session. Read [Person 2's direction handoff](docs/PERSON2_HANDOFF.md), [Person 3's core handoff](docs/PERSON3_KIRO_HANDOFF.md) and [parallel tracks](docs/PERSON3_ANTIGRAVITY_HANDOFF.md). Their direction overrides older planning defaults below and in the brief.
 
-Do not remove the brief's never-cut features without an explicit product decision. Core counterfactual is belief-only replay on fixed observations, not a promise of changed combat outcomes. Entropy reduction does not establish accuracy. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence.
+Build a first-person comms coach with voice-only player comms and local, free LLM teammate decisions. Person 3 owns voice/grounded interpretation, model goal generation, beliefs and model prompt/output logging. Person 2 owns fair perception and physical intent execution. Keep the deterministic planner as a required safety fallback; quick-call code is a test/fallback helper, not the player input UI. No training or paid API is required. Trust is removed; beliefs use report hedge strength alone. Keep the compatibility `trust: {}` field until both consumers coordinate a schema change.
+
+Grading/debrief and the belief-only counterfactual are deferred until the core voice-to-reaction loop works, not removed from the eventual product. Never invent pro behavior, measured savings, win-rate improvement, research citations or transfer evidence. Source clip/year/timestamps still require Person 3's verified notes. With nondeterministic model decisions, audit the exact recorded inputs/prompt/output; deterministic policy perturbation tests alone cannot establish full model fairness.
 
 Use synthetic fixtures for unresolved map/clip details and label them. No client access, ripped assets, replay-file scraping, secrets or paid required services. Keep the demo offline-capable.
 
