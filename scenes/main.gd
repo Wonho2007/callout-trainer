@@ -227,15 +227,23 @@ func _update_coords() -> void:
 
 
 func _region_at(p: Vector3) -> String:
-	# First region whose AABB (center +/- size/2, XZ only) contains the point, else "-".
+	# First region (in list order) whose footprint contains the point, else "-".
+	# Box regions: AABB on XZ. Circle regions: radius on XZ. List order sets precedence,
+	# so b_upper (listed before b_pit) wins the overlap -> Pit reads as the circle minus Upper.
 	if builder == null or not (builder.map_data is Dictionary):
 		return "-"
 	for region in builder.map_data.get("regions", []):
 		var c = region.get("center", [0, 0, 0])
-		var s = region.get("size", [0, 0, 0])
-		var hx: float = float(s[0]) * 0.5
-		var hz: float = float(s[2]) * 0.5
-		if abs(p.x - float(c[0])) <= hx and abs(p.z - float(c[2])) <= hz:
+		var inside := false
+		if String(region.get("shape", "box")) == "circle":
+			var r: float = float(region.get("radius", 0.0))
+			var dx: float = p.x - float(c[0])
+			var dz: float = p.z - float(c[2])
+			inside = (dx * dx + dz * dz) <= (r * r)
+		else:
+			var s = region.get("size", [0, 0, 0])
+			inside = abs(p.x - float(c[0])) <= float(s[0]) * 0.5 and abs(p.z - float(c[2])) <= float(s[2]) * 0.5
+		if inside:
 			return String(region.get("name", region.get("id", "?")))
 	return "-"
 

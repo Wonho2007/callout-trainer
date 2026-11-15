@@ -579,29 +579,32 @@
     {
       "id": "b_upper",
       "name": "B Upper",
+      "shape": "box",
       "center": [
-        0,
+        7.79,
         2,
-        -9
+        -7.22
       ],
       "size": [
-        10,
+        9.55,
         5,
-        6
+        3.0
       ]
     },
     {
       "id": "b_pit",
       "name": "B Pit",
+      "shape": "circle",
       "center": [
-        0,
+        2.77,
         2,
-        -1
+        -1.83
       ],
+      "radius": 5.0,
       "size": [
-        12,
+        10.0,
         5,
-        10
+        10.0
       ]
     },
     {

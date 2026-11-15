@@ -82,27 +82,43 @@ func _draw() -> void:
 		return
 
 	# Static callout regions (annotation colors), drawn first so walls/cover sit on top.
+	# Circles are drawn BEFORE boxes so an overlapping box (B Upper) paints over the
+	# circle (B Pit) — i.e. Pit reads as the circle with Upper's chunk removed.
 	if show_regions:
-		for r in _overlay.get("regions", []):
-			var rid := String(r.get("id", ""))
-			var col: Color = REGION_COLORS.get(rid, Color(0.6, 0.6, 0.6))
-			var top_left := _to_map(float(r["x"]) - float(r["w"]) * 0.5,
-				float(r["z"]) - float(r["d"]) * 0.5)
-			var bot_right := _to_map(float(r["x"]) + float(r["w"]) * 0.5,
-				float(r["z"]) + float(r["d"]) * 0.5)
-			var rect := Rect2(top_left, bot_right - top_left)
-			var fill := col
-			fill.a = 0.18
-			draw_rect(rect, fill, true)
-			draw_rect(rect, Color(col.r, col.g, col.b, 0.9), false, 1.5)
-			# Callout name near the region center.
-			var label := String(r.get("name", rid))
-			var center := _to_map(float(r["x"]), float(r["z"]))
-			var font := ThemeDB.fallback_font
-			var fsize := 10
-			var tw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
-			draw_string(font, center - Vector2(tw * 0.5, -3.0), label,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(col.r, col.g, col.b, 0.95))
+		var regs: Array = _overlay.get("regions", [])
+		for pass_shape in ["circle", "box"]:
+			for r in regs:
+				if String(r.get("shape", "box")) != pass_shape:
+					continue
+				var rid := String(r.get("id", ""))
+				var col: Color = REGION_COLORS.get(rid, Color(0.6, 0.6, 0.6))
+				var fill := col
+				fill.a = 0.18
+				var outline := Color(col.r, col.g, col.b, 0.9)
+				if pass_shape == "circle":
+					var ctr := _to_map(float(r["x"]), float(r["z"]))
+					# radius in pixels: scale world radius by the map's px-per-meter (x axis)
+					var span := _world_max - _world_min
+					var px_per_m := size.x / maxf(0.001, span.x)
+					var rad := float(r.get("radius", 1.0)) * px_per_m
+					draw_circle(ctr, rad, fill)
+					draw_arc(ctr, rad, 0.0, TAU, 48, outline, 1.5)
+				else:
+					var top_left := _to_map(float(r["x"]) - float(r["w"]) * 0.5,
+						float(r["z"]) - float(r["d"]) * 0.5)
+					var bot_right := _to_map(float(r["x"]) + float(r["w"]) * 0.5,
+						float(r["z"]) + float(r["d"]) * 0.5)
+					var rect := Rect2(top_left, bot_right - top_left)
+					draw_rect(rect, fill, true)
+					draw_rect(rect, outline, false, 1.5)
+				# Callout name near the region center.
+				var label := String(r.get("name", rid))
+				var center := _to_map(float(r["x"]), float(r["z"]))
+				var font := ThemeDB.fallback_font
+				var fsize := 10
+				var tw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
+				draw_string(font, center - Vector2(tw * 0.5, -3.0), label,
+					HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(col.r, col.g, col.b, 0.95))
 
 	# Cover, then walls (drawn over the region overlay).
 	for c in _overlay.get("cover", []):
