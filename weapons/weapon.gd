@@ -147,10 +147,15 @@ func fire(origin: Vector3, direction: Vector3, moving: bool, shooter: Node3D) ->
 		var blocked := false
 		if occluder != null and occluder.has_method("segment_blocked_by_smoke"):
 			blocked = occluder.segment_blocked_by_smoke(origin, hit.position)
+		if OS.get_cmdline_user_args().has("--combat-damage-debug"):
+			print("COMBAT_SHOT shooter=", shooter.name, " collider=", hit.collider.get_path(),
+				" position=", hit.position, " blocked_by_smoke=", blocked)
 		if not blocked:
 			_apply_hit_damage(hit.collider, hit.position, shooter)
 		else:
 			result["hit"] = false
+	elif OS.get_cmdline_user_args().has("--combat-damage-debug"):
+		print("COMBAT_SHOT shooter=", shooter.name, " collider=none position=", end)
 
 	fired.emit(origin, end, result["hit"])
 
@@ -192,7 +197,11 @@ func _apply_hit_damage(collider: Object, hit_pos: Vector3, shooter: Node3D = nul
 			else:
 				dmg = damage_body
 	var was_alive := actor.is_alive
+	var hp_before := actor.health.hp if actor.health != null else 0.0
 	actor.apply_damage(dmg)
+	if OS.get_cmdline_user_args().has("--combat-damage-debug"):
+		print("COMBAT_DAMAGE victim=", actor.name, " part=", part, " amount=", dmg,
+			" hp_before=", hp_before, " hp_after=", actor.health.hp if actor.health != null else 0.0)
 	if was_alive and not actor.is_alive:
 		kill_confirmed.emit(actor, shooter)
 

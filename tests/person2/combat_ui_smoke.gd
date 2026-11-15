@@ -144,6 +144,43 @@ func run(scene: Node) -> void:
 	await restart(scene)
 	await get_tree().create_timer(1.1).timeout
 	expect(not scene._victory_screen.visible and not ui.confirmation.visible and ui.kills == 0, "restart leaves no stale result or pending effect")
+	await _test_live_damage(scene)
 	if not failed:
 		print("PERSON2_COMBAT_UI_PASS checks=", checks)
 	get_tree().quit(1 if failed else 0)
+
+func _test_live_damage(scene: Node) -> void:
+	# Exercise normal gameplay paths rather than injecting damage or firing a
+	# short ray beside a victim. Keep the authored arrival positions and real
+	# perception delay, aim controller, rifle, collision and player input loop.
+	await arrive(scene)
+	for bot in scene.enemy_runtimes.values():
+		bot.enable_combat(scene.utility)
+	scene.runtime.enable_combat(scene.utility)
+	var player: ActorBase = scene._player
+	player.set_physics_process(true)
+	for _i in range(180):
+		await get_tree().physics_frame
+	expect(player.health.hp < player.health.max_hp, "live bots deal damage through perception and physical combat")
+	ui_health_matches(scene)
+	await restart(scene)
+	await arrive(scene)
+	var target: ActorBase = scene.enemies.chronicle
+	player.camera.look_at(target.global_position + Vector3.UP * 1.86)
+	var weapon: Node = player.get_node("Camera3D/Weapon")
+	weapon.spread_base = 0
+	weapon.spread_firing = 0
+	weapon._cooldown = 0
+	var ammo: int = weapon.in_mag
+	Input.action_press("fire")
+	for _i in range(4):
+		await get_tree().physics_frame
+	Input.action_release("fire")
+	expect(weapon.in_mag < ammo and not target.is_alive, "held-fire input shoots from real camera and kills authored enemy after restart")
+	expect(scene._combat_feedback.kills == 1, "normal input kill reaches player count")
+	player.set_physics_process(false)
+	await restart(scene)
+
+func ui_health_matches(scene: Node) -> void:
+	scene._combat_feedback.refresh_health()
+	expect(scene._combat_feedback.health_bar.value == scene._player.health.hp, "HUD reflects damage from live bots")

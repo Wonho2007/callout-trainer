@@ -72,6 +72,7 @@ def main():
     parser.add_argument("--combat-ui-capture", type=Path, help="Rendered combat UI capture prefix")
     parser.add_argument("--site-capture", type=Path, help="Optional rendered B site capture from --site-smoke")
     parser.add_argument("--voice-port", type=int, default=8765)
+    parser.add_argument("--combat-damage-debug", action="store_true", help="Log privileged physical shot collisions and HP changes; never sent to policy")
     parser.add_argument("--voice-headless", action="store_true", help="Developer external-host fixture, no window")
     parser.add_argument("--voice-interpret-only", action="store_true", help="External fixture requires LLM interpretation with scripted goals")
     mode.add_argument("--first-person-smoke", action="store_true", help="Headless first-person scene/comm/intent integration assertions")
@@ -260,7 +261,7 @@ def main():
                       if args.first_person or args.action_playtest else "Opening overhead motion test. Close window or press Esc to return.", flush=True)
                 # Human-controlled run: keep the temporary project alive until
                 # the window closes; no short test timeout or headless flag.
-                return subprocess.run([godot, *(["--headless"] if args.voice_headless else []), "--path", str(project), *(["--", "--voice-port=" + str(args.voice_port), *(["--voice-interpret-fixture" if args.voice_interpret_only else "--voice-model-fixture"] if args.voice_headless else [])] if args.voice_playtest or args.lotus_playtest or args.site_playtest else [])], check=False).returncode
+                return subprocess.run([godot, *(["--headless"] if args.voice_headless else []), "--path", str(project), *(["--", "--voice-port=" + str(args.voice_port), *(["--combat-damage-debug"] if args.combat_damage_debug else []), *(["--voice-interpret-fixture" if args.voice_interpret_only else "--voice-model-fixture"] if args.voice_headless else [])] if args.voice_playtest or args.lotus_playtest or args.site_playtest else [])], check=False).returncode
             if args.first_person_smoke or args.perception_smoke or args.hud_smoke or args.action_smoke or args.voice_smoke or args.lotus_smoke or args.site_smoke or combat_ui:
                 smoke_mode = "--site-smoke" if args.site_smoke else "--lotus-smoke" if args.lotus_smoke else "--voice-smoke" if args.voice_smoke else "--action-smoke" if args.action_smoke else ("--hud-smoke" if args.hud_smoke else ("--perception-smoke" if args.perception_smoke else "--first-person-smoke"))
                 if combat_ui:
@@ -271,6 +272,8 @@ def main():
                 command = [godot, *([] if args.combat_ui_capture or args.hud_capture or args.lotus_capture or args.site_capture else ["--headless"]), "--path", str(project), "--", smoke_mode]
                 if combat_ui:
                     command.append("--voice-port=0")
+                if args.combat_damage_debug:
+                    command.append("--combat-damage-debug")
                 if args.combat_ui_capture:
                     command.append("--combat-ui-capture=" + str(args.combat_ui_capture.resolve()))
                 if args.hud_capture:

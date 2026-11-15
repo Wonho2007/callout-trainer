@@ -34,7 +34,8 @@ cleanup of another worker's files was performed.
 | `weapons/weapon.gd` | Adds privileged `kill_confirmed(victim, shooter)` after lethal damage; optional third shooter argument preserves two-argument `_apply_hit_damage` callers |
 | `utility/molly.gd` | Adds privileged `kill_confirmed(victim)` after a lethal area-damage tick |
 | `utility/utility_system.gd` | Forwards molly confirmation with existing thrower ID as `kill_confirmed(victim, thrower_id)` |
-| `validation/run_person2_tests.py` | Copies new UI/test and local molly overlay; adds dedicated smoke/capture mode using actual site scene and existing strict checks/timeouts |
+| `validation/run_person2_tests.py` | Copies new UI/test and local molly overlay; adds dedicated smoke/capture mode using actual site scene and existing strict checks/timeouts; forwards optional shot diagnostics |
+| `validation/run_voice_game.ps1` | Optional `-CombatDebug` forwards the diagnostic flag to the game runner |
 | `tests/person2/combat_ui_smoke.gd` | Dedicated scene integration checks; leaves `site_smoke.gd` untouched |
 
 These signals are presentation-facing physical results, not bot observations or
@@ -46,7 +47,7 @@ path truthfully; other utility does not apply lethal actor damage.
 `validation/run_voice_game.ps1` selects `--site-playtest` through the same runner.
 The new component and modified molly are copied by that shared preparation path,
 alongside the already overlaid weapon and utility system. Thus the pinned `0260f28`
-snapshot does not mask these changes. The voice launcher itself is unchanged.
+snapshot does not mask these changes. The voice launcher's normal behavior is unchanged.
 
 ## Verification and limitations
 
@@ -69,8 +70,8 @@ diagnostics, **not passing strict runs**:
 |---|---|
 | Required bot scripts, 11 suites | All 575 assertions report their pass markers; certificate error remains in each process |
 | Unmodified site smoke | All 46 assertions report pass; certificate error remains |
-| Final dedicated UI smoke, headless | All 32 assertions report pass; certificate error remains |
-| Final rendered UI smoke | All 35 checks including 3 captures report pass; certificate error remains |
+| Dedicated UI smoke, headless with live-damage extension | All 36 assertions report pass; certificate error remains |
+| Rendered UI smoke before live-damage extension | All 35 checks including 3 captures report pass; certificate error remains |
 
 Dedicated checks cover real hitscan and overlapping molly damage, owner filtering,
 duplicate/stale death rejection, friendly fire exclusion, count/tween reset,
@@ -91,6 +92,27 @@ Full diagnostic logs remain in `%TEMP%`: `combat-ui-required.log`,
 `callout-combat-ui-diagnostic.py`; it is not part of the patch or acceptance runner.
 No microphone host was started, and no human voice, exported-build or offline
 acceptance is claimed.
+
+## Follow-up: reported inability to take/deal damage
+
+The user reported firing/tracers with no apparent damage in the UI worktree, with
+no intervening smoke, before trying a restart. The game log had no script errors.
+This report has **not yet been reproduced or claimed fixed**. Diagnostic scene
+probes at authored Heaven positions measured real camera shots taking Chronicle
+from 150 to 110 to 0 HP, and a bot-rifle shot taking the player from 150 to 110 HP.
+A second probe enabled live bot perception/combat and normal player physics: bots
+killed the player within 180 physics ticks; after restart, held-fire input from the
+actual camera killed the authored enemy. The committed dedicated test now covers
+these live incoming/outgoing paths and health/count updates (four extra checks).
+
+Optional `-CombatDebug` on the voice launcher enables `--combat-damage-debug` on the
+game. The shared rifle logs `COMBAT_SHOT` with shooter, collider path, impact and
+smoke-block status, plus `COMBAT_DAMAGE` with victim, hit part, damage and HP before/
+after. Misses log `collider=none`. Logs stay in the existing ignored run directory;
+no additional data enters bot policy, models or the recorder schema. Damage values,
+spread, smoke behavior and combat rules were deliberately left unchanged without
+a reproduction identifying the failure. The next failing run's `game.log` is needed
+to identify the actual hit blocker rather than guessing from visible tracers.
 
 ## Integration and strict rerun
 

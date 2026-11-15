@@ -1,4 +1,4 @@
-param([switch]$ModelGoals, [switch]$Lotus, [switch]$LegacyRoom, [switch]$LegacyLotus)
+param([switch]$ModelGoals, [switch]$Lotus, [switch]$LegacyRoom, [switch]$LegacyLotus, [switch]$CombatDebug)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $pythonExe = Join-Path $env:USERPROFILE '.cache\callout-voice-venv\Scripts\python.exe'
@@ -35,6 +35,7 @@ try {
     if ($LegacyLotus) { $sceneMode = '--lotus-playtest'; $sharedRef = '8712f7d' }
     $gameArgs = @('-u', "`"$(Join-Path $PSScriptRoot 'run_person2_tests.py')`"", '--godot', "`"$godotExe`"",
         $sceneMode, '--voice-port', $voicePort, '--person1-ref', $sharedRef, '--person3-ref', '57f809d')
+    if ($CombatDebug) { $gameArgs += '--combat-damage-debug' }
     $gameProcess = Start-Process -FilePath $pythonExe -ArgumentList $gameArgs -WorkingDirectory $repoRoot -WindowStyle Hidden -RedirectStandardOutput $gameLog -RedirectStandardError $gameErrors -PassThru
     $ready = $false
     $readyDeadline = (Get-Date).AddSeconds(30)
