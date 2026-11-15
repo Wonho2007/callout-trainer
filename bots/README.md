@@ -1,5 +1,7 @@
 # Person 2 knowledge planner
 
+**Current role:** this deterministic planner is the required safety fallback under Person 3's voice/local-LLM teammate core, per the user's confirmed updated direction. It is not the primary model implementation. The owned [first-person integration and proposed comm/goal seam](FIRST_PERSON.md) now run the shared player and a spawned teammate; actual microphone/LLM service wiring is still a dependency.
+
 New Codex window: read [Person 2 continuation handoff](PERSON2_HANDOFF.md) for branch state, ownership, tested components, commands and the next integration task.
 
 A deterministic, rule-based goal selector above the existing command executor. This is Person 2-owned code; no Person 1 actor/world files or Person 3 belief/annotation files were edited or merged.
