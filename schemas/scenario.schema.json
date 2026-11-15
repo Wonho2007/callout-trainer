@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/callout-trainer/scenario.schema.json",
+  "title": "Executable scenario v1 (callout-trainer)",
+  "description": "Schema for a validated scenario file. Real scenario data comes from hand-annotated public VODs (Person 3 annotates; Person 2 authors the final scenarios/*.json). Synthetic samples must set synthetic:true and must NOT contain invented pro positions or player data.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "synthetic",
+    "source",
+    "map",
+    "side",
+    "round_context",
+    "actors",
+    "timeline",
+    "branches"
+  ],
+  "$defs": {
+    "region_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A region ID that must exist in the referenced map file. Runtime-validated against the loaded map."
+    },
+    "ability_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "An ability ID that must exist in utility/abilities.json."
+    },
+    "tick": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maybe_unknown_string": {
+      "oneOf": [
+        { "type": "string", "minLength": 1, "not": { "const": "unknown" } },
+        { "const": "unknown" }
+      ]
+    },
+    "maybe_unknown_number": {
+      "oneOf": [
+        { "type": "number" },
+        { "const": "unknown" }
+      ]
+    },
+    "maybe_unknown_region": {
+      "oneOf": [
+        { "type": "string", "minLength": 1, "not": { "const": "unknown" } },
+        { "const": "unknown" }
+      ]
+    },
+    "weapon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "ammo_in_mag": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "const": "unknown" }] },
+        "reserve_ammo": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "const": "unknown" }] }
+      }
+    },
+    "util_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ability_id", "charges"],
+      "properties": {
+        "ability_id": { "$ref": "#/$defs/ability_id" },
+        "charges": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "const": "unknown" }] }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "team", "hp", "start_region"],
+      "properties": {
+        "id":           { "type": "string", "minLength": 1 },
+        "team":         { "enum": ["attacker", "defender"] },
+        "agent":        { "$ref": "#/$defs/maybe_unknown_string" },
+        "role":         { "$ref": "#/$defs/maybe_unknown_string" },
+        "hp":           { "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 150 }, { "const": "unknown" }] },
+        "armor":        { "oneOf": [{ "type": "integer", "minimum": 0 }, { "const": "unknown" }] },
+        "start_region": { "$ref": "#/$defs/maybe_unknown_region" },
+        "weapon":       { "$ref": "#/$defs/weapon" },
+        "utility":      { "type": "array", "items": { "$ref": "#/$defs/util_slot" } },
+        "is_player":    { "type": "boolean" }
+      }
+    },
+    "timeline_beat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tick", "actor_id", "action", "region"],
+      "properties": {
+        "tick":            { "$ref": "#/$defs/tick" },
+        "actor_id":        { "type": "string", "minLength": 1 },
+        "action":          { "type": "string", "minLength": 1 },
+        "region":          { "$ref": "#/$defs/maybe_unknown_region" },
+        "evidence_source": { "type": "string" },
+        "certainty":       { "enum": ["confirmed", "inferred", "unknown"] },
+        "note":            { "type": "string" }
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "weight", "trigger_condition", "beats"],
+      "properties": {
+        "id":                { "type": "string", "minLength": 1 },
+        "weight":            { "type": "number", "minimum": 0, "maximum": 1 },
+        "trigger_condition": { "type": "string", "minLength": 1 },
+        "beats":             { "type": "array", "items": { "$ref": "#/$defs/timeline_beat" } },
+        "note":              { "type": "string" }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "scenario.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable unique scenario ID."
+    },
+    "synthetic": {
+      "type": "boolean",
+      "description": "Must be true for any scenario not derived from a real annotated VOD. Synthetic scenarios must not contain invented pro positions or player data."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["annotator"],
+      "properties": {
+        "vod_url":         {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "not": { "enum": ["unknown", "synthetic"] }
+            },
+            { "const": "unknown" },
+            { "const": "synthetic" }
+          ]
+        },
+        "map":             { "type": "string" },
+        "round":           { "oneOf": [{ "type": "integer", "minimum": 1 }, { "const": "unknown" }] },
+        "plant_timestamp": {
+          "oneOf": [
+            { "type": "string", "not": { "enum": ["unknown"] } },
+            { "const": "unknown" }
+          ]
+        },
+        "annotator":       { "type": "string", "minLength": 1 },
+        "note":            { "type": "string" }
+      }
+    },
+    "map": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Map name. The map file supplies the region registry. Person 1 owns map files."
+    },
+    "map_file": {
+      "type": "string",
+      "description": "Optional path to the map JSON relative to repo root (e.g. world/maps/test_room.json). Validator uses this to load region IDs."
+    },
+    "side": {
+      "enum": ["attacker", "defender"],
+      "description": "Which side the player's team is on."
+    },
+    "round_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time_left_s", "spike_planted", "spike_site_region"],
+      "properties": {
+        "time_left_s":       { "oneOf": [{ "type": "number", "minimum": 0 }, { "const": "unknown" }] },
+        "spike_planted":     { "type": "boolean" },
+        "spike_site_region": { "$ref": "#/$defs/maybe_unknown_region" },
+        "spike_position":    {
+          "oneOf": [
+            { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+            { "const": "unknown" }
+          ]
+        },
+        "seed":              { "oneOf": [{ "type": "integer" }, { "const": "unknown" }] },
+        "note":              { "type": "string" }
+      }
+    },
+    "actors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/actor" },
+      "description": "All actors (player + teammates + enemies). Exactly one actor should have is_player:true."
+    },
+    "timeline": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/timeline_beat" },
+      "description": "Ordered baseline timeline beats. Validator checks tick ordering."
+    },
+    "branches": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/branch" },
+      "description": "At least one reactive branch. Validator checks weights sum to 1.0."
+    },
+    "branch_weights_source": {
+      "type": "string",
+      "description": "How branch weights were assigned (e.g. 'annotation', 'synthetic_uniform')."
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}
