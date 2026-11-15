@@ -97,7 +97,9 @@ acceptance is claimed.
 
 The user reported firing/tracers with no apparent damage in the UI worktree, with
 no intervening smoke, before trying a restart. The game log had no script errors.
-This report has **not yet been reproduced or claimed fixed**. Diagnostic scene
+After the diagnostic launcher update, the user reported that damage worked again
+and authorized a push. The original failure was not reproduced, and its root cause
+remains unestablished; the diagnostic changes did not alter damage rules. Diagnostic scene
 probes at authored Heaven positions measured real camera shots taking Chronicle
 from 150 to 110 to 0 HP, and a bot-rifle shot taking the player from 150 to 110 HP.
 A second probe enabled live bot perception/combat and normal player physics: bots
@@ -111,8 +113,8 @@ smoke-block status, plus `COMBAT_DAMAGE` with victim, hit part, damage and HP be
 after. Misses log `collider=none`. Logs stay in the existing ignored run directory;
 no additional data enters bot policy, models or the recorder schema. Damage values,
 spread, smoke behavior and combat rules were deliberately left unchanged without
-a reproduction identifying the failure. The next failing run's `game.log` is needed
-to identify the actual hit blocker rather than guessing from visible tracers.
+a reproduction identifying the failure. If it recurs, the failing run's `game.log`
+can identify the actual hit blocker rather than guessing from visible tracers.
 
 ## Integration and strict rerun
 
