@@ -5,8 +5,8 @@ Team GitHub handles: Wonho2007, sn-kurup and liedwin49. Wonho2007 has selected P
 | Lane | Owns | Must provide | Depends on |
 |---|---|---|---|
 | Person 1: world/player/delivery | world/, actors/, weapons/, utility/, scenes/maps/, scenes/player/, project.godot, main scene, export settings | Test room; named regions/spawns; shared mechanics; navigation bake; utility tests; map overlay geometry; offline build/video | Schemas from Person 3; bot integration from Person 2 |
-| Person 2: perception/bots/scenario | perception/, bots/, scenarios/, validation/, scenes/bots/; policy/perception tests | Delayed perception; baseline and reactive branches; fair controller; evidence trace; validator; fallback diagnostics | World/action interfaces from Person 1; belief contract from Person 3 |
-| Person 3: comms/evaluation/debrief | comms/, belief/, grading/, recording/, ui/debrief/, evaluation/; shared schemas | Quick-call; beliefs/trust; grading/logging; modes; debrief; belief counterfactual; headless pilot | Regions/events from Person 1; observations/decisions from Person 2 |
+| Person 2: perception/bots/scenario | perception/, bots/, scenarios/, validation/, scenes/bots/; policy/perception tests | Conversion of Person 3 notes into executable scenarios; delayed perception; baseline and reactive branches; fair controller; evidence trace; validator; fallback diagnostics | World/action interfaces from Person 1; belief contract from Person 3 |
+| Person 3: annotation/comms/evaluation/debrief | annotations/, comms/, belief/, grading/, recording/, ui/debrief/, evaluation/; shared schemas | Verified clip notes with source timestamps/uncertainty and communication opportunities; quick-call; beliefs/trust; grading/logging; modes; debrief; belief counterfactual; headless pilot | Regions/events from Person 1; observations/decisions from Person 2 |
 
 Directories above are reserved ownership boundaries; they are not claims that these modules already exist.
 
@@ -15,6 +15,10 @@ Directories above are reserved ownership boundaries; they are not claims that th
 Follow [docs/AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Person 1's first map is generated from world/maps/test_room.json by world/sandbox_builder.gd, with matching meshes/collision and named regions/spawns. Person 2 owns reusable bot behavior and scenarios; Person 3 coordinates debug visibility and the communication trace. The paths are proposed and not implemented.
 
 Person 1 initially operates Godot; all three help playtest. Use synthetic fixtures while dependencies are unfinished. Integrate one callout-driven teammate response before recreating the source site.
+
+## Video annotation ownership
+
+Person 3 watches and annotates the videos using [the annotation guide](VIDEO_ANNOTATION.md), storing notes under annotations/. Person 2 converts verified notes into executable scenario JSON, scripts and reactive branches; Person 1 maps geometry/markers. Keep observed facts, uncertainty and authored alternatives separate. Begin with one short clip and hand over starting-state notes early.
 
 ## Work together first
 

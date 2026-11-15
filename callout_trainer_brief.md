@@ -160,7 +160,7 @@ Use one shared **Godot 4 desktop project**. Pin the same stable editor version a
 
 **Reconstruction workflow:**
 
-1. Choose a public pro-round clip with action concentrated around one site. Person 1 recreates the relevant layout and sightlines; Person 2 annotates the starting situation, baseline actions and uncertainty; Person 3 identifies the communication opportunity to grade.
+1. Choose a public pro-round clip with action concentrated around one site. Person 1 recreates the relevant layout and sightlines; Person 3 watches and annotates the starting situation, observed actions, uncertainty and communication opportunities; Person 2 converts those notes into executable baseline actions and reactive branches.
 2. Start inside the round at a decision point, with the spike already planted. The player replaces one participant. Label reduced player counts and missing positions as simplifications.
 3. Baseline steps have goals, earliest times, deadlines, observation-based guards, and fallbacks. Example: hold angle -> receive delayed entry sound -> reposition -> see opponent -> engage. Do not force actions at VOD timestamps after a bot dies or loses vision.
 4. When observations no longer fit the baseline, select an authored reactive branch: cover a changed entry, hold behind smoke, or defend the spike. Guards use available observations, beliefs, own state and explicitly public round signals, never hidden enemy coordinates.
@@ -212,6 +212,8 @@ Scenarios are JSON files in the repo. A real database adds nothing at this scale
 ```
 
 Extend the example JSON with schema version, seed, coordinate convention, clip start/end timestamps, annotation uncertainty, simplified player slots, and baseline steps containing goal region, action, time window, observation guard and fallback. At least one authored branch must handle a changed entry or smoke. Hidden source positions remain private loader/evaluator data, not policy inputs.
+
+**Annotation ownership:** Person 3 owns source-video notes in annotations/. Person 2 owns conversion to executable scenarios/ and validation. Person 1 owns map geometry and markers. The repository's docs/VIDEO_ANNOTATION.md defines the annotation template and handoff; source observations, inferred facts and authored alternatives must remain distinguishable.
 
 The **validator** is a script that must pass before a scenario is accepted:
 
@@ -473,7 +475,7 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 **Owns:** perception/, bots/, scenarios/, validation/, scenes/bots/ and bot/perception tests.
 
 1. With Person 3, define the perception/policy boundary and build the first leak-test fixture before bot intelligence. Develop policy against fake observations.
-2. Annotate the chosen clip: initial state, baseline goals/timings, uncertain positions, reduced-player simplifications, reactive guards, fallback, source URL/timestamps.
+2. Consume Person 3's verified video annotations and convert the initial state/timeline into scenario JSON, baseline goals/timings, authored reactive guards and fallback. Preserve source timestamps, uncertainties and simplifications; validate feasibility rather than reassigning video annotation to Person 2.
 3. Build sight/hearing, smoke/flash effects, seeded reaction delay, observation logs and the coarse region visibility filter.
 4. Implement slow planner and fast controller: hold, move/peek, engage, retreat and cover defuse. Track last observed positions instead of hidden live targets.
 5. Add baseline script and observation-driven reactive branches. Consume Person 3's belief interface via a stub until ready. Emit decision/evidence records.
@@ -486,20 +488,21 @@ One shared Godot project, three owners, shared schemas. Replace Person 1/2/3 wit
 
 ### 9.3 Person 3: communication, evaluation, and explanation
 
-**Owns:** comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schema definitions and belief/logging tests.
+**Owns:** annotations/ (video notes), comms/, belief/, grading/, recording/, ui/debrief/, evaluation/, shared schema definitions and belief/logging tests.
 
-1. Define copied-value observation, callout, decision, run and snapshot schemas. Create a fake run and evidence-ID/time checks with Person 2 before bots.
-2. Implement per-enemy region beliefs, movement prediction, observation updates, trust/expiry and quick-call UI. Keyword parsing follows only if the core works; speech is stretch.
-3. Add silent/chatty/budgeted message modes and symmetric/asymmetric trust settings; keep perception/combat identical across modes. Bot templates speak only from observations.
-4. Implement precision, recall, latency, entropy change and belief accuracy against truth. Track message counts, fallback events and time/attempts to criterion. Undefined metrics are unavailable, not zero.
-5. Record truth separately from observations; build a scrubbable top-down truth-versus-belief timeline, callout markers and evidence-to-action inspector.
-6. Add core belief-only counterfactual replay from fixed observation logs; label it explicitly as not recomputing combat outcomes.
-7. Build the headless noisy-callout pilot and VOD-only instruction sheet; reserve unseen pre/post variants, document settings and limitations, coordinate a human-receiver test if feasible.
-8. Prepare real comparison results and the bot -> scenario -> trace demo narrative. Ask both teammates to collect runs and help test.
+1. Own video annotation: watch the selected public retake segment and record source timestamps, initial actor regions/state, visible actions/utility, uncertainty and communication opportunities in annotations/<scenario_id>.md. Provide early notes to Person 1 for the blockout and Person 2 for scenario scripting. Verify agent-assisted notes manually; never invent off-screen facts or unavailable team comms. Follow docs/VIDEO_ANNOTATION.md in the repository.
+2. Define copied-value observation, callout, decision, run and snapshot schemas. Create a fake run and evidence-ID/time checks with Person 2 before bots.
+3. Implement per-enemy region beliefs, movement prediction, observation updates, trust/expiry and quick-call UI. Keyword parsing follows only if the core works; speech is stretch.
+4. Add silent/chatty/budgeted message modes and symmetric/asymmetric trust settings; keep perception/combat identical across modes. Bot templates speak only from observations.
+5. Implement precision, recall, latency, entropy change and belief accuracy against truth. Track message counts, fallback events and time/attempts to criterion. Undefined metrics are unavailable, not zero.
+6. Record truth separately from observations; build a scrubbable top-down truth-versus-belief timeline, callout markers and evidence-to-action inspector.
+7. Add core belief-only counterfactual replay from fixed observation logs; label it explicitly as not recomputing combat outcomes.
+8. Build the headless noisy-callout pilot and VOD-only instruction sheet; reserve unseen pre/post variants, document settings and limitations, coordinate a human-receiver test if feasible.
+9. Prepare real comparison results and the bot -> scenario -> trace demo narrative. Ask both teammates to collect runs and help test.
 
 **Done when:** structured callouts change beliefs and behavior; the debrief explains why; all four comparison arms exist; repeatable pilot results are saved; no transfer claim exceeds the evidence.
 
-**Handoffs:** hour 2 schemas/fixtures; hour 6 belief/trust/grading on fake logs; hour 8 quick-call and live belief adapter; hour 12 real run recording and basic score end screen. Debrief and counterfactual follow integration.
+**Handoffs:** early verified clip notes/starting state for Persons 1/2 alongside hour 2 schemas/fixtures; hour 6 belief/trust/grading on fake logs; hour 8 quick-call and live belief adapter; hour 12 real run recording and basic score end screen. Debrief and counterfactual follow integration.
 
 ### 9.4 Shared contracts and integration gates
 
@@ -529,7 +532,7 @@ Use signals and narrow adapters, with restricted bot subscriptions. A global eve
 | 20-22 | Target build; backup video | Final fairness/validator checks | Metrics/limitations/demo rehearsal | Rehearsed offline demo and video |
 | 22-24 | Freeze/export/package | Verify frozen build | Submission/evidence bundle | No feature additions |
 
-**Balance:** Person 3 has the heaviest UI/analysis lane. Person 1 handles map drawing data, export and video; Person 2 owns validation and safety telemetry; both help collect evaluation runs. No optional speech/LLM work while debrief is incomplete.
+**Balance:** Person 3 has the heaviest UI/analysis lane and now owns video annotation. Timebox one short clip and deliver early verified notes before polishing UI; Person 1 handles map drawing data, export and demo video; Person 2 owns executable scenario conversion, validation and safety telemetry; both help collect evaluation runs. No optional speech/LLM work while debrief is incomplete.
 
 Merge small changes at hours 2, 6, 8, 12 and 16. Separate scene ownership avoids main-scene conflicts. Shared schema changes require updating fixtures and both consumers.
 
