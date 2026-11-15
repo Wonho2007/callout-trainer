@@ -615,6 +615,11 @@ func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6,
 	var body := StaticBody3D.new()
 	body.name = id
 	body.position = pos
+	# Optional rotation (degrees, XYZ) — used for tilted-box ramps. A solid rotated box is a
+	# convex collider, so a CharacterBody3D walks its sloped face cleanly (no trimesh needed).
+	if box.has("rotation_deg"):
+		var rd := _to_vec3(box.get("rotation_deg", [0, 0, 0]))
+		body.rotation = Vector3(deg_to_rad(rd.x), deg_to_rad(rd.y), deg_to_rad(rd.z))
 	body.collision_layer = LAYER_WORLD
 	body.collision_mask = 0
 	parent.add_child(body)
