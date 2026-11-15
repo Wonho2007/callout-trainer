@@ -19,7 +19,16 @@ class_name ActorBase
 @export var crouch_speed: float = 2.0
 @export var jump_velocity: float = 4.5
 
+## Dash: a short horizontal impulse burst. Respects collision (move_and_slide),
+## so an actor cannot dash through walls. Placeholders tuned by playtest.
+@export var dash_speed: float = 40.0
+@export var dash_time_s: float = 0.18
+@export var dash_cooldown_s: float = 2.5
+
 enum MoveMode { RUN, WALK, CROUCH }
+
+## Emitted when a dash starts (for the event bus / feedback). No hidden truth.
+signal dashed(direction: Vector3)
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 
@@ -28,6 +37,11 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 var move_dir: Vector3 = Vector3.ZERO
 var move_mode: int = MoveMode.RUN
 var _want_jump: bool = false
+
+## Dash state.
+var _dash_dir: Vector3 = Vector3.ZERO
+var _dash_remaining: float = 0.0
+var _dash_cooldown_remaining: float = 0.0
 
 ## Optional health component child named "Health", if present.
 @onready var health: Health = get_node_or_null("Health")
@@ -55,8 +69,12 @@ func _on_health_died() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _dash_cooldown_remaining > 0.0:
+		_dash_cooldown_remaining = maxf(0.0, _dash_cooldown_remaining - delta)
+
 	# A dead combatant does not move, but still falls so it rests on the floor.
 	if not is_alive:
+		_dash_remaining = 0.0
 		_apply_gravity(delta)
 		velocity.x = 0.0
 		velocity.z = 0.0
@@ -64,6 +82,16 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_apply_gravity(delta)
+
+	# An active dash overrides normal horizontal movement with an impulse burst;
+	# move_and_slide still resolves collision, so you cannot dash through walls.
+	if _dash_remaining > 0.0:
+		_dash_remaining -= delta
+		velocity.x = _dash_dir.x * dash_speed
+		velocity.z = _dash_dir.z * dash_speed
+		move_and_slide()
+		return
+
 	if _want_jump and is_on_floor():
 		velocity.y = jump_velocity
 	_want_jump = false
@@ -104,6 +132,34 @@ func set_move_dir(dir: Vector3) -> void:
 ## Request a jump on the next physics step (applied only if on the floor).
 func request_jump() -> void:
 	_want_jump = true
+
+
+## Dash in a world-space horizontal direction (y ignored). Falls back to the
+## actor's current facing if the direction is ~zero. No-op while dead, already
+## dashing, or on cooldown. Shared by the player and bots.
+func dash(direction: Vector3) -> bool:
+	if not is_alive or _dash_remaining > 0.0 or _dash_cooldown_remaining > 0.0:
+		return false
+	var d := direction
+	d.y = 0.0
+	if d.length() < 0.001:
+		d = -global_transform.basis.z  # current facing
+		d.y = 0.0
+	_dash_dir = d.normalized()
+	_dash_remaining = dash_time_s
+	_dash_cooldown_remaining = dash_cooldown_s
+	dashed.emit(_dash_dir)
+	return true
+
+
+## True if a dash can be triggered right now (alive, not dashing, off cooldown).
+func can_dash() -> bool:
+	return is_alive and _dash_remaining <= 0.0 and _dash_cooldown_remaining <= 0.0
+
+
+## Remaining dash cooldown in seconds (0 = ready). For HUD/feedback.
+func dash_cooldown_left() -> float:
+	return _dash_cooldown_remaining
 
 
 ## Move toward a world-space point. Returns the distance remaining. Callers

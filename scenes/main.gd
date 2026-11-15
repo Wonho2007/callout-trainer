@@ -85,6 +85,7 @@ func _spawn_player() -> void:
 	# Give the player references it needs for utility (shared mechanics side).
 	_player.utility = utility
 	_player.flash_overlay = get_node_or_null("HUD/FlashOverlay")
+	_player.blind_overlay = get_node_or_null("HUD/BlindOverlay")
 	_player.smoke_overlay = get_node_or_null("HUD/SmokeOverlay")
 	# Privileged event records for Person 3's grader (not a policy input path).
 	_player.health.damaged.connect(func(amount, remaining):
@@ -114,6 +115,24 @@ func _spawn_target() -> void:
 		_target.teleport_to(spawn)
 	else:
 		_target.global_position = Vector3(7, 1, -7)
+	_wire_minimap()
+
+
+func _wire_minimap() -> void:
+	var foes: Array = []
+	if _target:
+		foes.append(_target)
+	# The scan orb tests against the same enemy list.
+	if _player:
+		_player.scan_targets = foes
+	var mm := get_node_or_null("HUD/Minimap")
+	if mm == null:
+		return
+	mm.builder = builder
+	mm.player = _player
+	mm.enemies = foes
+	mm.utility = utility   # so the minimap can draw decaying recon marks
+	mm.refresh()
 
 
 func _spawn_spike() -> void:
@@ -169,7 +188,7 @@ func _restart() -> void:
 func _update_hud() -> void:
 	var hud := get_node_or_null("HUD/Hints")
 	if hud:
-		hud.text = "WASD move | LMB fire | R reload | Q smoke | E flash | Hold C defuse | F restart | Esc mouse"
+		hud.text = "WASD | LMB fire | V dash | R reload | Q smoke | E flash | G wave | X molly | T scan | Hold C defuse | F restart | Esc mouse"
 
 
 func _update_status() -> void:
@@ -197,11 +216,11 @@ func _update_round_label() -> void:
 		return
 	match _round_state:
 		"defused":
-			label.text = "SPIKE DEFUSED — round won.  Press F to restart."
+			label.text = "SPIKE DEFUSED — round won.  Press R to restart."
 		"detonated":
-			label.text = "SPIKE DETONATED — round lost.  Press F to restart."
+			label.text = "SPIKE DETONATED — round lost.  Press R to restart."
 		"player_down":
-			label.text = "YOU ARE DOWN — round lost.  Press F to restart."
+			label.text = "YOU ARE DOWN — round lost.  Press R to restart."
 		_:
 			if _spike:
 				var pct := int(_spike.defuse_progress * 100.0)

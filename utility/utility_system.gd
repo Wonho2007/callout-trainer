@@ -9,6 +9,10 @@ class_name UtilitySystem
 
 const SmokeScript := preload("res://utility/smoke.gd")
 const FlashScript := preload("res://utility/flash.gd")
+const MollyScript := preload("res://utility/molly.gd")
+const BlindWaveScript := preload("res://utility/blind_wave.gd")
+const ScanOrbScript := preload("res://utility/scan_orb.gd")
+const ReconOutlineScript := preload("res://utility/recon_outline.gd")
 
 ## Emitted when utility is deployed, for the privileged recorder/grader (not a
 ## policy input). Carries the ability id, thrower id and world position.
@@ -19,6 +23,11 @@ signal deployed(ability_id: String, thrower_id: String, position: Vector3)
 var _defs: Dictionary = {}
 var _smokes: Array[Smoke] = []
 var _flashes: Array[Flash] = []
+var _mollies: Array[Molly] = []
+var _blind_waves: Array[BlindWave] = []
+## Decaying last-known recon marks for the player's HUD/minimap (not bot policy).
+## Each: { position: Vector3, reveal_until: float }.
+var _recon_marks: Array = []
 
 
 func _ready() -> void:
@@ -88,6 +97,80 @@ func throw_flash(from: Vector3, velocity: Vector3) -> Flash:
 	flash.expired.connect(func(): _flashes.erase(flash))
 	deployed.emit("flash", "player", from)
 	return flash
+
+
+## Toss a molly (area_damage) projectile from `from` with an initial `velocity`.
+## It arcs, bounces, and ignites a damaging ground zone where it rests. Returns
+## the Molly, or null if undefined.
+func throw_molly(from: Vector3, velocity: Vector3) -> Molly:
+	if not _defs.has("molly"):
+		return null
+	var molly: Molly = MollyScript.new()
+	molly.setup(_defs["molly"])
+	add_child(molly)
+	molly.throw(from, velocity)
+	_mollies.append(molly)
+	molly.expired.connect(func(): _mollies.erase(molly))
+	molly.ignited.connect(func(pos): deployed.emit("molly", "player", pos))
+	return molly
+
+
+## Launch a blind wave from `from` travelling along horizontal `direction`.
+## Returns the BlindWave, or null if undefined.
+func throw_blind_wave(from: Vector3, direction: Vector3) -> BlindWave:
+	if not _defs.has("blind_wave"):
+		return null
+	var wave: BlindWave = BlindWaveScript.new()
+	wave.setup(_defs["blind_wave"])
+	add_child(wave)
+	wave.launch(from, direction)
+	_blind_waves.append(wave)
+	wave.expired.connect(func(): _blind_waves.erase(wave))
+	wave.detonated.connect(func(pos): deployed.emit("blind_wave", "player", pos))
+	return wave
+
+
+## Throw a scan orb from `from` with `velocity`, scanning against `targets` on
+## detonation. Revealed contacts (fair LOS only) become decaying recon marks.
+## Returns the ScanOrb, or null if undefined.
+func throw_scan_orb(from: Vector3, velocity: Vector3, targets: Array) -> ScanOrb:
+	if not _defs.has("scan_orb"):
+		return null
+	var orb: ScanOrb = ScanOrbScript.new()
+	orb.setup(_defs["scan_orb"])
+	add_child(orb)
+	orb.throw(from, velocity, targets)
+	orb.scanned.connect(_on_scan)
+	orb.scanned.connect(func(_c): deployed.emit("scan_orb", "player", orb.global_position))
+	return orb
+
+
+func _on_scan(contacts: Array) -> void:
+	for c in contacts:
+		_recon_marks.append(c)
+		# Spawn a decaying through-wall outline at each scanned position
+		# (player-only visual snapshot of fair info; not a bot-policy input).
+		var outline: ReconOutline = ReconOutlineScript.new()
+		add_child(outline)
+		var dur := float(c.get("reveal_until", 0.0)) - (Time.get_ticks_msec() / 1000.0)
+		outline.setup(c["position"], maxf(0.1, dur))
+
+
+## Current, non-expired recon marks for the player's HUD/minimap. Prunes stale
+## ones. This is a player-facing last-known display, never a bot-policy input.
+func recon_marks() -> Array:
+	var now := Time.get_ticks_msec() / 1000.0
+	var live: Array = []
+	for m in _recon_marks:
+		if float(m.get("reveal_until", 0.0)) > now:
+			live.append(m)
+	_recon_marks = live
+	return live
+
+
+## Live blind waves, for the player/perception to query on detonation.
+func active_blind_waves() -> Array[BlindWave]:
+	return _blind_waves
 
 
 ## True if any active smoke blocks the straight segment a -> b. Perception and
