@@ -16,7 +16,7 @@ is pending review. This is not a verified reconstruction or a prediction of pro 
 
 - [Project description and requirements](docs/PROJECT_DESCRIPTION.md)
 - [Current Person 2 handoff](docs/PERSON2_HANDOFF.md)
-- [Prompt for a new Codex window](docs/CODEX_RESUME_PROMPT.md)
+- [Prompt for a new Kiro window](docs/KIRO_RESUME_PROMPT.md)
 - [Current team/integration status](docs/HANDOFFS.md)
 - [Repository instructions](AGENTS.md)
 

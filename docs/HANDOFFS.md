@@ -22,7 +22,7 @@ the integration runner overlays the shared weapon script onto its pinned source.
 - [Project description](PROJECT_DESCRIPTION.md): product, current scope and deferred work.
 - [Person 2 handoff](PERSON2_HANDOFF.md): authoritative continuation state, exact tools,
   test scopes, remaining dependencies and next sequence.
-- [New Codex prompt](CODEX_RESUME_PROMPT.md): paste into a fresh window.
+- [New Kiro prompt](KIRO_RESUME_PROMPT.md): paste into a fresh window.
 - [Current site guide](../bots/SITE_SCENARIO.md): imported map, circular-zone precedence, plant starts and +23s arrivals.
 - [Voice/game guide](../bots/VOICE_GAME.md): transport, measured goal failures, selected fallback.
 - [Historical index](ARCHIVE.md): earlier implementation records and planning snapshots.

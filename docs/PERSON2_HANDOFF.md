@@ -5,6 +5,9 @@ flash is still not fully functional; fixing it is the immediate continuation tas
 accumulated handoff. Read [project description](PROJECT_DESCRIPTION.md), [decisions](DECISIONS.md)
 and [AGENTS.md](../AGENTS.md). Earlier records are in [history](ARCHIVE.md), not below.
 
+The next continuation is in **Kiro**. Use [the Kiro resume prompt](KIRO_RESUME_PROMPT.md)
+and Kiro's native tools; historical Codex tool/sandbox instructions are environment-specific.
+
 ## Workspace and Git
 
 - Checkout: `C:\Users\Isoto\Documents\GitHub\callout-trainer`.
