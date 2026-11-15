@@ -530,33 +530,30 @@ func _build_stair_pit(divot: Dictionary, parent: Node3D) -> void:
 	mesh_instance.material_override = mat
 	body.add_child(mesh_instance)
 
-	# Collision is a SMOOTH cone (rim -> bottom), NOT the stepped mesh. CharacterBody3D
-	# snags on vertical step risers (the "getting stuck" bug); a smooth conical surface at
-	# a sub-45-degree slope lets the capsule walk in and out freely. The stepped mesh above
-	# is visual only. The cone top extends slightly OUTWARD past the floor hole (same y=0
-	# height, flush) so its surface tucks UNDER the floor's inner edge — the capsule meets
-	# the cone, never a vertical lip at the rim.
-	var rim_overlap := 0.8           # cone top reaches this far past the hole radius (flush, y=0)
-	var cst := SurfaceTool.new()
-	cst.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var c_bottom := Vector3(0, -depth, 0)
-	for i in range(segments):
-		var a0 := TAU * float(i) / float(segments)
-		var a1 := TAU * float(i + 1) / float(segments)
-		var t0 := Vector3(cos(a0) * (top_radius + rim_overlap), 0.0, sin(a0) * (top_radius + rim_overlap))
-		var t1 := Vector3(cos(a1) * (top_radius + rim_overlap), 0.0, sin(a1) * (top_radius + rim_overlap))
-		var bd0 := Vector3(cos(a0) * bottom_radius, -depth, sin(a0) * bottom_radius)
-		var bd1 := Vector3(cos(a1) * bottom_radius, -depth, sin(a1) * bottom_radius)
-		# smooth cone wall
-		cst.add_vertex(t0); cst.add_vertex(bd0); cst.add_vertex(t1)
-		cst.add_vertex(t1); cst.add_vertex(bd0); cst.add_vertex(bd1)
-		# flat bottom
-		cst.add_vertex(bd0); cst.add_vertex(c_bottom); cst.add_vertex(bd1)
-	cst.generate_normals()
-	var cmesh := cst.commit()
-	var collision := CollisionShape3D.new()
-	collision.shape = cmesh.create_trimesh_shape()
-	body.add_child(collision)
+	# Collision: a STACK of solid cylinders, one per step (NOT a trimesh). Trimesh collision
+	# on a concave stepped/coned surface makes a CharacterBody3D clip in and wedge. Solid
+	# primitive cylinders have no concave seams: the capsule simply rests on the top of
+	# whichever cylinder it is over, so it walks down the steps and back out cleanly. Each
+	# cylinder's TOP is at its tread height; all extend well below the pit bottom (solid fill).
+	# Widest/shallowest first so inner deeper cylinders sit inside the outer ones.
+	var floor_bottom := -depth - 2.0   # solid fill well below the pit
+	for k in range(steps + 1):
+		var r_outer: float
+		var y_top: float
+		if k < steps:
+			r_outer = top_radius - run * float(k)   # step k tread outer radius
+			y_top = -riser * float(k)               # step k tread height
+		else:
+			r_outer = bottom_radius                  # final flat bottom disc
+			y_top = -depth
+		var h := y_top - floor_bottom
+		var cyl := CylinderShape3D.new()
+		cyl.radius = r_outer
+		cyl.height = h
+		var cshape := CollisionShape3D.new()
+		cshape.shape = cyl
+		cshape.position = Vector3(0, y_top - h * 0.5, 0)   # top sits exactly at y_top
+		body.add_child(cshape)
 
 
 func _build_solid_box(box: Dictionary, parent: Node3D, color: Color = Color(0.6, 0.6, 0.62)) -> void:
