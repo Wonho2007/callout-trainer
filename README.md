@@ -1,9 +1,6 @@
 # Comm Bot — Callout Trainer
 
-A first-person tactical communication game built for our hackathon. Speak to an AI
-teammate, coordinate a push or flash, and defend a planted spike against four enemy
-bots. Your teammate acts on what it has seen, heard, or been told rather than
-knowing every enemy's location.
+A first-person tactical communication game built for the Riot Games track at DevHacks 2026. In this project, we took the final round of the PRX vs. FNC Masters Toronto grand finals and recreated the scenario with AI gameplay bots. The player plays as PRX something and can communicate to an AI teammate to ask for utility, initiate a double swing, or provide information. The gameplay bots operate on limited information and change their actions based on player voice input, encouraging precise and consistent communication.
 
 Built with Godot 4.4.1, GDScript, Python, local Whisper speech recognition, and
 Llama 3.1 through Ollama. No paid API or model training is required.
@@ -28,7 +25,7 @@ using `run_game.bat` opens the original authoring sandbox without the voice scen
 
 ## Play a round
 
-You and your teammate defend a planted spike on a seven-zone B-site greybox map.
+You and your teammate defend a planted spike on a seven-zone Lotus B-site greybox map.
 You start in Heaven; the teammate and spike start in Pit. The round begins at plant,
 and four enemies enter at their first annotated positions, 23 seconds later.
 
@@ -64,7 +61,7 @@ you can still give voice reports. Press **F** for a fresh round.
 | B | Dash |
 | Hold V | Push to talk; release to send |
 | Q / E | Player smoke / flash |
-| X / G / T | Player molly / blind wave / scan orb |
+| X / G / T | Phoenix Hot Hands / Omen Paranoia / Fade Haunt |
 | F | Restart the round |
 | Esc | Release or recapture the mouse |
 | F1 / F2 | Toggle player HUD / teammate information panel |
